@@ -1,5 +1,8 @@
+import csv
 import hashlib
 import math
+import os
+from pathlib import Path
 import uuid
 from datetime import datetime
 from decimal import Decimal
@@ -11,6 +14,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Index,
+    Integer,
     JSON,
     Numeric,
     String,
@@ -147,6 +151,115 @@ class LegalArticleVector(Base):
             postgresql_ops={"embedding": "vector_cosine_ops"},
         ),
     )
+
+
+class AccountRecord(Base):
+    """
+    Bank account records with KYC owner details, branch, deposits, and status.
+    Mapped from accounts.csv.
+    """
+    __tablename__ = "accounts"
+
+    acct_id: Mapped[str] = mapped_column(String(64), primary_key=True, index=True)
+    dsply_nm: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    type: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    acct_stat: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    acct_rptng_crncy: Mapped[Optional[str]] = mapped_column(String(16), nullable=True, default="USD")
+    prior_sar_count: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, default=0)
+    branch_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    open_dt: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    close_dt: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    initial_deposit: Mapped[Optional[Decimal]] = mapped_column(Numeric(18, 2), nullable=True)
+    tx_behavior_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    bank_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    first_name: Mapped[Optional[str]] = mapped_column(String(128), nullable=True, index=True)
+    last_name: Mapped[Optional[str]] = mapped_column(String(128), nullable=True, index=True)
+    street_addr: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    city: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    state: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    country: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    zip: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    gender: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    birth_date: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    ssn: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, index=True)
+    lon: Mapped[Optional[float]] = mapped_column(Numeric(10, 6), nullable=True)
+    lat: Mapped[Optional[float]] = mapped_column(Numeric(10, 6), nullable=True)
+
+
+class AccountMappingRecord(Base):
+    """
+    Mapping relationships linking account identifiers to customer/party IDs.
+    Mapped from accountMapping.csv.
+    """
+    __tablename__ = "account_mappings"
+
+    cust_acct_mapping_id: Mapped[str] = mapped_column(String(64), primary_key=True, index=True)
+    acct_id: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
+    cust_id: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
+    cust_acct_role: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, default="Primary")
+    src_sys: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    data_dump_dt: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+
+
+class PartyRecord(Base):
+    """
+    Customer / entity identity records for individuals and organizations.
+    Mapped from individuals-bulkload.csv and organizations-bulkload.csv.
+    """
+    __tablename__ = "parties"
+
+    party_id: Mapped[str] = mapped_column(String(64), primary_key=True, index=True)
+    party_type: Mapped[str] = mapped_column(String(32), nullable=False, default="Individual")
+    is_individual: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
+    first_name: Mapped[Optional[str]] = mapped_column(String(128), nullable=True, index=True)
+    last_name: Mapped[Optional[str]] = mapped_column(String(128), nullable=True, index=True)
+    middle_name: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    legal_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, index=True)
+    name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    name_alias: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    birth_place_country: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    country_of_residency: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    country_of_incorporation: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    nationality: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    occupation: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    organization_symbol: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    source_of_income: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    title: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    website: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    gender: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    marital_status: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    is_active: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True, default=True)
+    listed_company: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True, default=False)
+    primary_phone: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    work_phone: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    cell_phone: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    alternate_phone: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    home_phone: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    personal_email: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    work_email: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    company_email: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    alternate_email: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    death_time: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+
+
+class CashTransactionRecord(Base):
+    """
+    Cash transactions (ATM deposits and withdrawals/cashouts).
+    Mapped from cash_tx.csv.
+    """
+    __tablename__ = "cash_transactions"
+
+    tran_id: Mapped[str] = mapped_column(String(64), primary_key=True, index=True)
+    account_id: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
+    bene_acct: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    tx_type: Mapped[str] = mapped_column(String(32), index=True, nullable=False, default="CASH-OUT")
+    amount: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    timestamp: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    branch_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    is_sar: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True, default=False)
+    alert_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    raw_metadata: Mapped[Dict[str, Any]] = mapped_column(JSON_DOCUMENT, default=dict, nullable=False)
+
 
 
 # -----------------------------------------------------------------------------
@@ -351,3 +464,358 @@ async def seed_legal_knowledge(session: AsyncSession) -> int:
     if inserted_count > 0:
         await session.commit()
     return inserted_count
+
+
+# -----------------------------------------------------------------------------
+# Banking Data Repository & Initialization (Accounts, Mappings, Parties, Cash)
+# -----------------------------------------------------------------------------
+IN_MEMORY_BANKING_DATA: Dict[str, Any] = {
+    "accounts": {},           # acct_id (str) -> dict
+    "account_mappings": [],   # list of dicts
+    "parties": {},            # party_id (str) -> dict
+    "cash_transactions": [],  # list of dicts
+}
+
+
+def get_sample_data_dir() -> Path:
+    """Discovers the directory containing sample banking CSVs."""
+    candidates = [
+        Path("data/sample"),
+        Path(__file__).parent.parent.parent / "data" / "sample",
+        Path(__file__).parent.parent / "data" / "sample",
+        Path("backend/data/sample"),
+    ]
+    for c in candidates:
+        if c.exists() and (c / "accounts.csv").exists():
+            return c
+    return candidates[0]
+
+
+def load_in_memory_banking_data(sample_dir: Optional[Path] = None) -> Dict[str, int]:
+    """
+    Loads banking datasets (accounts, mappings, individuals, organizations, cash)
+    into IN_MEMORY_BANKING_DATA for sub-millisecond local queries and fallback execution.
+    """
+    target_dir = sample_dir or get_sample_data_dir()
+    counts = {"accounts": 0, "account_mappings": 0, "parties": 0, "cash_transactions": 0}
+
+    # 1. Accounts
+    accts_file = target_dir / "accounts.csv"
+    if accts_file.exists():
+        with open(accts_file, "r", encoding="utf-8", errors="replace") as f:
+            for row in csv.DictReader(f):
+                aid = str(row.get("acct_id", "")).strip()
+                if not aid:
+                    continue
+                sar_raw = str(row.get("prior_sar_count", "0")).strip().lower()
+                prior_sar = 1 if sar_raw in ("true", "1") else (int(sar_raw) if sar_raw.isdigit() else 0)
+                dep_raw = row.get("initial_deposit")
+                init_dep = float(dep_raw) if dep_raw and dep_raw != "" else None
+                lon_raw = row.get("lon")
+                lat_raw = row.get("lat")
+                IN_MEMORY_BANKING_DATA["accounts"][aid] = {
+                    "acct_id": aid,
+                    "dsply_nm": row.get("dsply_nm"),
+                    "type": row.get("type"),
+                    "acct_stat": row.get("acct_stat"),
+                    "acct_rptng_crncy": row.get("acct_rptng_crncy") or "USD",
+                    "prior_sar_count": prior_sar,
+                    "branch_id": row.get("branch_id"),
+                    "open_dt": row.get("open_dt"),
+                    "close_dt": row.get("close_dt"),
+                    "initial_deposit": init_dep,
+                    "tx_behavior_id": row.get("tx_behavior_id"),
+                    "bank_id": row.get("bank_id"),
+                    "first_name": row.get("first_name"),
+                    "last_name": row.get("last_name"),
+                    "street_addr": row.get("street_addr"),
+                    "city": row.get("city"),
+                    "state": row.get("state"),
+                    "country": row.get("country"),
+                    "zip": row.get("zip"),
+                    "gender": row.get("gender"),
+                    "birth_date": row.get("birth_date"),
+                    "ssn": row.get("ssn"),
+                    "lon": float(lon_raw) if lon_raw else None,
+                    "lat": float(lat_raw) if lat_raw else None,
+                }
+        counts["accounts"] = len(IN_MEMORY_BANKING_DATA["accounts"])
+
+    # 2. Account Mappings
+    mappings_file = target_dir / "accountMapping.csv"
+    if mappings_file.exists():
+        mappings_list = []
+        with open(mappings_file, "r", encoding="utf-8", errors="replace") as f:
+            for row in csv.DictReader(f):
+                mid = str(row.get("cust_acct_mapping_id", "")).strip()
+                aid = str(row.get("acct_id", "")).strip()
+                cid = str(row.get("cust_id", "")).strip()
+                if not mid or not aid:
+                    continue
+                mappings_list.append({
+                    "cust_acct_mapping_id": mid,
+                    "acct_id": aid,
+                    "cust_id": cid,
+                    "cust_acct_role": row.get("cust_acct_role") or "Primary",
+                    "src_sys": row.get("src_sys"),
+                    "data_dump_dt": row.get("data_dump_dt"),
+                })
+        IN_MEMORY_BANKING_DATA["account_mappings"] = mappings_list
+        counts["account_mappings"] = len(mappings_list)
+
+    # 3. Individuals & Organizations (Parties)
+    indiv_file = target_dir / "individuals-bulkload.csv"
+    if indiv_file.exists():
+        with open(indiv_file, "r", encoding="utf-8", errors="replace") as f:
+            for row in csv.DictReader(f):
+                pid = str(row.get("partyId", "")).strip()
+                if not pid:
+                    continue
+                is_act = str(row.get("isActive", "1")).lower() in ("1", "true")
+                is_listed = str(row.get("listedCompany", "0")).lower() in ("1", "true")
+                IN_MEMORY_BANKING_DATA["parties"][pid] = {
+                    "party_id": pid,
+                    "party_type": "Individual",
+                    "is_individual": True,
+                    "first_name": row.get("firstName"),
+                    "last_name": row.get("lastName"),
+                    "middle_name": row.get("middleName"),
+                    "legal_name": row.get("legalName"),
+                    "name": row.get("name"),
+                    "name_alias": row.get("nameAlias"),
+                    "birth_place_country": row.get("birthPlaceCountry"),
+                    "country_of_residency": row.get("countryofResidency") or row.get("countryOfResidency"),
+                    "country_of_incorporation": None,
+                    "nationality": row.get("nationality"),
+                    "occupation": row.get("occupation"),
+                    "organization_symbol": row.get("organizationSymbol"),
+                    "source_of_income": row.get("sourceOfIncome"),
+                    "title": row.get("title"),
+                    "website": row.get("website"),
+                    "gender": row.get("gender"),
+                    "marital_status": row.get("maritalStatus"),
+                    "is_active": is_act,
+                    "listed_company": is_listed,
+                    "primary_phone": row.get("primaryPhone"),
+                    "work_phone": row.get("workPhone"),
+                    "cell_phone": row.get("cellPhone"),
+                    "alternate_phone": row.get("alternatePhone"),
+                    "home_phone": row.get("homePhone"),
+                    "personal_email": row.get("personalEmail"),
+                    "work_email": row.get("workEmail"),
+                    "company_email": row.get("companyEmail"),
+                    "alternate_email": row.get("alternateEmail"),
+                    "death_time": row.get("deathTime"),
+                }
+
+    org_file = target_dir / "organizations-bulkload.csv"
+    if org_file.exists():
+        with open(org_file, "r", encoding="utf-8", errors="replace") as f:
+            for row in csv.DictReader(f):
+                pid = str(row.get("partyId", "")).strip()
+                if not pid:
+                    continue
+                is_act = str(row.get("isActive", "1")).lower() in ("1", "true")
+                is_listed = str(row.get("listedCompany", "0")).lower() in ("1", "true")
+                IN_MEMORY_BANKING_DATA["parties"][pid] = {
+                    "party_id": pid,
+                    "party_type": "Organization",
+                    "is_individual": False,
+                    "first_name": row.get("firstName"),
+                    "last_name": row.get("lastName"),
+                    "middle_name": row.get("middleName"),
+                    "legal_name": row.get("legalName"),
+                    "name": row.get("name"),
+                    "name_alias": row.get("nameAlias"),
+                    "birth_place_country": row.get("birthPlaceCountry"),
+                    "country_of_residency": row.get("countryofResidency") or row.get("countryOfResidency"),
+                    "country_of_incorporation": row.get("countryOfIncorporation"),
+                    "nationality": row.get("nationality"),
+                    "occupation": row.get("occupation"),
+                    "organization_symbol": row.get("organizationSymbol"),
+                    "source_of_income": row.get("sourceOfIncome"),
+                    "title": row.get("title"),
+                    "website": row.get("website"),
+                    "gender": row.get("gender"),
+                    "marital_status": row.get("maritalStatus"),
+                    "is_active": is_act,
+                    "listed_company": is_listed,
+                    "primary_phone": row.get("primaryPhone"),
+                    "work_phone": row.get("workPhone"),
+                    "cell_phone": row.get("cellPhone"),
+                    "alternate_phone": row.get("alternatePhone"),
+                    "home_phone": row.get("homePhone"),
+                    "personal_email": row.get("personalEmail"),
+                    "work_email": row.get("workEmail"),
+                    "company_email": row.get("companyEmail"),
+                    "alternate_email": row.get("alternateEmail"),
+                    "death_time": row.get("deathTime"),
+                }
+    counts["parties"] = len(IN_MEMORY_BANKING_DATA["parties"])
+
+    # 4. Cash Transactions (ATM takeouts and deposits)
+    cash_files = [target_dir / "cash_tx.csv", target_dir.parent.parent / "AMLSim" / "sample" / "outputs" / "cash_tx.csv"]
+    cash_list = []
+    for c_file in cash_files:
+        if c_file.exists() and c_file.stat().st_size > 80:
+            with open(c_file, "r", encoding="utf-8", errors="replace") as f:
+                for row in csv.DictReader(f):
+                    tid = str(row.get("TXN_ID") or row.get("tran_id") or "").strip()
+                    aid = str(row.get("ACCOUNT_ID") or row.get("orig_acct") or "").strip()
+                    if not tid or not aid:
+                        continue
+                    ttype = str(row.get("TXN_SOURCE_TYPE_CODE") or row.get("tx_type") or "CASH-OUT").strip()
+                    amt_val = float(row.get("TXN_AMOUNT_ORIG") or row.get("base_amt") or 0.0)
+                    ts = str(row.get("RUN_DATE") or row.get("tran_timestamp") or "")
+                    bid = str(row.get("BRANCH_ID") or "")
+                    is_sar = str(row.get("is_sar", "0")).lower() in ("1", "true")
+                    cash_list.append({
+                        "tran_id": tid,
+                        "account_id": aid,
+                        "bene_acct": row.get("bene_acct"),
+                        "tx_type": ttype,
+                        "amount": amt_val,
+                        "timestamp": ts,
+                        "branch_id": bid,
+                        "is_sar": is_sar,
+                        "alert_id": row.get("alert_id"),
+                        "raw_metadata": dict(row),
+                    })
+            if cash_list:
+                break
+    IN_MEMORY_BANKING_DATA["cash_transactions"] = cash_list
+    counts["cash_transactions"] = len(cash_list)
+
+    return counts
+
+
+# Automatically load on module import
+try:
+    load_in_memory_banking_data()
+except Exception:
+    pass
+
+
+async def seed_core_banking_data(session: AsyncSession, sample_dir: Optional[Path] = None) -> Dict[str, int]:
+    """
+    Seeds core banking tables (accounts, account_mappings, parties, cash_transactions)
+    from sample CSV files into PostgreSQL / SQLite database tables idempotently.
+    Returns counts of newly inserted records per table.
+    """
+    load_in_memory_banking_data(sample_dir)
+    results = {"accounts": 0, "account_mappings": 0, "parties": 0, "cash_transactions": 0}
+
+    # 1. Accounts
+    existing_accts = (await session.execute(select(func.count(AccountRecord.acct_id)))).scalar() or 0
+    if existing_accts == 0 and IN_MEMORY_BANKING_DATA["accounts"]:
+        for aid, data in IN_MEMORY_BANKING_DATA["accounts"].items():
+            record = AccountRecord(
+                acct_id=data["acct_id"],
+                dsply_nm=data["dsply_nm"],
+                type=data["type"],
+                acct_stat=data["acct_stat"],
+                acct_rptng_crncy=data["acct_rptng_crncy"],
+                prior_sar_count=data["prior_sar_count"],
+                branch_id=data["branch_id"],
+                open_dt=data["open_dt"],
+                close_dt=data["close_dt"],
+                initial_deposit=Decimal(str(data["initial_deposit"])) if data["initial_deposit"] is not None else None,
+                tx_behavior_id=data["tx_behavior_id"],
+                bank_id=data["bank_id"],
+                first_name=data["first_name"],
+                last_name=data["last_name"],
+                street_addr=data["street_addr"],
+                city=data["city"],
+                state=data["state"],
+                country=data["country"],
+                zip=data["zip"],
+                gender=data["gender"],
+                birth_date=data["birth_date"],
+                ssn=data["ssn"],
+                lon=Decimal(str(data["lon"])) if data["lon"] is not None else None,
+                lat=Decimal(str(data["lat"])) if data["lat"] is not None else None,
+            )
+            session.add(record)
+            results["accounts"] += 1
+
+    # 2. Account Mappings
+    existing_mappings = (await session.execute(select(func.count(AccountMappingRecord.cust_acct_mapping_id)))).scalar() or 0
+    if existing_mappings == 0 and IN_MEMORY_BANKING_DATA["account_mappings"]:
+        for data in IN_MEMORY_BANKING_DATA["account_mappings"]:
+            record = AccountMappingRecord(
+                cust_acct_mapping_id=data["cust_acct_mapping_id"],
+                acct_id=data["acct_id"],
+                cust_id=data["cust_id"],
+                cust_acct_role=data["cust_acct_role"],
+                src_sys=data["src_sys"],
+                data_dump_dt=data["data_dump_dt"],
+            )
+            session.add(record)
+            results["account_mappings"] += 1
+
+    # 3. Parties
+    existing_parties = (await session.execute(select(func.count(PartyRecord.party_id)))).scalar() or 0
+    if existing_parties == 0 and IN_MEMORY_BANKING_DATA["parties"]:
+        for pid, data in IN_MEMORY_BANKING_DATA["parties"].items():
+            record = PartyRecord(
+                party_id=data["party_id"],
+                party_type=data["party_type"],
+                is_individual=data["is_individual"],
+                first_name=data["first_name"],
+                last_name=data["last_name"],
+                middle_name=data["middle_name"],
+                legal_name=data["legal_name"],
+                name=data["name"],
+                name_alias=data["name_alias"],
+                birth_place_country=data["birth_place_country"],
+                country_of_residency=data["country_of_residency"],
+                country_of_incorporation=data["country_of_incorporation"],
+                nationality=data["nationality"],
+                occupation=data["occupation"],
+                organization_symbol=data["organization_symbol"],
+                source_of_income=data["source_of_income"],
+                title=data["title"],
+                website=data["website"],
+                gender=data["gender"],
+                marital_status=data["marital_status"],
+                is_active=data["is_active"],
+                listed_company=data["listed_company"],
+                primary_phone=data["primary_phone"],
+                work_phone=data["work_phone"],
+                cell_phone=data["cell_phone"],
+                alternate_phone=data["alternate_phone"],
+                home_phone=data["home_phone"],
+                personal_email=data["personal_email"],
+                work_email=data["work_email"],
+                company_email=data["company_email"],
+                alternate_email=data["alternate_email"],
+                death_time=data["death_time"],
+            )
+            session.add(record)
+            results["parties"] += 1
+
+    # 4. Cash Transactions
+    existing_cash = (await session.execute(select(func.count(CashTransactionRecord.tran_id)))).scalar() or 0
+    if existing_cash == 0 and IN_MEMORY_BANKING_DATA["cash_transactions"]:
+        for data in IN_MEMORY_BANKING_DATA["cash_transactions"]:
+            record = CashTransactionRecord(
+                tran_id=data["tran_id"],
+                account_id=data["account_id"],
+                bene_acct=data["bene_acct"],
+                tx_type=data["tx_type"],
+                amount=Decimal(str(data["amount"])),
+                timestamp=data["timestamp"],
+                branch_id=data["branch_id"],
+                is_sar=data["is_sar"],
+                alert_id=data["alert_id"],
+                raw_metadata=data["raw_metadata"],
+            )
+            session.add(record)
+            results["cash_transactions"] += 1
+
+    total_inserted = sum(results.values())
+    if total_inserted > 0:
+        await session.commit()
+
+    return results
+

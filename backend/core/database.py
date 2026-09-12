@@ -12,7 +12,11 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.pool import StaticPool
 
 from backend.core.config import settings
-from backend.models.forensic import Base, seed_legal_knowledge
+from backend.models.forensic import (
+    Base,
+    seed_core_banking_data,
+    seed_legal_knowledge,
+)
 
 logger = logging.getLogger("forensic_auditor.database")
 
@@ -223,7 +227,10 @@ async def init_db(engine: Optional[AsyncEngine] = None) -> None:
 
     async with factory() as session:
         count = await seed_legal_knowledge(session)
-        logger.info(f"Database schema initialized and seed precedents verified ({count} new records added).")
+        banking_counts = await seed_core_banking_data(session)
+        logger.info(
+            f"Database schema initialized: {count} precedents, core banking records {banking_counts} verified."
+        )
 
 
 async def close_db() -> None:
