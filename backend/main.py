@@ -5,14 +5,34 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.core.config import settings
 from backend.api.routes.investigations import router as investigations_router
 from backend.api.routes.tts import router as tts_router
+from backend.api.routes.agent_tools import router as agent_tools_router
+
+
+try:
+    from backend.core.database import init_db, close_db
+except ImportError:
+    init_db = None  # type: ignore
+    close_db = None  # type: ignore
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup initialization
     print(f"🚀 [Forensic Auditor API] Initialized successfully in {settings.ENVIRONMENT} mode.")
+    if init_db is not None:
+        try:
+            await init_db()
+            print("📦 [Database] Database initialization completed successfully.")
+        except Exception as exc:
+            print(f"⚠️ [Database] Startup connection warning: {exc}. Running without active DB connection.")
     yield
     # Teardown / Cleanup
+    if close_db is not None:
+        try:
+            await close_db()
+            print("🛑 [Database] Database connections closed cleanly.")
+        except Exception as exc:
+            print(f"⚠️ [Database] Shutdown warning: {exc}")
     print("🛑 [Forensic Auditor API] Shutting down.")
 
 
@@ -38,6 +58,7 @@ app.add_middleware(
 # Router Registration
 app.include_router(investigations_router, prefix=settings.API_V1_STR)
 app.include_router(tts_router, prefix=settings.API_V1_STR)
+app.include_router(agent_tools_router, prefix=settings.API_V1_STR)
 
 
 @app.get("/health", tags=["health"])

@@ -1,11 +1,14 @@
-import io
+import asyncio
+import logging
 from typing import Optional, AsyncGenerator
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 import httpx
 
 from backend.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/tts", tags=["tts"])
 
@@ -19,7 +22,14 @@ class SynthesizeRequest(BaseModel):
 def generate_fallback_silence_mp3() -> bytes:
     """
     Generates a valid minimal MPEG audio frame (silent audio) as a fallback
-    when no ElevenLabs API key is configured, avoiding front-end player crashes.
+    when no ElevenLabs API key is configured or when upstream fails,
+    avoiding front-end player crashes.
+
+    Binary Format Specification:
+    - Standard: MPEG-1 Layer III (MP3), 128 kbps, 44.1 kHz, Joint Stereo, No CRC
+    - Frame Header: 0xFF 0xFB 0x90 0x64 (4 bytes)
+    - Payload: 28 zeroed bytes (silent frequency subbands)
+    - Total: 32 bytes per frame * 10 frames = 320 bytes
     """
     # Valid minimal silent MP3 frame sequence (MPEG-1 Layer 3, 128kbps, 44.1kHz)
     silent_mp3_frame = (
@@ -33,7 +43,11 @@ def generate_fallback_silence_mp3() -> bytes:
 async def stream_elevenlabs_audio(
     text: str, voice_id: str, model_id: str
 ) -> AsyncGenerator[bytes, None]:
-    """Streams audio bytes directly from ElevenLabs TTS API."""
+    """
+    Streams audio bytes directly from ElevenLabs TTS API.
+    Gracefully falls back to silent MPEG audio on any upstream failure
+    (500, 401, 429, timeout, connect error) so client audio playback never crashes.
+    """
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}/stream"
     headers = {
         "Accept": "audio/mpeg",
@@ -51,17 +65,39 @@ async def stream_elevenlabs_audio(
         },
     }
 
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        async with client.stream("POST", url, headers=headers, json=payload) as response:
-            if response.status_code != 200:
-                error_body = await response.aread()
-                raise HTTPException(
-                    status_code=response.status_code,
-                    detail=f"ElevenLabs TTS API error: {error_body.decode('utf-8', errors='ignore')}"
-                )
-            async for chunk in response.aiter_bytes():
-                if chunk:
-                    yield chunk
+    timeout = httpx.Timeout(
+        connect=getattr(settings, "TTS_CONNECT_TIMEOUT", 5.0),
+        read=getattr(settings, "TTS_TIMEOUT", 30.0),
+        write=10.0,
+        pool=5.0,
+    )
+
+    try:
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            async with client.stream("POST", url, headers=headers, json=payload) as response:
+                if response.status_code != 200:
+                    error_body = await response.aread()
+                    logger.warning(
+                        "ElevenLabs TTS API returned status %s: %s. Gracefully falling back to silent MP3.",
+                        response.status_code,
+                        error_body.decode("utf-8", errors="ignore"),
+                    )
+                    yield generate_fallback_silence_mp3()
+                    return
+
+                async for chunk in response.aiter_bytes():
+                    if chunk:
+                        yield chunk
+    except (asyncio.CancelledError, GeneratorExit):
+        logger.info("Client disconnected during ElevenLabs audio stream.")
+        raise
+    except Exception as exc:
+        logger.warning(
+            "ElevenLabs TTS network/connection failure (%s: %s). Gracefully falling back to silent MP3.",
+            type(exc).__name__,
+            exc,
+        )
+        yield generate_fallback_silence_mp3()
 
 
 @router.post("/synthesize")
@@ -69,11 +105,12 @@ async def synthesize_speech(request: SynthesizeRequest):
     """
     Proxy endpoint to synthesize speech via ElevenLabs in streaming mode (audio/mpeg).
     Shields the ELEVENLABS_API_KEY from exposure on the client side.
+    Falls back gracefully to synthetic silent audio when unconfigured or on upstream failure.
     """
     voice_id = request.voice_id or settings.ELEVENLABS_VOICE_ID
     model_id = request.model_id or settings.ELEVENLABS_MODEL_ID
 
-    # If no key is provided, return simulated audio stream to support offline demo
+    # If no key is provided or placeholder is used, return simulated audio stream
     if not settings.ELEVENLABS_API_KEY or settings.ELEVENLABS_API_KEY.startswith("your_"):
         async def fallback_stream():
             yield generate_fallback_silence_mp3()
@@ -84,22 +121,14 @@ async def synthesize_speech(request: SynthesizeRequest):
             headers={
                 "Content-Disposition": "inline; filename=verdict_fallback.mp3",
                 "X-Audio-Source": "synthetic-fallback-mode",
-            }
+            },
         )
 
-    try:
-        return StreamingResponse(
-            stream_elevenlabs_audio(request.text, voice_id, model_id),
-            media_type="audio/mpeg",
-            headers={
-                "Content-Disposition": "inline; filename=verdict.mp3",
-                "Cache-Control": "no-cache",
-            }
-        )
-    except HTTPException:
-        raise
-    except Exception as exc:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Failed to stream audio from ElevenLabs: {str(exc)}"
-        )
+    return StreamingResponse(
+        stream_elevenlabs_audio(request.text, voice_id, model_id),
+        media_type="audio/mpeg",
+        headers={
+            "Content-Disposition": "inline; filename=verdict.mp3",
+            "Cache-Control": "no-cache",
+        },
+    )
