@@ -2,9 +2,15 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Forensic Auditor | Hub Pericial AML de Alta Precisión",
+  title: "Polar | Financial Risk Intelligence",
   description:
-    "Plataforma pericial para detección determinista de grafos de lavado de dinero, streaming de razonamiento pericial y dictamen por voz.",
+    "Polar reveals connected risk hidden inside complex transaction records through focused, graph-based financial investigation.",
+  openGraph: {
+    title: "Polar | See beneath the surface",
+    description:
+      "Financial pattern intelligence for focused investigations.",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
@@ -13,8 +19,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es">
-      <body className="antialiased selection:bg-emerald-500 selection:text-black">
+    <html lang="en">
+      <body className="antialiased selection:bg-brand-500 selection:text-brand-ink">
         {children}
       </body>
     </html>
