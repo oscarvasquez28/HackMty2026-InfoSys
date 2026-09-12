@@ -835,6 +835,7 @@ function makeVerdict(currentCase: UploadResponse): VerdictEvent {
   };
 }
 
+/** @deprecated Legacy frontend-only simulation. Superseded by CaseFileWorkspace at /investigate. */
 export function useAgentSimulation(): UseAgentSimulationReturn {
   const [currentCase, setCurrentCase] = useState<UploadResponse | null>(null);
   const [thoughts, setThoughts] = useState<ThoughtEvent[]>([]);

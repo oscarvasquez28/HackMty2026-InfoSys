@@ -58,7 +58,15 @@ const workflow = [
   },
 ];
 
+import { redirect } from "next/navigation";
+
+// NOTE: Landing page is temporarily deactivated to route directly into investigation.
+// To reactivate, return <LandingPageContent /> from Home.
 export default function Home() {
+  redirect("/investigate");
+}
+
+function LandingPageContent() {
   return (
     <div id="top" className="landing-shell min-h-screen overflow-hidden bg-background text-foreground">
       <LandingNavigation />

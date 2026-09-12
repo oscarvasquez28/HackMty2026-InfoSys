@@ -32,6 +32,7 @@ const specialistFocus: Record<string, string> = {
   RISK_REVIEW: "Connects the pattern findings to their scope, limitations and recommended human follow-up.",
 };
 
+/** @deprecated Legacy frontend-only simulation. Superseded by CaseFileWorkspace at /investigate. */
 export const InvestigationDashboard: React.FC = () => {
   const {
     currentCase,

@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { InvestigationDashboard } from "@/components/InvestigationDashboard";
+import { CaseFileWorkspace } from "@/components/case-file/CaseFileWorkspace";
 
 export const metadata: Metadata = {
-  title: "Investigate | Polar",
-  description: "Follow a guided financial investigation from transaction records to connected findings and an evidence-based assessment.",
+  title: "Case File | Polar",
+  description: "Forensic case file viewer: findings, money trails, exhibits, reconciliation and declined leads.",
 };
 
 export default function InvestigatePage() {
-  return <InvestigationDashboard />;
+  return <CaseFileWorkspace />;
 }
