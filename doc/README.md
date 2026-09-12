@@ -1,4 +1,4 @@
-# Forensic Auditor: Master Architecture & Documentation Hub 🔍⚡
+# Forensic Auditor: Master Architecture & Documentation Hub
 
 [Agent Navigation & Context Index](./index.md) | [Architecture](./architecture/README.md) | [Backend](./backend/README.md) | [Frontend](./frontend/README.md) | [Data & Compliance](./data-and-compliance/README.md)
 
@@ -12,23 +12,23 @@ Financial crime networks utilize sophisticated obfuscation strategies—such as 
 
 Forensic Auditor resolves this through a multi-tier hybrid architecture:
 1. **Deterministic Algorithmic Graph Pruning**: Ingests transaction ledgers via [Polars](https://pola.rs/) in sub-second time, constructs directed multigraphs with [NetworkX](https://networkx.org/), and isolates elementary cycles ($k \le 5$) and rapid passthrough flows ($\ge 90\%$ pass-through within $\Delta t \le 48\text{h}$). This deterministically eliminates **85% to 98% of computational noise** before touching any LLM.
-2. **External Agentic Legal Reasoning**: Forwards only the isolated suspicious subgraph to an external **n8n** ReAct agent driven by **Google Gemini (1.5 / 2.5 Flash)** and backed by an external PostgreSQL instance hosted on **TigerData** equipped with `pgvector` for semantic legal searches against Mexican fiscal and AML frameworks (Art. 69-B del CFF, NIFs, and UIF/GAFI typologies).
-3. **Reactive Real-Time Forensic Console**: Streams turn-by-turn investigative reasoning and verdicts to a **Next.js 14 / React 18** frontend via Server-Sent Events (SSE), renders an interactive money trail graph via **React Flow (`@xyflow/react`)**, and vocalizes the final judicial dictamen via an **ElevenLabs** streaming voice proxy.
+2. **External Agentic Legal Reasoning & Tooling**: Exposes dedicated database inspection endpoints and dynamic query facilities (`/api/v1/tools/*`) to external ReAct agents (e.g. n8n with Google Gemini), backed by managed PostgreSQL on **TigerData** equipped with `pgvector` for semantic legal searches against Mexican fiscal and AML frameworks (Art. 69-B del CFF, NIFs, and UIF/GAFI typologies).
+3. **Reactive Real-Time Forensic Console**: Streams turn-by-turn investigative reasoning and verdicts to a **Next.js 14 / React 18** dashboard (`/investigate`) via Server-Sent Events (SSE), renders an interactive money trail graph via **React Flow (`@xyflow/react`)**, and vocalizes the final judicial dictamen via an **ElevenLabs** streaming voice proxy.
 
 ---
 
 ## 2. Prior Documentation & Architectural Evolution Synthesis
 
-This documentation synthesizes the initial prototype base documented in the root [`README.md`](../README.md), the target system blueprint (*Forensic Auditor - Arquitectura y Flujo del Sistema*), and user architectural decisions:
+This documentation synthesizes the initial prototype base, production architecture, and recent multi-agent forensic additions:
 
 | Architectural Dimension | Initial Base Prototype | Target Production Architecture | Documentation Location |
 | :--- | :--- | :--- | :--- |
-| **System Ingestion & Pruning** | In-memory CSV upload with Polars & NetworkX pruning in `backend/api/routes/investigations.py`. | Preserves high-speed Polars/NetworkX pipeline; adds structured subgraph metadata and persistence. | [`doc/backend/README.md`](./backend/README.md) |
-| **Database Persistence** | Ephemeral in-memory dictionary (`INVESTIGATION_CASES`). | External managed PostgreSQL with `pgvector` hosted on **TigerData**, integrated via Python **`sqlalchemy`** for connection pooling, transaction persistence, and vector search. | [`doc/backend/README.md`](./backend/README.md) |
-| **AI Orchestration (n8n)** | Webhook proxy stub in `investigations.py` with fallback 6-step thought generator. | Externalized to a separate repository/service; backend maintains clean HTTP webhook dispatch and SSE proxying contract. | [`doc/architecture/README.md`](./architecture/README.md) |
-| **Frontend Visualization** | Metric cards, text-based ThoughtStream console, and VerdictCard. | Adds interactive AML Money Trail Visualizer using **`@xyflow/react`** with Dagre topological layout engine and entity inspector drawer. | [`doc/frontend/react-flow-blueprint.md`](./frontend/react-flow-blueprint.md) |
-| **Audio Synthesis** | Direct backend streaming proxy to ElevenLabs with silent MPEG frame fallback. | Hardened streaming proxy preserving key confidentiality and zero-downtime offline presentation support. | [`doc/backend/README.md`](./backend/README.md) |
-| **Legal & Regulatory Alignment** | Basic GAFI risk metrics in code comments. | Formal Mexican tax & AML compliance engine (Art. 69-B CFF EFOS/EDOS, NIF A-2 materiality, UIF ROI reporting). | [`doc/data-and-compliance/README.md`](./data-and-compliance/README.md) |
+| **System Ingestion & Pruning** | In-memory CSV upload with Polars & NetworkX pruning in `backend/api/routes/investigations.py`. | High-speed Polars/NetworkX pipeline with multigraph aggregation, structured subgraph metadata, and database persistence. | [`doc/backend/README.md`](./backend/README.md) |
+| **Database Persistence** | Ephemeral in-memory dictionary (`INVESTIGATION_CASES`). | Production PostgreSQL with `pgvector` hosted on **TigerData**, integrated via Async **SQLAlchemy 2.0** for connection pooling, transaction persistence, and vector similarity search. | [`doc/backend/README.md`](./backend/README.md) |
+| **AI Orchestration & Agent Tools** | Webhook proxy stub in `investigations.py` with fallback 6-step thought generator. | Dedicated read-only investigative tool endpoints (`/api/v1/tools/*`) with dynamic AST validation, alongside n8n webhook proxying and SSE reasoning fallback. | [`doc/architecture/README.md`](./architecture/README.md) |
+| **Frontend Workspace** | Metric cards, text-based ThoughtStream console, and VerdictCard. | Dual-mode forensic workspace (`/investigate`) featuring 1-5 multi-file upload, interactive `@xyflow/react` + Dagre graph canvas, and telemetry cards. | [`doc/frontend/README.md`](./frontend/README.md) |
+| **Audio Synthesis** | Direct backend streaming proxy to ElevenLabs with silent MPEG frame fallback. | Hardened streaming proxy preserving key confidentiality and zero-downtime offline presentation fallback (`X-Audio-Source` header). | [`doc/backend/README.md`](./backend/README.md) |
+| **Legal & Regulatory Alignment** | Basic GAFI risk metrics in code comments. | Formal Mexican tax & AML compliance engine (Art. 69-B CFF EFOS/EDOS, NIF A-2 materiality, UIF ROI reporting, and pgvector HNSW index). | [`doc/data-and-compliance/README.md`](./data-and-compliance/README.md) |
 
 ---
 
@@ -37,8 +37,9 @@ This documentation synthesizes the initial prototype base documented in the root
 ```mermaid
 flowchart TD
     subgraph ClientTier ["1. Frontend Web Client (Next.js 14 / React 18)"]
-        UI["Dashboard (app/page.tsx)"]
-        UploadComp["FileUpload.tsx<br/>(Drag & Drop CSV)"]
+        Landing["Landing Page (app/page.tsx)"]
+        Workspace["Workspace (app/investigate/page.tsx)"]
+        UploadComp["Multi-File Ingestion<br/>(1-5 CSV Upload)"]
         Console["ThoughtStream.tsx<br/>(Terminal SSE Stream)"]
         Verdict["VerdictCard.tsx<br/>(Dictamen & Metricas)"]
         AudioUI["AudioPlayer.tsx<br/>(Equalizer Playback)"]
@@ -49,9 +50,10 @@ flowchart TD
         API["FastAPI Routing Hub<br/>(backend/main.py)"]
         IngestService["Ingestion Engine<br/>(services/ingestion.py - Polars)"]
         FilterService["Deterministic Graph Filter<br/>(services/deterministic_filter.py - NetworkX)"]
+        ToolRouter["Agent Tools Router<br/>(api/routes/agent_tools.py)"]
         SSEProxy["SSE Event Streaming Proxy<br/>(api/routes/investigations.py)"]
         TTSProxy["ElevenLabs Audio Proxy<br/>(api/routes/tts.py)"]
-        SQLAlchemyClient["TigerData DB Client<br/>(SQLAlchemy + pgvector)"]
+        SQLAlchemyClient["TigerData DB Client<br/>(SQLAlchemy 2.0 + pgvector)"]
     end
 
     subgraph ExternalServices ["3. External Managed & Partner Services"]
@@ -68,9 +70,10 @@ flowchart TD
     API -->|3. Persist Case & Graph| SQLAlchemyClient
     SQLAlchemyClient <-->|SSL Connection Pool| TigerData
 
-    UI -->|4. GET /stream EventSource| SSEProxy
+    Workspace -->|4. GET /stream EventSource| SSEProxy
     SSEProxy -->|5. Webhook POST case_id| N8NWorkflow
-    N8NWorkflow <-->|Vector Search Precedents| TigerData
+    N8NWorkflow <-->|Read-Only Agent Tools /tools/*| ToolRouter
+    ToolRouter <-->|AST Safe Queries & pgvector| SQLAlchemyClient
     N8NWorkflow -->|6. Stream Thoughts / Verdict| SSEProxy
     SSEProxy -->|SSE event: thought| Console
     SSEProxy -->|SSE event: verdict| Verdict
@@ -141,9 +144,12 @@ All sensitive API credentials and integration endpoints are managed via environm
 - **Non-blocking SSE Proxying**: Event streaming utilizes asynchronous generators (`async for line in response.aiter_lines()`) and `asyncio.sleep()`, preventing thread pool starvation in Uvicorn.
 
 ### 5.4 Testing & Quality Assurance
-The codebase includes comprehensive integration testing in [`backend/tests/test_pipeline.py`](file:///c:/Users/maxan/OneDrive/Documentos/Repositories/HackMTY%202026/Infosys/Polar/backend/tests/test_pipeline.py) executed via `pytest`:
-- Injects a synthetic AML transaction dataset containing known cycles, pass-through accounts, and noise.
+The codebase includes a comprehensive automated test suite across 13 test modules (121 tests) in `backend/tests/` executed via `pytest`:
+- End-to-end pipeline verification in `backend/tests/test_pipeline.py`.
+- Algorithmic pruning unit tests in `backend/tests/test_deterministic_filter.py`.
+- TigerData PostgreSQL async persistence and pooling in `backend/tests/test_database.py`.
+- Agent tool inspection and AST query security in `backend/tests/test_agent_tools.py`.
 - Asserts that deterministic pruning eliminates legitimate payroll and merchant noise.
 - Connects to the SSE endpoint using `httpx.ASGITransport` to validate `thought` and `verdict` payloads.
-- Validates the ElevenLabs audio synthesis proxy endpoint.
+- Validates the ElevenLabs audio synthesis proxy endpoint and silent frame fallback.
 

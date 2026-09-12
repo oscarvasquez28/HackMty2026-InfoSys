@@ -9,31 +9,44 @@
 The **Forensic Auditor AML Engine** backend is an asynchronous, high-performance microservice built on **FastAPI**. It is designed to detect, prune, and explain complex money laundering topographies (such as smurfing, circular layering, and rapid pass-through mule networks) across massive financial transaction datasets.
 
 ### Core Architectural Pillars
-- **High-Throughput Columnar Ingestion**: Employs **Polars** (`polars.DataFrame`) for sub-second ingestion, alias normalization, and memory-efficient filtering of banking transaction datasets (including IBM AMLSim format).
-- **Deterministic Graph Pruning**: Uses **NetworkX** (`networkx.DiGraph`) to execute mathematical pruning algorithms:
+- **High-Throughput Columnar Ingestion**: Employs **Polars** (`polars.DataFrame`) for sub-second ingestion, canonical alias normalization, and memory-efficient filtering of banking transaction ledgers.
+- **Deterministic Graph Pruning**: Uses **NetworkX** (`networkx.DiGraph`) to execute mathematical graph algorithms:
   - Directed cycle extraction (length 2 to $k$, default $k=5$) identifying circular layering and smurfing rings.
-  - Temporal pass-through velocity detection (in/out ratio $\ge 90\%$ within a $\le 48\text{h}$ window) isolating mule accounts.
-  - Noise reduction that prunes $80\%\text{--}99\%$ of legitimate volume, isolating the suspicious subgraph.
+  - Temporal pass-through velocity detection (in/out ratio $\ge 90\%$ within $\le 48\text{h}$) isolating mule conduit accounts.
+  - Noise reduction that deterministically prunes $85\%\text{--}98\%$ of legitimate volume, isolating the suspicious subgraph.
+- **Persistent Relational Ledger & Vector Knowledge Base**: Built on **SQLAlchemy 2.0 (async)** connecting to managed PostgreSQL on **TigerData** with the **pgvector** extension:
+  - Transactional persistence for cases (`investigation_cases`) and individual ledger rows (`transactions`).
+  - 1536-dimensional vector embedding storage (`legal_knowledge_vectors`) with HNSW cosine distance indexing for semantic Mexican AML jurisprudence retrieval (CFF Art. 69-B, NIF A-2, UIF guidelines).
+- **Scalable Query Interface & Dynamic Agent Tool Registry**: Dedicated tool endpoints and a composable Abstract Syntax Tree (AST) query builder for external **n8n** ReAct agents with strict column whitelisting, parameterized SQL generation, and mandatory `case_id` isolation.
 - **Real-Time Forensic Agent Reasoning (SSE)**: Streams turn-by-turn investigative thoughts and legal verdicts via Server-Sent Events (`text/event-stream`), natively integrating with an external **n8n** webhook orchestrator with built-in high-fidelity fallback simulation.
-- **Shielded ElevenLabs Audio Proxy**: Direct audio streaming proxy for verdict narration via ElevenLabs API, featuring a synthetic silent MP3 generator fallback for zero-downtime offline demos.
+- **Shielded ElevenLabs Audio Proxy**: Direct audio streaming proxy for verdict narration via ElevenLabs API, featuring a synthetic silent MP3 generator fallback for zero-downtime offline demonstrations.
 
 ```
-+------------------------------------------------------------------------------------+
-|                                FastAPI Application                                 |
-|                                                                                    |
-|  +---------------------------+             +------------------------------------+  |
-|  |   /investigations/upload  |             |      /investigations/{id}/stream   |  |
-|  |    - Polars Ingestion     |             |      - External n8n Webhook /      |  |
-|  |    - NetworkX Pruning     |             |        SSE Thought Simulation      |  |
-|  +-------------+-------------+             +-----------------+------------------+  |
-|                |                                             |                     |
-|                v                                             v                     |
-|  +---------------------------+             +------------------------------------+  |
-|  |     In-Memory / TigerData |             |          /tts/synthesize           |  |
-|  |    PostgreSQL + pgvector  |             |      - ElevenLabs Stream Proxy /   |  |
-|  |          Store            |             |        Fallback Silent MPEG Frame  |  |
-|  +---------------------------+             +------------------------------------+  |
-+------------------------------------------------------------------------------------+
++----------------------------------------------------------------------------------------------------+
+|                                         FastAPI Application                                        |
+|                                                                                                    |
+|  +-----------------------------+  +----------------------------+  +-----------------------------+  |
+|  |   /investigations/upload    |  |    /investigations/{id}    |  | /investigations/{id}/stream |  |
+|  |  - Polars Fast Ingestion    |  |  - Case History & Subgraph |  |  - n8n ReAct Webhook Proxy  |  |
+|  |  - NetworkX Pruning Engine  |  |  - Ingestion & Flow Stats  |  |  - 6-Phase Thought Fallback |  |
+|  |  - PostgreSQL Persistence   |  |                            |  |  - Persistent Case Verdict  |  |
+|  +--------------+--------------+  +-------------+--------------+  +--------------+--------------+  |
+|                 |                               |                                |                 |
+|                 v                               v                                v                 |
+|  +----------------------------------------------------------------------------------------------+  |
+|  |                         Agent Tool Router & Composable Query Builder                         |  |
+|  |  - /tools/transactions  - /tools/entities  - /tools/patterns  - /tools/legal-precedents      |  |
+|  |  - /tools/query (Dynamic AST Filter, Column Whitelisting, Parameterized SQL Execution)       |  |
+|  +----------------------------------------------+-----------------------------------------------+  |
+|                                                 |                                                  |
+|                                                 v                                                  |
+|  +-------------------------------------------------------------+  +-----------------------------+  |
+|  |             Async SQLAlchemy 2.0 Engine Layer               |  |       /tts/synthesize       |  |
+|  |  - TigerData PostgreSQL 16 (Connection Pool & SSL Enforced) |  |  - ElevenLabs Stream Proxy  |  |
+|  |  - pgvector HNSW Index (Legal Precedent Cosine Search)      |  |  - Minimal Silent MP3 Frame |  |
+|  |  - In-Memory Dual-Write Fallback Cache                      |  |    for Offline Resilience   |  |
+|  +-------------------------------------------------------------+  +-----------------------------+  |
++----------------------------------------------------------------------------------------------------+
 ```
 
 ---
@@ -42,7 +55,7 @@ The **Forensic Auditor AML Engine** backend is an asynchronous, high-performance
 
 ### Request Flow 1: Dataset Upload & Deterministic Pruning Pipeline
 
-When a financial investigator uploads an AML transaction file (CSV), the ingestion and deterministic filter services execute synchronously to produce topological metrics and an isolated suspicious subgraph.
+When a financial investigator uploads an AML transaction file (CSV), the ingestion and deterministic filter services execute synchronously to produce topological metrics, isolate the suspicious subgraph, and persist records to TigerData PostgreSQL.
 
 ```mermaid
 sequenceDiagram
@@ -51,7 +64,8 @@ sequenceDiagram
     participant Route as api/routes/investigations.py
     participant Ingest as services/ingestion.py (Polars)
     participant Filter as services/deterministic_filter.py (NetworkX)
-    participant Store as State Store (In-Memory / TigerData)
+    participant DB as core/database.py (SQLAlchemy AsyncSession)
+    participant PG as TigerData PostgreSQL + pgvector
 
     Client->>Route: POST /api/v1/investigations/upload (multipart/form-data)
     Route->>Ingest: read_amlsim_csv(content)
@@ -60,13 +74,45 @@ sequenceDiagram
     Route->>Filter: apply_deterministic_filter(df)
     Note over Filter: 1. Build DiGraph with edge & node metadata<br/>2. Detect cycles (len <= MAX_CYCLE_LENGTH)<br/>3. Detect pass-through accounts (ratio >= 0.90, dt <= 48h)<br/>4. Prune legitimate edges & calculate metrics
     Filter-->>Route: Suspicious Subgraph, Metrics, Patterns
-    Route->>Store: Persist Case Record (case_id, subgraph, metrics)
+    Route->>DB: Session.add(InvestigationCase) + bulk_insert(TransactionRecord)
+    DB->>PG: INSERT into investigation_cases & transactions
+    PG-->>DB: Commit OK
     Route-->>Client: 201 Created (case_id, metrics, subgraph, patterns)
 ```
 
-### Request Flow 2: SSE Thought Streaming & Forensic Verdict
+### Request Flow 2: Agent Tools & Dynamic Query Execution (n8n Integration)
 
-Once a case is created, the frontend connects to the streaming endpoint to receive live forensic agent reasoning steps and the concluding legal verdict.
+External n8n ReAct agents interact with the backend through specialized tool endpoints or the dynamic query builder to inspect transaction ledgers and retrieve legal precedents.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Agent as External n8n ReAct Agent
+    participant ToolRoute as api/routes/agent_tools.py
+    participant Registry as services/tool_registry.py
+    participant DB as core/database.py (AsyncSession)
+    participant PG as TigerData PostgreSQL + pgvector
+
+    Agent->>ToolRoute: POST /api/v1/tools/legal-precedents {"query_text": "simulacion operaciones 69-B"}
+    ToolRoute->>DB: Cosine similarity query on legal_knowledge_vectors (<=> operator)
+    DB->>PG: HNSW approximate nearest neighbor scan
+    PG-->>DB: Matched jurisprudence precedents
+    DB-->>ToolRoute: LegalArticleVector rows
+    ToolRoute-->>Agent: 200 OK (precedents, similarity_score, articles)
+
+    Agent->>ToolRoute: POST /api/v1/tools/query (Dynamic AST Request)
+    ToolRoute->>Registry: execute_query(target="transactions", criteria)
+    Note over Registry: Whitelist validation -> Parameterized SQL construction -> case_id scoping
+    Registry->>DB: Execute parameterized Select query
+    DB->>PG: SELECT ... FROM transactions WHERE case_id=:id AND ...
+    PG-->>DB: Filtered transaction rows
+    Registry-->>ToolRoute: Structured records + telemetry
+    ToolRoute-->>Agent: 200 OK (target, count, total_records, data)
+```
+
+### Request Flow 3: SSE Thought Streaming & Forensic Verdict Persistence
+
+Once an investigation is created, the frontend connects to the streaming endpoint to receive turn-by-turn forensic reasoning steps and the concluding legal verdict. Upon stream completion, the verdict is stored in PostgreSQL and the case status is updated to `COMPLETED`.
 
 ```mermaid
 sequenceDiagram
@@ -74,25 +120,29 @@ sequenceDiagram
     actor Client as Frontend UI (EventSource)
     participant Route as api/routes/investigations.py
     participant N8N as External n8n Webhook (Optional)
-    
+    participant DB as core/database.py (AsyncSession)
+    participant PG as TigerData PostgreSQL
+
     Client->>Route: GET /api/v1/investigations/{case_id}/stream
-    Route->>Route: Fetch case_data from Store
-    alt N8N_WEBHOOK_URL is configured & active
+    Route->>DB: Load InvestigationCase from PostgreSQL / In-Memory
+    alt N8N_WEBHOOK_URL is configured & reachable
         Route->>N8N: POST {case_id, metrics, patterns}
         N8N-->>Route: SSE text/event-stream
         Route-->>Client: Proxy SSE events
     else Fallback or Simulation Mode
         loop Forensic Reasoning Steps (1 to 6)
-            Note over Route: Ingestion Validation -> Topology Graph -><br/>Cycle Extraction -> Velocity Check -><br/>Deterministic Pruning -> Regulatory Assessment
+            Note over Route: 1. Ingestion Validation -> 2. Topology Graph -><br/>3. Cycle Extraction -> 4. Velocity Check -><br/>5. Deterministic Pruning -> 6. Regulatory Assessment
             Route-->>Client: event: thought\ndata: {"step": i, "phase": "...", "message": "..."}\n\n
         end
-        Note over Route: Calculate final risk score & GAFI/UIF verdict
+        Note over Route: Calculate final risk score & legal verdict
         Route-->>Client: event: verdict\ndata: {"risk_level": "...", "fraud_type": "...", ...}\n\n
     end
+    Route->>DB: UPDATE investigation_cases SET status='COMPLETED', verdict=:verdict
+    DB->>PG: UPDATE commit
     Route-->>Client: Close stream
 ```
 
-### Request Flow 3: ElevenLabs Audio Synthesis Proxy
+### Request Flow 4: ElevenLabs Audio Synthesis Proxy
 
 The speech synthesis route acts as a security gateway, preventing leakage of `ELEVENLABS_API_KEY` to client browsers while supporting offline demonstration resilience.
 
@@ -118,7 +168,7 @@ sequenceDiagram
 
 ## 3. Key Components & File Breakdown
 
-The backend codebase follows a clean, modular structure organized by concerns:
+The backend codebase follows a clean, modular structure organized by domain concerns:
 
 ```
 backend/
@@ -127,224 +177,163 @@ backend/
 ├── main.py
 ├── core/
 │   ├── __init__.py
-│   └── config.py
+│   ├── config.py
+│   └── database.py
+├── models/
+│   ├── __init__.py
+│   └── forensic.py
+├── schemas/
+│   ├── __init__.py
+│   ├── agent_tools.py
+│   └── investigation.py
 ├── api/
 │   ├── __init__.py
 │   └── routes/
 │       ├── __init__.py
+│       ├── agent_tools.py
 │       ├── investigations.py
 │       └── tts.py
 ├── services/
 │   ├── __init__.py
+│   ├── deterministic_filter.py
 │   ├── ingestion.py
-│   └── deterministic_filter.py
+│   ├── investigation_reporting.py
+│   └── tool_registry.py
 └── tests/
     ├── __init__.py
-    └── test_pipeline.py
+    ├── conftest.py
+    ├── test_agent_tools.py
+    ├── test_challenge_m2_streaming.py
+    ├── test_challenge_m3_tools.py
+    ├── test_challenge_m4_2.py
+    ├── test_challenge_m4_tts.py
+    ├── test_challenger_m3_2.py
+    ├── test_database.py
+    ├── test_e2e_full_lifecycle.py
+    ├── test_investigations.py
+    ├── test_investigations_challenge.py
+    ├── test_pipeline.py
+    └── test_tts.py
 ```
 
 ### Component Responsibility Matrix
 
 | File / Module | Responsibility | Key Symbols / Classes | External Dependencies |
 | :--- | :--- | :--- | :--- |
-| `backend/main.py` | Application entry point, lifespan management, CORS middleware configuration, route inclusion, `/health` endpoint. | `app`, `lifespan()`, `health_check()` | `fastapi`, `uvicorn` |
-| `backend/core/config.py` | Pydantic v2 application configuration, environment parsing, CORS origin normalization, and deterministic algorithm thresholds. | `Settings`, `settings` | `pydantic`, `pydantic-settings` |
-| `backend/api/routes/investigations.py` | HTTP controller for CSV upload, case storage, and SSE streaming generator proxying n8n or simulated reasoning. | `upload_investigation_dataset()`, `stream_investigation_thoughts()`, `generate_n8n_or_simulated_stream()`, `INVESTIGATION_CASES` | `fastapi`, `httpx`, `asyncio`, `uuid` |
-| `backend/api/routes/tts.py` | Audio synthesis controller, ElevenLabs streaming proxy, and silent MPEG-1 Layer 3 fallback generator. | `SynthesizeRequest`, `synthesize_speech()`, `stream_elevenlabs_audio()`, `generate_fallback_silence_mp3()` | `fastapi`, `httpx`, `pydantic` |
-| `backend/services/ingestion.py` | High-speed ingestion using Polars. Handles alias detection for IBM AMLSim datasets, column casting, sanitization, and dataset metrics. | `read_amlsim_csv()`, `find_canonical_column()`, `COLUMN_ALIASES` | `polars` |
+| `backend/main.py` | Application entry point, lifespan management (`init_db`, `close_db`), CORS middleware, routing registration, and `/health` probe. | `app`, `lifespan()`, `health_check()` | `fastapi`, `uvicorn` |
+| `backend/core/config.py` | Pydantic Settings application configuration, environment parsing, CORS origin normalization, and deterministic algorithm thresholds. | `Settings`, `settings` | `pydantic`, `pydantic-settings` |
+| `backend/core/database.py` | Async SQLAlchemy 2.0 engine, connection pooling, SSL enforcement, transactional session management, and database schema initialization. | `get_engine()`, `get_session_factory()`, `get_db()`, `init_db()`, `close_db()`, `normalize_database_url()` | `sqlalchemy`, `asyncpg`, `psycopg` |
+| `backend/models/forensic.py` | Declarative SQLAlchemy ORM models with cross-dialect compatibility (`JSON_DOCUMENT`), pgvector HNSW indexing, and seed Mexican AML jurisprudence. | `Base`, `InvestigationCase`, `TransactionRecord`, `LegalArticleVector`, `generate_deterministic_embedding()`, `seed_legal_knowledge()` | `sqlalchemy`, `pgvector` |
+| `backend/schemas/investigation.py` | Pydantic v2 validation schemas for dataset upload, case listings, detail retrieval, metrics, and forensic verdicts. | `InvestigationUploadResponse`, `InvestigationSummary`, `InvestigationPaginationResponse`, `InvestigationDetailResponse` | `pydantic` |
+| `backend/schemas/agent_tools.py` | Pydantic v2 models for dedicated agent tools, filter operators, dynamic composable queries, and column whitelists. | `TransactionQueryRequest`, `EntityProfileRequest`, `PatternQueryRequest`, `LegalPrecedentQueryRequest`, `DynamicQueryRequest`, `DynamicQueryResponse` | `pydantic` |
+| `backend/api/routes/investigations.py` | HTTP controller for CSV upload, paginated case history, case detail retrieval, and SSE reasoning proxying n8n or simulated reasoning with database persistence. | `upload_investigation_dataset()`, `list_investigations()`, `get_investigation_detail()`, `stream_investigation_thoughts()`, `INVESTIGATION_CASES` | `fastapi`, `httpx`, `asyncio`, `uuid` |
+| `backend/api/routes/agent_tools.py` | Router exposing dedicated tool endpoints and the dynamic query builder for external n8n ReAct agents. | `query_transactions()`, `profile_entity()`, `query_patterns()`, `query_legal_precedents()`, `execute_dynamic_query()` | `fastapi`, `sqlalchemy` |
+| `backend/api/routes/tts.py` | Audio synthesis controller, ElevenLabs streaming proxy, and bitwise-compliant silent MPEG-1 Layer 3 fallback generator. | `SynthesizeRequest`, `synthesize_speech()`, `stream_elevenlabs_audio()`, `generate_fallback_silence_mp3()` | `fastapi`, `httpx`, `pydantic` |
+| `backend/services/ingestion.py` | High-speed tabular ingestion using Polars. Handles alias detection for IBM AMLSim datasets, column casting, sanitization, and dataset metrics. | `read_amlsim_csv()`, `find_canonical_column()`, `COLUMN_ALIASES` | `polars` |
 | `backend/services/deterministic_filter.py` | Topological graph construction, directed cycle search, rapid pass-through node detection, and noise pruning. | `build_transaction_graph()`, `detect_closed_cycles()`, `detect_passthrough_accounts()`, `apply_deterministic_filter()` | `networkx`, `polars` |
-| `backend/tests/test_pipeline.py` | Comprehensive async test suite validating health checks, CSV upload, deterministic metrics, SSE streaming, and TTS synthesis. | `test_complete_forensic_pipeline()`, `test_tts_synthesize_proxy()`, `SYNTHETIC_AML_CSV` | `pytest`, `pytest-asyncio`, `httpx` |
-| `backend/Dockerfile` | Minimal Docker container definition based on `python:3.11-slim` with build dependencies. | Multi-stage container instructions | Docker |
-| `backend/requirements.txt` | Explicit pinned and ranged dependencies for runtime and testing. | Dependencies list | pip |
+| `backend/services/tool_registry.py` | Extensible query registry and parameterized AST builder enforcing column whitelisting, mandatory `case_id` scoping, and dual PostgreSQL/in-memory execution. | `ToolRegistry`, `tool_registry`, `TargetMetadata` | `sqlalchemy`, `fastapi` |
+| `backend/services/investigation_reporting.py` | Auxiliary reporting and formatting utilities for investigation summaries and audit trails. | `format_investigation_summary()`, `generate_audit_trail()` | stdlib |
+| `backend/tests/` | Comprehensive test suite containing 121 automated tests across 13 test modules validating database CRUD, agent tools, streaming, and TTS proxying. | Full test suite (`test_e2e_full_lifecycle.py`, `test_database.py`, etc.) | `pytest`, `pytest-asyncio`, `httpx` |
 
 ---
 
-## 4. External Integrations & Blueprint for Target Architecture
+## 4. Database Architecture, Models & Agent Tool Registry
 
-### 4.1 Database Architecture: Current State vs. TigerData Blueprint
+### 4.1 TigerData PostgreSQL & pgvector Database Layer
 
-#### Current In-Memory State
-In the current implementation, investigation cases are persisted in a process-local Python dictionary:
+The backend connects directly to managed PostgreSQL 16 hosted on **TigerData**, integrating via async **SQLAlchemy 2.0**:
+
+- **Engine Configuration (`backend/core/database.py`)**:
+  - Connection pooling: `pool_size=20`, `max_overflow=10`, `pool_pre_ping=True`, `pool_recycle=3600`.
+  - SSL enforcement: automatically verifies and enforces `sslmode=require` across both `postgresql+asyncpg` and `postgresql+psycopg` schemes via `normalize_database_url()`.
+  - Safe logging: `sanitize_database_url()` masks database passwords in operational logs.
+- **Dependency Injection & Lifecycle**:
+  - `get_db()` yields an `AsyncSession`, commits automatically on successful route completion, and rolls back upon unhandled exceptions.
+  - `init_db()` creates tables, initializes the `pgvector` extension, and idempotently populates seed Mexican AML legal precedents (`seed_legal_knowledge()`).
+  - In offline mode (when `DATABASE_URL` is unset), `get_optional_db()` yields `None`, causing routes to gracefully operate using the in-memory dual-write store (`INVESTIGATION_CASES`).
+
+### 4.2 Database Models & Schema Design (`backend/models/forensic.py`)
+
 ```python
-# backend/api/routes/investigations.py
-INVESTIGATION_CASES: Dict[str, Dict[str, Any]] = {}
-```
-*Limitations*: Data is lost on process restart; does not scale horizontally across multiple Uvicorn worker processes or container replicas.
-
-#### Target TigerData Blueprint: SQLAlchemy Client & pgvector Design
-The production architecture interfaces with the TigerData instance (backed by PostgreSQL 16 with the `pgvector` extension) defined in `docker-compose.yml`. Communication is conducted via the Python `sqlalchemy` package (version 2.0+).
-
-```
-+----------------------------------------------------------------------------------------------------+
-|                                    SQLAlchemy Database Engine Layer                                |
-|                                                                                                    |
-|  Connection URI: postgresql+psycopg://forensic_user:forensic_password@postgres-pgvector:5432/...   |
-|  Pool Settings: pool_size=20, max_overflow=10, pool_pre_ping=True, pool_recycle=3600               |
-+-------------------------------------------------+--------------------------------------------------+
-                                                  |
-                         +------------------------+------------------------+
-                         |                                                 |
-                         v                                                 v
-        +----------------------------------+             +----------------------------------+
-        |        Relational Tables         |             |      Vector Embeddings Table     |
-        |  - investigation_cases (JSONB)   |             |  - legal_knowledge_vectors       |
-        |  - transactions (Timescale/SQL)  |             |    (article_code, jurisdiction,  |
-        |  - suspicious_entities           |             |     embedding: Vector(1536))      |
-        +----------------------------------+             +----------------------------------+
-```
-
-#### Proposed Database Module: `backend/core/database.py`
-```python
-from typing import AsyncGenerator
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-from sqlalchemy.orm import DeclarativeBase
-from backend.core.config import settings
-
-# Async PostgreSQL connection string with psycopg or asyncpg
-DATABASE_URL = (
-    f"postgresql+psycopg://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}"
-    f"@{settings.POSTGRES_HOST}:{settings.POSTGRES_PORT}/{settings.POSTGRES_DB}"
-)
-
-engine = create_async_engine(
-    DATABASE_URL,
-    echo=settings.DEBUG,
-    pool_size=20,
-    max_overflow=10,
-    pool_pre_ping=True,       # Reconnects automatically on dropped connections
-    pool_recycle=3600,        # Recycles connections older than 1 hour
-)
-
-AsyncSessionLocal = async_sessionmaker(
-    bind=engine,
-    autocommit=False,
-    autoflush=False,
-    expire_on_commit=False,
-    class_=AsyncSession,
-)
-
-class Base(DeclarativeBase):
-    pass
-
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    """FastAPI Dependency for transactional database session management."""
-    async with AsyncSessionLocal() as session:
-        try:
-            yield session
-            await session.commit()
-        except Exception:
-            await session.rollback()
-            raise
-        finally:
-            await session.close()
-```
-
-#### Proposed Target Models: `backend/models/forensic.py`
-```python
-import uuid
-from datetime import datetime
-from pgvector.sqlalchemy import Vector
-from sqlalchemy import String, Float, Integer, DateTime, ForeignKey, Text
-from sqlalchemy.dialects.postgresql import UUID, JSONB
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from backend.core.database import Base
-
 class InvestigationCase(Base):
     __tablename__ = "investigation_cases"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     filename: Mapped[str] = mapped_column(String(255), nullable=False)
-    status: Mapped[str] = mapped_column(String(50), default="PROCESSED")
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
-    
-    # Store high-dimension metrics, graph topology, and patterns as structured JSONB
-    ingestion_metadata: Mapped[dict] = mapped_column(JSONB, nullable=False)
-    metrics: Mapped[dict] = mapped_column(JSONB, nullable=False)
-    subgraph: Mapped[dict] = mapped_column(JSONB, nullable=False)
-    patterns: Mapped[dict] = mapped_column(JSONB, nullable=False)
-    verdict: Mapped[dict] = mapped_column(JSONB, nullable=True)
+    status: Mapped[str] = mapped_column(String(50), nullable=False, default="PENDING")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
-    transactions: Mapped[list["TransactionRecord"]] = relationship(back_populates="case", cascade="all, delete-orphan")
+    ingestion_metadata: Mapped[Dict[str, Any]] = mapped_column(JSON_DOCUMENT, nullable=False, default=dict)
+    metrics: Mapped[Dict[str, Any]] = mapped_column(JSON_DOCUMENT, nullable=False, default=dict)
+    subgraph: Mapped[Dict[str, Any]] = mapped_column(JSON_DOCUMENT, nullable=False, default=dict)
+    patterns: Mapped[Dict[str, Any]] = mapped_column(JSON_DOCUMENT, nullable=False, default=dict)
+    verdict: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON_DOCUMENT, nullable=True, default=None)
+
+    transactions: Mapped[List["TransactionRecord"]] = relationship(
+        "TransactionRecord", back_populates="case", cascade="all, delete-orphan", passive_deletes=True
+    )
 
 
 class TransactionRecord(Base):
     __tablename__ = "transactions"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    case_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("investigation_cases.id", ondelete="CASCADE"), index=True)
-    origin: Mapped[str] = mapped_column(String(128), index=True, nullable=False)
-    destination: Mapped[str] = mapped_column(String(128), index=True, nullable=False)
-    amount: Mapped[float] = mapped_column(Float, nullable=False)
-    timestamp: Mapped[float] = mapped_column(Float, nullable=False)
-    is_suspicious: Mapped[bool] = mapped_column(default=False, index=True)
-    reasons: Mapped[dict] = mapped_column(JSONB, default=list)
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    case_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("investigation_cases.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    origin: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
+    destination: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
+    amount: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    is_suspicious: Mapped[bool] = mapped_column(Boolean, default=False, index=True, nullable=False)
+    reasons: Mapped[List[str]] = mapped_column(JSON_DOCUMENT, default=list, nullable=False)
 
-    case: Mapped["InvestigationCase"] = relationship(back_populates="transactions")
+    case: Mapped["InvestigationCase"] = relationship("InvestigationCase", back_populates="transactions")
 
 
 class LegalArticleVector(Base):
-    """Vector database table storing Mexican AML Law (LFPIORPI / UIF) articles for RAG retrieval."""
     __tablename__ = "legal_knowledge_vectors"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    article_code: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
-    law_name: Mapped[str] = mapped_column(String(255), nullable=False) # e.g. "LFPIORPI Art. 17 Fracc. IV"
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    article_code: Mapped[str] = mapped_column(String(50), unique=True, index=True, nullable=False)
+    law_name: Mapped[str] = mapped_column(String(100), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
-    # 1536-dimensional vector embedding for cosine semantic similarity
-    embedding: Mapped[Vector] = mapped_column(Vector(1536), nullable=False)
+    embedding: Mapped[Optional[List[float]]] = mapped_column(Vector(1536), nullable=True)
+
+    __table_args__ = (
+        Index(
+            "idx_legal_vectors_hnsw",
+            "embedding",
+            postgresql_using="hnsw",
+            postgresql_with={"m": 16, "ef_construction": 64},
+            postgresql_ops={"embedding": "vector_cosine_ops"},
+        ),
+    )
 ```
 
----
+### 4.3 Agent Tool Registry & Dynamic Query Builder (`backend/services/tool_registry.py`)
 
-### 4.2 External n8n Webhook Integration
+The dynamic query registry allows external n8n AI agents to compose parameterized filter queries against transaction ledgers with strict security boundaries:
 
-The route `GET /api/v1/investigations/{case_id}/stream` contains an SSE proxy mechanism that connects to `settings.N8N_WEBHOOK_URL` (configured via environment variable or default `http://n8n:5678/webhook/investigation-stream`):
+- **AST Column Whitelisting**: Every query target (`transactions`, `cases`, `entities`, `patterns`, `cycles`, `passthrough_accounts`, `legal_precedents`) defines an immutable whitelist of queryable and sortable fields. Probing unapproved columns raises HTTP 400.
+- **Mandatory `case_id` Scoping**: For case-scoped targets, `case_id` is mandatory to enforce multi-tenant isolation and prevent unauthorized data leaks.
+- **SQL Injection Prevention**: All criteria operators (`eq`, `neq`, `gt`, `gte`, `lt`, `lte`, `like`, `ilike`, `in`, `not_in`) translate into bound SQLAlchemy expressions rather than raw string concatenation.
+- **Dual Execution Engine**: Executes against PostgreSQL via `AsyncSession` when configured, with automatic fallback to the in-memory case store when operating offline.
 
-1. **Payload Dispatch**:
-   ```json
-   {
-     "case_id": "8f3b2591-628d-4b89-a720-d3d63b210a56",
-     "metrics": {
-       "total_nodes_analyzed": 14,
-       "total_edges_analyzed": 28,
-       "suspicious_nodes_count": 5,
-       "detected_cycles_count": 1,
-       "passthrough_accounts_count": 1,
-       "pruned_edges_count": 22,
-       "pruning_efficiency_pct": 78.57,
-       "suspicious_volume_mxn": 985000.0
-     },
-     "patterns": {
-       "cycles": [{"path": ["ACC_A", "ACC_B", "ACC_C", "ACC_A"], "length": 3, "estimated_volume": 443000.0}],
-       "passthrough_accounts": [{"account": "MULE_01", "total_in": 500000.0, "total_out": 485000.0, "ratio": 0.97, "time_delta_hours": 12.0}]
-     }
-   }
-   ```
-2. **Streaming Response Parsing**:
-   - The backend checks for `Content-Type: text/event-stream`.
-   - Iterates lines asynchronously (`response.aiter_lines()`) and forwards them verbatim to the frontend client.
-3. **Resilience & Fallback Mode**:
-   - If `N8N_WEBHOOK_URL` is empty, times out (`timeout=10.0`), or returns a non-200 error, the route **catches the exception cleanly** and generates the 6 internal simulated forensic reasoning steps and final verdict. This guarantees that UI demonstrations and automated tests succeed without external dependencies.
+### 4.4 External n8n Webhook Integration
 
----
+When `settings.N8N_WEBHOOK_URL` is set:
+1. `GET /api/v1/investigations/{case_id}/stream` forwards case metrics and patterns to n8n via HTTP POST.
+2. The route checks for `Content-Type: text/event-stream` and streams lines asynchronously using `response.aiter_lines()`.
+3. If unreachable or timed out (`timeout=10.0`), the route falls back seamlessly to the internal 6-phase reasoning generator.
 
-### 4.3 ElevenLabs TTS Integration
+### 4.5 ElevenLabs Speech Synthesis Proxy & Silent Frame Fallback
 
 The route `POST /api/v1/tts/synthesize` provides speech synthesis for the final forensic audit summary:
-
-- **Upstream Endpoint**: `https://api.elevenlabs.io/v1/text-to-speech/{voice_id}/stream`
-- **Default Voice**: Rachel (`21m00Tcm4TlvDq8ikWAM`)
-- **Default Model**: `eleven_multilingual_v2`
-- **Streaming Output**: `audio/mpeg` delivered in real-time binary chunks.
-- **Offline Safeguard**: When `ELEVENLABS_API_KEY` is not set or starts with `your_`, the service immediately streams a valid 320-byte MPEG-1 Layer 3 silent frame:
-  ```python
-  silent_mp3_frame = (
-      b"\xff\xfb\x90\x64\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-      b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-      * 10
-  )
-  ```
-  This returns HTTP 200 with header `X-Audio-Source: synthetic-fallback-mode`, preventing frontend HTML5 `<audio>` elements from throwing decoder errors.
+- **Upstream**: `https://api.elevenlabs.io/v1/text-to-speech/{voice_id}/stream`
+- **Default Voice**: Rachel (`21m00Tcm4TlvDq8ikWAM`) | **Default Model**: `eleven_multilingual_v2`
+- **Offline Safeguard**: When `ELEVENLABS_API_KEY` is not set, empty, or placeholder, the service streams a valid bitwise 320-byte MPEG-1 Layer 3 silent frame (`0xFF 0xFB 0x90 0x64...`) with header `X-Audio-Source: synthetic-fallback-mode`, preventing browser audio decoders from failing.
 
 ---
 
@@ -433,9 +422,37 @@ The route `POST /api/v1/tts/synthesize` provides speech synthesis for the final 
 
 ---
 
-### 5.2 Stream Investigation Thoughts (SSE)
-- **Method**: `GET`
-- **Path**: `/api/v1/investigations/{case_id}/stream`
+### 5.2 List Investigation Cases
+- **Method & Path**: `GET /api/v1/investigations`
+- **Query Parameters**: `page` (int, default 1), `page_size` (int, default 20), `status` (optional string)
+- **Response**: `200 OK`
+
+```json
+{
+  "total": 42,
+  "page": 1,
+  "page_size": 20,
+  "pages": 3,
+  "items": [
+    {
+      "case_id": "4a71d87e-4081-4877-94a2-23c28c89b3f1",
+      "filename": "sample_amlsim.csv",
+      "status": "COMPLETED",
+      "created_at": "2026-09-12T08:15:20Z",
+      "updated_at": "2026-09-12T08:15:35Z",
+      "metrics": { "suspicious_volume_mxn": 943000.0, "pruning_efficiency_pct": 28.57 },
+      "verdict": { "risk_level": "CRÍTICO", "confidence_score": 0.94 }
+    }
+  ]
+}
+```
+
+### 5.3 Get Case Detail & Subgraph
+- **Method & Path**: `GET /api/v1/investigations/{case_id}`
+- **Response**: `200 OK` (Full case record, topological metrics, subgraph, patterns, and verdict)
+
+### 5.4 Stream Investigation Thoughts (SSE)
+- **Method & Path**: `GET /api/v1/investigations/{case_id}/stream`
 - **Media-Type**: `text/event-stream`
 - **Headers**:
   - `Cache-Control: no-cache`
@@ -455,11 +472,64 @@ The route `POST /api/v1/tts/synthesize` provides speech synthesis for the final 
    data: {"case_id": "4a71d87e-4081-4877-94a2-23c28c89b3f1", "risk_level": "CRÍTICO", "fraud_type": "Estructuración Circular (Smurfing) y Cuentas Mula de Paso Rápido", "total_amount_mxn": 943000.0, "confidence_score": 0.94, "entities_involved": ["ACC_A", "ACC_B", "ACC_C", "MULE_01", "OFFSHORE_OUT"], "pruned_leads_count": 2, "patterns_summary": {"closed_cycles": 1, "passthrough_accounts": 1, "pruning_efficiency_pct": 28.57}, "legal_recommendation": "Presentar de forma urgente un Reporte de Operación Inusual (ROI) ante la UIF y proceder con la congelación cautelar de los fondos remanentes en las cuentas puente.", "audit_summary_text": "Dictamen Pericial Forense para el caso 4a71d87e. Se identificó una red estructurada de lavado de dinero...", "completed_at": "2026-09-12T08:15:33.456789+00:00"}
    ```
 
----
+### 5.5 Agent Tools API
 
-### 5.3 Synthesize Speech Proxy (TTS)
-- **Method**: `POST`
-- **Path**: `/api/v1/tts/synthesize`
+#### Query Transactions Tool
+- **Method & Path**: `POST /api/v1/tools/transactions`
+- **Request Body**:
+  ```json
+  {
+    "case_id": "4a71d87e-4081-4877-94a2-23c28c89b3f1",
+    "min_amount": 100000.0,
+    "is_suspicious": true,
+    "limit": 50
+  }
+  ```
+
+#### Profile Entity Tool
+- **Method & Path**: `POST /api/v1/tools/entities`
+- **Request Body**:
+  ```json
+  {
+    "case_id": "4a71d87e-4081-4877-94a2-23c28c89b3f1",
+    "account_id": "MULE_01"
+  }
+  ```
+
+#### Query Patterns Tool
+- **Method & Path**: `POST /api/v1/tools/patterns`
+- **Request Body**: `{"case_id": "4a71d87e-4081-4877-94a2-23c28c89b3f1", "pattern_type": "ALL"}`
+
+#### Legal Precedents Similarity Tool
+- **Method & Path**: `POST /api/v1/tools/legal-precedents`
+- **Request Body**:
+  ```json
+  {
+    "query_text": "simulacion operaciones 69-B defraudacion fiscal",
+    "limit": 5,
+    "threshold": 0.5
+  }
+  ```
+
+#### Dynamic Composable Query Builder
+- **Method & Path**: `POST /api/v1/tools/query`
+- **Request Body**:
+  ```json
+  {
+    "target": "transactions",
+    "case_id": "4a71d87e-4081-4877-94a2-23c28c89b3f1",
+    "filters": [
+      { "field": "amount", "operator": "gte", "value": 150000.0 },
+      { "field": "is_suspicious", "operator": "eq", "value": true }
+    ],
+    "sort_by": "amount",
+    "sort_order": "desc",
+    "limit": 10
+  }
+  ```
+
+### 5.6 Synthesize Speech Proxy (TTS)
+- **Method & Path**: `POST /api/v1/tts/synthesize`
 - **Content-Type**: `application/json`
 - **Media-Type Response**: `audio/mpeg`
 - **Request Body**:
@@ -471,11 +541,8 @@ The route `POST /api/v1/tts/synthesize` provides speech synthesis for the final 
   }
   ```
 
----
-
-### 5.4 Health Check
-- **Method**: `GET`
-- **Path**: `/health`
+### 5.7 Health Check
+- **Method & Path**: `GET /health`
 - **Response**: `200 OK`
   ```json
   {
@@ -527,29 +594,35 @@ On standard AMLSim datasets, this eliminates over $90\%$ of edges, allowing the 
 
 ## 7. Testing & Quality Assurance
 
-The backend includes an asynchronous integration test suite located at `backend/tests/test_pipeline.py`.
+The backend contains an automated test suite verifying all database operations, model CRUD, ingestion algorithms, agent tools, SSE streaming, and speech synthesis.
 
 ### Test Architecture
-- Framework: **pytest** with **pytest-asyncio**.
-- In-process HTTP client: **httpx** using `httpx.ASGITransport(app=app)`.
-- Synthetic Test Dataset: `SYNTHETIC_AML_CSV` containing:
-  - Circular triangle: `ACC_A` $\rightarrow$ `ACC_B` $\rightarrow$ `ACC_C` $\rightarrow$ `ACC_A`.
-  - Pass-through mule: `CORP_INFLOW` $\rightarrow$ `MULE_01` $\rightarrow$ `OFFSHORE_OUT` ($97\%$ ratio within 12 hours).
-  - Benign noise: Payroll transfer (`LEGIT_PAYROLL` $\rightarrow$ `EMPLOYEE_01`) and retail merchant payment (`STORE_MERCHANT` $\rightarrow$ `CONSUMER_99`).
+- **Framework**: `pytest` with `pytest-asyncio` and `anyio`.
+- **Database Isolation Fixture**: `backend/tests/conftest.py` configures an isolated in-memory SQLite engine (`sqlite+aiosqlite:///:memory:`) using `@compiles(Vector, "sqlite")` and `@compiles(JSONB, "sqlite")` hooks with FastAPI `dependency_overrides[get_db]`.
+- **Test Inventory**: **121 automated test cases** across **13 test modules** passing with a **100% success rate**.
+
+| Test Module | Coverage Scope | Test Count |
+| :--- | :--- | :--- |
+| `test_database.py` | Connection pooling, SSL enforcement, CRUD, cascade deletion, vector cosine search, seed data. | 7 |
+| `test_investigations.py` | Upload persistence, paginated listing, case detail retrieval, SSE stream verdict save. | 9 |
+| `test_agent_tools.py` | Dedicated tools (`/transactions`, `/entities`, `/patterns`, `/legal-precedents`) & dynamic query builder. | 25 |
+| `test_tts.py` | Speech proxy streaming, silent MPEG fallback frame, input validation, disconnect handling. | 15 |
+| `test_e2e_full_lifecycle.py` | Unified 10-step end-to-end forensic lifecycle, security whitelisting, cascade deletion. | 5 |
+| `test_pipeline.py` | Complete upload -> deterministic pruning -> SSE streaming -> TTS synthesis pipeline. | 4 |
+| `test_challenge_*` | Adversarial stress suites, corrupt CSVs, injection attacks, socket leak stress tests. | 56 |
 
 ### Running Tests
-From the project root:
+Execute from the project root using the virtual environment:
 ```bash
-# Set PYTHONPATH to include project root
-export PYTHONPATH=.
-pytest backend/tests/test_pipeline.py -v
-```
+# Full test suite
+.\.venv\Scripts\python.exe -m pytest backend/tests/ -v
 
-### Verification Points Covered
-1. `/health` responds with HTTP 200 and `"status": "healthy"`.
-2. `/api/v1/investigations/upload` successfully cleanses synthetic CSV, extracts $\ge 1$ cycle and $\ge 1$ pass-through account, and prunes at least 2 benign edges.
-3. `/api/v1/investigations/{case_id}/stream` delivers at least 5 `thought` events and finishes with a valid `verdict` event containing risk levels, financial amounts, and legal recommendations.
-4. `/api/v1/tts/synthesize` returns valid streaming `audio/mpeg` without exceptions.
+# Targeted E2E lifecycle test
+.\.venv\Scripts\python.exe -m pytest backend/tests/test_e2e_full_lifecycle.py -v
+
+# Base pipeline test
+.\.venv\Scripts\python.exe -m pytest backend/tests/test_pipeline.py -v
+```
 
 ---
 
@@ -568,7 +641,13 @@ Polars uses Apache Arrow memory layouts with zero-copy operations. However, cons
 - **Proxy Buffering**: Reverse proxies (such as Nginx or AWS ALB) often buffer chunked HTTP responses by default, delaying real-time event delivery. The backend sets the `X-Accel-Buffering: no` header to ensure immediate streaming.
 - **Client Cancellation**: In `investigations.py`, `asyncio.sleep()` is used between reasoning steps. If the client closes the connection, FastAPI handles the cancelled generator cleanly, aborting subsequent steps without leaking tasks.
 
-### 8.4 CORS Configuration
+### 8.4 AST Whitelisting & SQL Injection Prevention
+- The dynamic tool query builder (`/tools/query`) evaluates incoming filter criteria against an explicit whitelist of allowed model attributes. Arbitrary column probing, raw SQL strings, or attempts to access undeclared columns are rejected with HTTP 400.
+
+### 8.5 Dual-Write & Offline In-Memory Fallback
+- If `DATABASE_URL` is unconfigured or the TigerData instance is unreachable during local demonstrations, `INVESTIGATION_CASES` maintains an in-memory dual-write store, ensuring zero demo interruption.
+
+### 8.6 CORS Configuration
 When running the Next.js frontend on `http://localhost:3000` or production domains, CORS origins must be configured via the `BACKEND_CORS_ORIGINS` environment variable. `core/config.py` supports comma-separated strings (`"http://localhost:3000,http://app.domain.com"`) or JSON arrays (`'["http://localhost:3000"]'`).
 
 ---
@@ -584,6 +663,18 @@ All settings can be specified via environment variables or a `.env` file loaded 
 | `ENVIRONMENT` | string | `"development"` | Environment indicator (`development`, `production`, `test`) |
 | `DEBUG` | boolean | `True` | Enables debug logging and interactive API docs |
 | `BACKEND_CORS_ORIGINS` | list / str | `["http://localhost:3000", ...]` | Allowed HTTP origins for CORS validation |
+| `DATABASE_URL` | string | `""` | PostgreSQL connection string for TigerData instance |
+| `POSTGRES_USER` | string | `"forensic_user"` | PostgreSQL username |
+| `POSTGRES_PASSWORD` | string | `"forensic_password"` | PostgreSQL password |
+| `POSTGRES_HOST` | string | `"localhost"` | PostgreSQL hostname |
+| `POSTGRES_PORT` | integer | `5432` | PostgreSQL port |
+| `POSTGRES_DB` | string | `"forensic_auditor"` | PostgreSQL database name |
+| `DB_POOL_SIZE` | integer | `20` | Maximum persistent connection pool size |
+| `DB_MAX_OVERFLOW` | integer | `10` | Temporary connection overflow above pool size |
+| `DB_POOL_PRE_PING` | boolean | `True` | Tests connection validity prior to checkout |
+| `DB_POOL_RECYCLE` | integer | `3600` | Recycles connections older than 1 hour (seconds) |
+| `DB_SSL_REQUIRE` | boolean | `True` | Enforces SSL mode (`sslmode=require`) |
+| `DB_ECHO` | boolean | `False` | Logs raw SQL queries to console |
 | `N8N_WEBHOOK_URL` | string | `""` | Optional external n8n orchestrator webhook URL |
 | `ELEVENLABS_API_KEY` | string | `""` | ElevenLabs API token |
 | `ELEVENLABS_VOICE_ID` | string | `"21m00Tcm4TlvDq8ikWAM"` | ElevenLabs voice ID (Rachel) |

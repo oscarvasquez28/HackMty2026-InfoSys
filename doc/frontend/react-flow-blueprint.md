@@ -72,7 +72,7 @@ npm install --save-dev @types/dagre
 
 ## 4. Data Adapter: Converting Subgraph to React Flow
 
-The backend returns `UploadResponse.subgraph` adhering to `SubgraphData` in [`types/investigation.ts`](file:///c:/Users/maxan/OneDrive/Documentos/Repositories/HackMTY%202026/Infosys/Polar/frontend/types/investigation.ts):
+The backend returns `UploadResponse.subgraph` adhering to `SubgraphData` in [`types/investigation.ts`](../../frontend/types/investigation.ts):
 
 ```typescript
 import { Node, Edge } from "@xyflow/react";
@@ -398,9 +398,22 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ subgraph, patt
 
 ---
 
-## 8. Dashboard Layout Integration in `app/page.tsx`
+## 8. Dashboard Layout Integration in `/investigate` Workspace
 
-When integrating the visualizer into the primary investigation view:
-1. Place `<GraphVisualizer subgraph={currentCase.subgraph} patterns={currentCase.patterns} />` directly below the summary metric tiles and above the `ThoughtStream` and `VerdictCard`.
+When integrating the visualizer into the primary investigation workspace (`components/InvestigationDashboard.tsx` or `app/investigate/page.tsx`):
+1. Place `<GraphVisualizer subgraph={currentCase.subgraph} patterns={currentCase.patterns} />` adjacent to `EvidenceInspector` to enable dual tabular/graphical exploration.
 2. Wrap the visualizer in an expanding panel with an optional full-screen modal toggle.
 3. Coordinate node selection events with the `VerdictCard` collapsible suspect list to highlight accounts across both views.
+
+---
+
+## 9. Edge Cases, Performance & Gotchas
+
+### 9.1 Layout Performance on Large Subgraphs
+- Dagre calculates hierarchical layouts synchronously on the main thread. For graphs with $> 100$ nodes, wrap `getLayoutedElements` in `useMemo` or delegate to a Web Worker to avoid freezing the UI.
+
+### 9.2 Custom Node Re-rendering
+- Wrap `AccountNode` and `TransactionEdge` in `React.memo` with custom comparison functions to prevent unnecessary canvas re-renders when panning or zooming.
+
+### 9.3 Viewport Viewfit on Dimension Changes
+- Call `fitView({ padding: 0.2, duration: 400 })` only when the active dataset changes, not on every node selection event.

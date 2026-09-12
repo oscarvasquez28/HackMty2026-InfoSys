@@ -1,4 +1,4 @@
-# System Architecture & Multi-Service Topology 🏛️⚡
+# System Architecture & Multi-Service Topology
 
 [← Back to Master Documentation](../README.md) | [Agent Routing Index](../index.md)
 
@@ -15,15 +15,16 @@ In conventional compliance pipelines, automated AML monitoring suffers from two 
 
 **Forensic Auditor solves this through a hybrid pipeline**:
 
-- **Deterministic Algorithmic Poda (Graph Theory)**: Using [Polars](https://pola.rs/) and [NetworkX](https://networkx.org/), the raw transaction graph is normalized in memory and subjected to deterministic topological filtering (directed cycle detection and high-velocity passthrough account ratios). This discards **85% to 98% of computational noise** in sub-second execution.
-- **Agentic Legal Verification (External n8n & TigerData)**: Only the dense, mathematically isolated suspicious subgraph is forwarded to an external ReAct agent orchestrated via n8n and backed by an external PostgreSQL with `pgvector` hosted on **TigerData**.
+- **Deterministic Algorithmic Pruning (Graph Theory)**: Using [Polars](https://pola.rs/) and [NetworkX](https://networkx.org/), the raw transaction graph is normalized in memory and subjected to deterministic topological filtering (directed cycle detection and high-velocity passthrough account ratios). This discards **85% to 98% of computational noise** in sub-second execution.
+- **Persistent Relational Ledger & Vector Knowledge Base**: Transactional records and investigation metadata persist directly into managed PostgreSQL on **TigerData**, indexed with **pgvector** for sub-second semantic retrieval of Mexican tax/AML jurisprudence (CFF Art. 69-B, NIF A-2, UIF guidelines).
+- **Agentic Legal Verification (External n8n & Dynamic Tools)**: External n8n ReAct agents execute queries against dedicated tool routes (`/tools/transactions`, `/tools/entities`, `/tools/patterns`, `/tools/legal-precedents`) and a parameterized dynamic query builder with strict AST column whitelisting.
 - **Real-Time Streaming Experience (SSE + ElevenLabs + React Flow)**: Audit reasoning steps are streamed live to the Next.js frontend via Server-Sent Events (SSE), rendered interactively with React Flow (`@xyflow/react`), and vocalized via an ElevenLabs streaming voice proxy.
 
 ---
 
 ## 2. End-to-End System Flow & Architecture
 
-The following sequence details the 6-stage lifecycle of an investigation from raw CSV ingestion to interactive graph exploration and vocalized forensic verdict:
+The following sequence details the lifecycle of an investigation from raw CSV ingestion to interactive exploration and vocalized forensic verdict:
 
 ```mermaid
 sequenceDiagram
@@ -32,7 +33,7 @@ sequenceDiagram
     participant Frontend as Next.js Frontend (@xyflow/react)
     participant FastAPI as FastAPI Backend (/api/v1)
     participant Engine as Polars & NetworkX Engine
-    participant TigerData as External TigerData (pgvector)
+    participant TigerData as TigerData PostgreSQL + pgvector
     participant n8n as External n8n ReAct Agent
     participant ElevenLabs as ElevenLabs Audio API
 
@@ -40,31 +41,38 @@ sequenceDiagram
     Auditor->>Frontend: Drag-and-Drop AMLSim CSV
     Frontend->>FastAPI: POST /api/v1/investigations/upload (multipart/form-data)
   
-    Note over FastAPI,Engine: Stage 2 & 3: Ingestion & Deterministic Pruning
+    Note over FastAPI,Engine: Stage 2: Deterministic Pruning & Persistence
     FastAPI->>Engine: Ingest in-memory buffer via Polars
     Engine->>Engine: Build Directed Multigraph with NetworkX
     Engine->>Engine: Detect closed cycles (k <= 5) & 48h passthrough accounts (>= 90%)
     Engine-->>FastAPI: Return Subgraph G_suspect + Metrics (pruned 95% noise)
+    FastAPI->>TigerData: Persist InvestigationCase & TransactionRecords
+    TigerData-->>FastAPI: Commit OK
     FastAPI-->>Frontend: 201 Created (case_id, metrics, subgraph, patterns)
 
-    Note over Frontend,FastAPI: Stage 4: SSE Thought Streaming & Agent Reasoning
+    Note over Frontend,FastAPI: Stage 3: SSE Thought Streaming & Agent Reasoning
     Frontend->>FastAPI: GET /api/v1/investigations/{case_id}/stream (EventSource)
   
     alt External n8n Agent Enabled
         FastAPI->>n8n: POST Webhook (case_id, metrics, patterns)
-        n8n->>TigerData: Vector similarity search (UIF typologies / AML jurisprudence)
-        TigerData-->>n8n: Matched precedents & regulatory legal articles
-        n8n-->>FastAPI: Proxy live stream of thoughts
+        loop Agent Tool Execution
+            n8n->>FastAPI: POST /api/v1/tools/legal-precedents or /query
+            FastAPI->>TigerData: HNSW vector search / Parameterized SQL
+            TigerData-->>FastAPI: Matched records
+            FastAPI-->>n8n: Tool response data
+        end
+        n8n-->>FastAPI: Stream thoughts and final verdict
     else Local Simulation Fallback
         FastAPI->>FastAPI: Generate high-fidelity 6-phase forensic reasoning
     end
 
     FastAPI-->>Frontend: SSE event: thought (Step 1..6 with timestamp & phase)
     FastAPI-->>Frontend: SSE event: verdict (Legal recommendation, risk score, summary)
+    FastAPI->>TigerData: Update InvestigationCase (status='COMPLETED', verdict)
     Frontend->>Frontend: Render interactive graph with @xyflow/react & update VerdictCard
 
-    Note over Frontend,ElevenLabs: Stage 5 & 6: Audio Synthesis Proxy
-    Auditor->>Frontend: Click "Escuchar Dictamen"
+    Note over Frontend,ElevenLabs: Stage 4: Audio Synthesis Proxy
+    Auditor->>Frontend: Click "Listen to Verdict" / Audio Playback
     Frontend->>FastAPI: POST /api/v1/tts/synthesize (text, voice_id, model_id)
     FastAPI->>ElevenLabs: POST /v1/text-to-speech/{voice_id}/stream (Headers: xi-api-key)
     ElevenLabs-->>FastAPI: Streaming audio chunks (audio/mpeg)
@@ -81,7 +89,7 @@ The project structure is organized as a production-grade monorepo combining cont
 ```mermaid
 graph TB
     subgraph ClientBrowser [Client Tier - Browser]
-        UI[Next.js App / React 19]
+        UI[Next.js App / React 18]
         RF[React Flow Canvas - @xyflow/react]
         Console[ThoughtStream Console]
         Audio[Audio Player Stream]
@@ -96,12 +104,13 @@ graph TB
             FastAPIApp[Uvicorn / FastAPI Core]
             PolarsEngine[Polars Dataframe Engine]
             NXGraph[NetworkX Topological Analyzer]
+            AgentToolsRouter[Agent Tools & AST Query Engine]
             TTSProxy[ElevenLabs Streaming Proxy]
         end
     end
 
     subgraph ExternalServices [External Managed Infrastructure]
-        TigerDataDB[(TigerData PostgreSQL + pgvector)]
+        TigerDataDB[(TigerData PostgreSQL 16 + pgvector)]
         n8nAgent[n8n Workflow Engine / ReAct Agent]
         ElevenLabsAPI[ElevenLabs Text-to-Speech API]
     end
@@ -114,12 +123,13 @@ graph TB
 
     FastAPIApp --> PolarsEngine
     FastAPIApp --> NXGraph
+    FastAPIApp --> AgentToolsRouter
     FastAPIApp --> TTSProxy
 
     FastAPIApp -.->|HTTP Webhook POST| n8nAgent
-    FastAPIApp -.->|SQLAlchemy / pgvector| TigerDataDB
+    FastAPIApp -.->|SQLAlchemy 2.0 / pgvector| TigerDataDB
+    n8nAgent -.->|POST /api/v1/tools/*| AgentToolsRouter
     TTSProxy -->|HTTPS Streaming with xi-api-key| ElevenLabsAPI
-    n8nAgent -.->|RAG Queries| TigerDataDB
 ```
 
 ### 3.1 Container Orchestration (`docker-compose.yml`)
@@ -276,54 +286,113 @@ When `settings.N8N_WEBHOOK_URL` is configured, FastAPI delegates reasoning to n8
 
 ---
 
-## 5. Key Infrastructure & Code Files Breakdown
+### 4.5 Agent Tool Interface & Dynamic Query Builder Contract
 
-| Component                        | File Path                                                                                     | Language / Stack          | Core Responsibility                                                                                       |
-| :------------------------------- | :-------------------------------------------------------------------------------------------- | :------------------------ | :-------------------------------------------------------------------------------------------------------- |
-| **Container Orchestrator** | [`docker-compose.yml`](../../docker-compose.yml)                                             | Docker Compose 3.8        | Orchestrates backend, frontend, and local dev dependencies.                                               |
-| **Backend Entrypoint**     | [`backend/main.py`](../../backend/main.py)                                                   | Python / FastAPI          | App initialization, CORS policy, router registration.                                                     |
-| **Config Engine**          | [`backend/core/config.py`](../../backend/core/config.py)                                     | Pydantic BaseSettings     | Type-safe environment management, thresholds (`MAX_CYCLE_LENGTH`, `PASS_THROUGH_RATIO_THRESHOLD`).    |
-| **Investigation Route**    | [`backend/api/routes/investigations.py`](../../backend/api/routes/investigations.py)         | FastAPI / AsyncIO / HTTPX | CSV upload endpoint, in-memory case cache, SSE generator, n8n proxy.                                      |
-| **TTS Voice Proxy**        | [`backend/api/routes/tts.py`](../../backend/api/routes/tts.py)                               | FastAPI / HTTPX           | Shields ElevenLabs API key, streams MP3 audio chunks, provides silent frame fallback.                     |
-| **Ingestion Service**      | [`backend/services/ingestion.py`](../../backend/services/ingestion.py)                       | Polars                    | Zero-copy CSV parsing, column normalization, timestamp validation.                                        |
-| **Deterministic Filter**   | [`backend/services/deterministic_filter.py`](../../backend/services/deterministic_filter.py) | NetworkX / Python         | Cycle extraction (`nx.simple_cycles`), 48h passthrough ratio calculation, subgraph extraction.          |
-| **SSE Client Hook**        | [`frontend/hooks/useInvestigationStream.ts`](../../frontend/hooks/useInvestigationStream.ts) | TypeScript / React        | Manages`EventSource` connection, parses `thought` and `verdict` events, handles stream termination. |
-| **Terminal Console UI**    | [`frontend/components/ThoughtStream.tsx`](../../frontend/components/ThoughtStream.tsx)       | Next.js / Tailwind CSS    | Collapsible dark terminal rendering real-time forensic thought updates.                                   |
-| **Forensic Verdict Card**  | [`frontend/components/VerdictCard.tsx`](../../frontend/components/VerdictCard.tsx)           | Next.js / Tailwind CSS    | Visualizes risk badge, confidence scores, legal recommendations, and metrics.                             |
-| **Audio Player Hook**      | [`frontend/hooks/useAudioStream.ts`](../../frontend/hooks/useAudioStream.ts)                 | TypeScript / Web Audio    | Streams binary MP3 chunks into an`AudioContext` / `<audio>` element for low-latency playback.         |
+External n8n ReAct agents query case data through dedicated tools and composable AST queries:
+
+- **Dedicated Endpoints**:
+  - `POST /api/v1/tools/transactions`: Filters transactions by `case_id`, origin/destination accounts, amount range, and suspicion flag.
+  - `POST /api/v1/tools/entities`: Profiles counterparty degree, inflow/outflow, and forensic risk score for an account.
+  - `POST /api/v1/tools/patterns`: Retrieves extracted elementary cycles and rapid pass-through mule metrics.
+  - `POST /api/v1/tools/legal-precedents`: Vector similarity search against `legal_knowledge_vectors` using cosine similarity (`<=>`).
+- **Dynamic Query Builder (`POST /api/v1/tools/query`)**:
+  ```json
+  {
+    "target": "transactions",
+    "case_id": "8f3b204e-2895-4680-bc90-9ceba694e207",
+    "filters": [
+      { "field": "amount", "operator": "gte", "value": 150000.0 },
+      { "field": "is_suspicious", "operator": "eq", "value": true }
+    ],
+    "sort_by": "amount",
+    "sort_order": "desc",
+    "limit": 25
+  }
+  ```
 
 ---
 
-## 6. Gotchas, Edge Cases & Security Considerations
+## 5. Key Infrastructure & Code Files Breakdown
 
-### 6.1 API Key Shielding & Secret Management
+### Component Responsibility Matrix
 
-- `ELEVENLABS_API_KEY` is strictly confined to the backend container.
-- The frontend **never** receives or stores third-party LLM or audio credentials; all external third-party communication is brokered through FastAPI.
+| File / Module | Responsibility | Key Symbols / Classes | External Dependencies |
+| :--- | :--- | :--- | :--- |
+| `docker-compose.yml` | Multi-container staging and local orchestration (backend, frontend, PostgreSQL pgvector, n8n). | Service definitions | Docker Compose 3.8 |
+| `backend/main.py` | FastAPI application factory, lifespan management (`init_db`, `close_db`), and CORS policy. | `app`, `lifespan()`, `health_check()` | `fastapi`, `uvicorn` |
+| `backend/core/config.py` | Centralized environment and algorithm threshold settings. | `Settings`, `settings` | `pydantic-settings` |
+| `backend/core/database.py` | Async SQLAlchemy engine, SSL enforcement, connection pooling, and session generator. | `get_engine()`, `get_db()`, `init_db()`, `close_db()` | `sqlalchemy`, `asyncpg`, `psycopg` |
+| `backend/models/forensic.py` | Relational tables (`investigation_cases`, `transactions`) and vector table (`legal_knowledge_vectors`). | `InvestigationCase`, `TransactionRecord`, `LegalArticleVector` | `sqlalchemy`, `pgvector` |
+| `backend/api/routes/investigations.py` | CSV upload, paginated listing, case detail retrieval, and SSE thought streaming with DB persistence. | `upload_investigation_dataset()`, `list_investigations()`, `stream_investigation_thoughts()` | `fastapi`, `httpx` |
+| `backend/api/routes/agent_tools.py` | Dedicated tool endpoints and dynamic query builder for external n8n ReAct agents. | `query_transactions()`, `profile_entity()`, `execute_dynamic_query()` | `fastapi`, `sqlalchemy` |
+| `backend/api/routes/tts.py` | ElevenLabs speech proxy shielding API key, with 320-byte silent MPEG frame fallback. | `synthesize_speech()`, `generate_fallback_silence_mp3()` | `fastapi`, `httpx` |
+| `backend/services/ingestion.py` | In-memory CSV cleansing, column alias resolution, and Polars validation. | `read_amlsim_csv()`, `find_canonical_column()` | `polars` |
+| `backend/services/deterministic_filter.py` | Topological graph construction, directed cycle extraction, and pass-through mule detection. | `build_transaction_graph()`, `detect_closed_cycles()`, `detect_passthrough_accounts()` | `networkx`, `polars` |
+| `backend/services/tool_registry.py` | Parameterized AST query builder enforcing column whitelists and mandatory case scoping. | `ToolRegistry`, `tool_registry` | `sqlalchemy` |
+| `frontend/hooks/useInvestigationStream.ts` | Browser EventSource manager parsing SSE `thought` and `verdict` payloads. | `useInvestigationStream` | `react` |
+| `frontend/components/ThoughtStream.tsx` | Collapsible dark terminal rendering real-time reasoning thoughts. | `ThoughtStream` | `next`, `tailwind` |
+| `frontend/components/VerdictCard.tsx` | Forensic verdict summary with risk badges, financial metrics, and legal recommendations. | `VerdictCard` | `next`, `tailwind` |
+| `frontend/hooks/useAudioStream.ts` | Audio player hook managing streaming MP3 chunks from backend proxy. | `useAudioStream` | `react` |
 
-### 6.2 Reverse Proxy & SSE Buffer Flushing
+---
 
-- When running behind an HTTP reverse proxy (e.g. Nginx, Cloudflare, Traefik, AWS ALB), SSE streams can stall if the proxy buffers output chunks.
-- The backend explicitly sets the response header:
-  ```http
-  X-Accel-Buffering: no
-  ```
-- Any production reverse proxy must disable proxy buffering (`proxy_buffering off;`) for routes matching `/api/v1/investigations/*/stream`.
+## 6. Architectural Invariants & Data Integrity
 
-### 6.3 EventSource Lifecycle Management
+1. **Deterministic Pre-Filtering Guarantee**: No raw transaction ledger is ever passed to an LLM or external agent without first passing through the deterministic NetworkX pruning filter. This guarantees 85% to 98% noise reduction.
+2. **Credential Shielding**: Client browsers never receive `ELEVENLABS_API_KEY` or `DATABASE_URL`. All external communications pass through the FastAPI backend gateway.
+3. **AST Column Whitelisting**: External n8n agent queries to `/tools/query` cannot access unmapped columns or execute arbitrary SQL. Only whitelisted attributes are compiled into bound SQLAlchemy clauses.
+4. **Offline Presentation Resilience**: If TigerData, n8n, or ElevenLabs are unreachable, the platform degrades gracefully to local simulation fallback and valid silent MPEG audio frames.
 
-- In React 19 / Next.js client components, rapid component re-renders or unmounts can spawn orphaned `EventSource` connections.
-- The `useInvestigationStream` hook enforces clean termination:
-  1. Closes existing `EventSource` instances before initializing new ones (`resetStream`).
-  2. Actively calls `es.close()` immediately upon encountering an error or receiving the terminal `verdict` event.
-  3. Registers a cleanup hook on `useEffect` unmount.
+---
 
-### 6.4 External TigerData Database Connectivity
+## 7. Testing & Multi-Service Verification
 
+The multi-service integration is verified through end-to-end automated pipelines:
+
+- **E2E Full Lifecycle Test (`backend/tests/test_e2e_full_lifecycle.py`)**: Traverses upload -> database persistence -> paginated listing -> detail retrieval -> agent tool queries -> dynamic query builder -> SSE streaming -> verdict persistence -> audio synthesis in a single run.
+- **Backend Test Suite**: 121 automated tests executed via `python -m pytest backend/tests/ -v`.
+- **Frontend Typecheck**: Non-emitting strict TypeScript check via `npx --no-install tsc --noEmit --incremental false`.
+
+---
+
+## 8. Edge Cases, Security & Gotchas
+
+### 8.1 API Key Shielding & Secret Management
+- `ELEVENLABS_API_KEY` and `DATABASE_URL` are strictly confined to server-side environments.
+- The frontend client communicates exclusively with the backend `/api/v1` routes using `NEXT_PUBLIC_API_URL`.
+
+### 8.2 Reverse Proxy & SSE Buffer Flushing
+- Reverse proxies (such as Nginx or AWS ALB) often buffer chunked HTTP responses by default, delaying real-time event delivery.
+- The backend sets `X-Accel-Buffering: no` to guarantee immediate streaming delivery.
+- Production reverse proxies must disable proxy buffering (`proxy_buffering off;`) for `/api/v1/investigations/*/stream`.
+
+### 8.3 EventSource Lifecycle Management
+- In React client components, rapid component re-renders or unmounts can spawn orphaned `EventSource` connections.
+- The `useInvestigationStream` hook closes previous connections before re-opening and registers a cleanup hook on unmount.
+
+### 8.4 External TigerData Database Connectivity
 - Connecting from the containerized FastAPI backend to TigerData PostgreSQL requires SSL encryption.
-- Ensure the connection URI includes `?sslmode=require` or sets `connect_args={"sslmode": "require"}` in SQLAlchemy engine creation.
+- The connection URL must enforce `sslmode=require` (or `connect_args={"ssl": "require"}` for asyncpg).
 
-### 6.5 Deterministic Pruning Computational Complexity
+### 8.5 Deterministic Pruning Computational Complexity
+- To prevent denial-of-service on densely connected graphs, cycle search is bounded by `settings.MAX_CYCLE_LENGTH` (default 5).
 
-- Finding all cycles in an arbitrary directed graph is NP-hard.
-- To prevent denial-of-service on densely connected graphs, `backend/services/deterministic_filter.py` bounds the cycle search using `MAX_CYCLE_LENGTH` (default: 5) and isolates weakly connected sub-components before deep path traversal.
+### 8.6 AST Parameterization & Injection Resistance
+- Dynamic queries evaluate all filter criteria against bound parameters, preventing SQL injection vulnerabilities.
+
+---
+
+## 9. Configuration Reference
+
+| Environment Variable | Service Scope | Default Value | Description |
+| :--- | :--- | :--- | :--- |
+| `NEXT_PUBLIC_API_URL` | Frontend | `"http://localhost:8000"` | Base URL for FastAPI backend gateway |
+| `DATABASE_URL` | Backend | `""` | Managed PostgreSQL connection string (TigerData) |
+| `DB_SSL_REQUIRE` | Backend | `True` | Enforces SSL mode on database connection |
+| `N8N_WEBHOOK_URL` | Backend | `""` | External n8n ReAct agent orchestrator webhook URL |
+| `ELEVENLABS_API_KEY` | Backend | `""` | ElevenLabs API key for speech synthesis |
+| `ELEVENLABS_VOICE_ID` | Backend | `"21m00Tcm4TlvDq8ikWAM"` | ElevenLabs voice ID (Rachel) |
+| `MAX_CYCLE_LENGTH` | Backend | `5` | Upper limit on path length for cycle detection |
+| `PASS_THROUGH_RATIO_THRESHOLD` | Backend | `0.90` | Minimum turnover ratio for mule account detection |
+| `PASS_THROUGH_WINDOW_HOURS` | Backend | `48.0` | Maximum time window in hours for pass-through analysis |
+| `BACKEND_CORS_ORIGINS` | Backend | `["http://localhost:3000"]` | Allowed CORS origins for Next.js client |

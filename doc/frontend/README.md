@@ -2,173 +2,258 @@
 
 [← Back to Master Documentation](../README.md) | [Agent Routing Index](../index.md)
 
-## Current Application Entry Point
-
-The landing page remains at `/`. Its **Explore the platform** button and **Explore Polar** calls to action open `/investigate`, implemented by `app/investigate/page.tsx` and `components/InvestigationDashboard.tsx`.
-
-The workspace uses English interface labels and the existing Polar charcoal/ice-blue theme. It contains `DatasetContext`, `AgentSwimlanes`, `StepDetail`, `EvidenceInspector`, and `VerdictCard`. Mobile users switch between Activity, Dataset, and Evidence views. Provider-generated narrative text retains its original language.
-
-The current `/investigate` experience is a **frontend-only visual simulation**. Backend development is owned by another contributor; do not change backend files for UI work without coordination. `FileUpload` accepts 1-5 CSV files (20 MB total) and passes them to `useAgentSimulation`. The hook reads up to 200 rows per file in the browser, recognizes common AMLSim aliases, and uses filenames, sample account IDs, amounts, and row counts to populate the preview.
-
-The orchestrator and four specialists execute on a shared time axis via concurrent schedule tracks covering data validation, circular flows, pass-through activity, and risk review (with dependency scheduling and interleaved plain-language tool executions). When complete, the board collapses smoothly to elevate the final assessment. Pattern findings and the final risk level are illustrative. Persistent simulation labels state that no backend, AI model, or real fraud detector analyzed the files. Reset clears pending timers and local case state.
-
-`EvidenceInspector` shows uploaded sample records alongside simulated paths and bridge-account evidence. `VerdictCard` labels the outcome as a simulated assessment and suppresses backend audio controls in demo mode. The existing `useInvestigationStream` and `useAudioStream` remain available for future live integration, but `/investigate` does not invoke them in simulation mode.
-
-Verification from `frontend`: `npx --no-install tsc --noEmit --incremental false` checks types without touching Next's build cache. `npm run build` remains the production verification. On Windows, a permission/lock error opening `.next/trace` must be resolved by the workspace owner rather than deleting their cache or stopping their processes without permission.
-
-The sections below describe the original pipeline architecture; where component placement differs, use this entry-point section and the current source files.
+---
 
 ## 1. Overview
 
-The **frontend** segment of Polar Forensic Auditor is a high-precision, real-time investigation dashboard built with **Next.js 14 (App Router)**, **React 18**, **TypeScript**, and **Tailwind CSS**. It serves as the primary user interface for Anti-Money Laundering (AML) compliance officers, forensic auditors, and financial investigators.
+The **frontend** tier of Polar Forensic Auditor is a high-precision, real-time investigation dashboard built with **Next.js 14 (App Router)**, **React 18**, **TypeScript**, and **Tailwind CSS**. It serves as the primary investigative console for Anti-Money Laundering (AML) compliance officers, forensic auditors, and financial intelligence analysts.
 
-### Core Responsibilities
-- **Dataset Ingestion**: Drag-and-drop CSV ingestion of transaction datasets (formatted according to IBM AMLSim standards) to trigger backend deterministic graph reduction with Polars and NetworkX.
-- **Live Forensic Reasoning Stream**: Real-time visualization of the forensic reasoning process via Server-Sent Events (SSE), streaming chain-of-thought events from the inference pipeline.
-- **Forensic Verdict Presentation**: Structured presentation of risk metrics, financial volume in Mexican Pesos (MXN), identified AML typologies (closed circular transactions, rapid passthrough accounts), and legal/regulatory guidance (UIF / GAFI).
-- **Executive Voice Dictation**: Audio playback of synthesized forensic verdicts powered by a secure ElevenLabs backend proxy.
-- **Money Trail Topology (Planned Blueprint)**: Interactive graph visualization of transaction subgraphs and suspicious money trails using `@xyflow/react` (React Flow).
+### Current Application Entry Points & Interface Conventions
+- **Landing Page (`/`)**: The main landing page introduces the Polar platform, highlighting its hybrid deterministic graph reduction and agentic reasoning capabilities. Action buttons ("Explore the platform", "Explore Polar") navigate directly to `/investigate`.
+- **Investigation Workspace (`/investigate`)**: Implemented via `app/investigate/page.tsx` and `components/InvestigationDashboard.tsx`. It provides a multi-agent forensic workspace featuring `DatasetContext`, `AgentSwimlanes`, `StepDetail`, `EvidenceInspector`, and `VerdictCard`.
+- **Interface Language & Theme**: In accordance with platform conventions, the workspace interface uses **English** UI labels with the signature Polar charcoal/ice-blue forensic theme (`#090d16`, `#111827`, `#1f293d`). Narrative text generated by upstream forensic services retains its supplied language.
+- **Dual-Mode Operational Architecture**:
+  - **Frontend Simulation Mode**: Fully functional offline demo mode powered by `useAgentSimulation`. Accepts 1-5 CSV files (up to 20 MB), parses sample rows directly in the browser, and executes simulated concurrent specialist reasoning across a synchronized timeline without requiring an active backend connection.
+  - **Live Inference Pipeline Mode**: Production mode integrating with the FastAPI backend via `POST /api/v1/investigations/upload`, real-time SSE reasoning via `useInvestigationStream`, and audio verdict playback via `useAudioStream`.
+  - **Interactive Money Trail Visualization**: Target integration blueprint using `@xyflow/react` and `@dagrejs/dagre` (documented in [React Flow Architecture Blueprint](./react-flow-blueprint.md)).
+
+```
++----------------------------------------------------------------------------------------------------+
+|                                    Next.js 14 Client Dashboard                                     |
+|                                                                                                    |
+|  +---------------------------+  +---------------------------------------------------------------+  |
+|  |       Landing Page        |  |                     Investigation Workspace                   |  |
+|  |          app/             |  |                        app/investigate/                       |  |
+|  |  - Hero & Value Prop      |  |  - DatasetContext (Multi-file summary & AMLSim columns)       |  |
+|  |  - "Explore Polar" CTA    |  |  - AgentSwimlanes (5 concurrent specialist tracks)            |  |
+|  |                           |  |  - StepDetail (Narrative tool logs & evidence citations)     |  |
+|  |                           |  |  - EvidenceInspector (Transaction records & path traces)      |  |
+|  |                           |  |  - VerdictCard (Risk badge, financial sums, UIF/GAFI text)    |  |
+|  +-------------+-------------+  +-------------------------------+-------------------------------+  |
+|                |                                                |                                  |
+|                v                                                v                                  |
+|  +---------------------------+  +---------------------------------------------------------------+  |
+|  |   Simulation Pipeline     |  |                    Live API & Streaming Hooks                 |  |
+|  |   - useAgentSimulation    |  |  - useInvestigationStream (EventSource SSE: thought, verdict) |  |
+|  |   - In-Browser CSV Parser |  |  - useAudioStream (ElevenLabs MP3 proxy streaming playback)   |  |
+|  |   - Scheduled Timelines   |  |  - GraphVisualizer (@xyflow/react + Dagre Topology Canvas)    |  |
+|  +---------------------------+  +---------------------------------------------------------------+  |
++----------------------------------------------------------------------------------------------------+
+```
 
 ---
 
 ## 2. Architecture & Component Hierarchy
 
-The client architecture follows Next.js App Router conventions with client-side reactive streaming components (`"use client"`).
+The client architecture adheres to Next.js 14 App Router patterns, utilizing client-side reactive components (`"use client"`).
 
 ### Component & Data Flow Diagram
 
 ```mermaid
 graph TD
-    subgraph UI ["User Interface (Next.js 14 App Router)"]
-        Page["app/page.tsx (Investigation Orchestrator)"]
-        FileUpload["components/FileUpload.tsx"]
-        ThoughtStream["components/ThoughtStream.tsx"]
-        VerdictCard["components/VerdictCard.tsx"]
-        AudioPlayer["components/AudioPlayer.tsx"]
-        ReactFlowView["components/GraphVisualizer.tsx (Blueprint)"]
+    subgraph Routes ["App Router Views"]
+        Landing["app/page.tsx (Landing Page)"]
+        Investigate["app/investigate/page.tsx (Workspace Route)"]
     end
 
-    subgraph Hooks ["Custom Streaming Hooks"]
-        useStream["hooks/useInvestigationStream.ts"]
-        useAudio["hooks/useAudioStream.ts"]
+    subgraph Workspace ["Investigation Workspace Components"]
+        Dashboard["InvestigationDashboard.tsx"]
+        UploadZone["FileUpload.tsx (Drag & Drop 1-5 CSVs)"]
+        DatasetSummary["DatasetContext.tsx (Ingestion Meta)"]
+        Swimlanes["AgentSwimlanes.tsx (Concurrent Agent Tracks)"]
+        Narrative["StepDetail.tsx (Agent Reasoning & Tool Logs)"]
+        Evidence["EvidenceInspector.tsx (Tabular Records & Paths)"]
+        Verdict["VerdictCard.tsx (Risk Badge & Legal Summary)"]
+        AudioUI["AudioPlayer.tsx (Equalizer Audio Playback)"]
+        FlowView["GraphVisualizer.tsx (@xyflow/react Blueprint)"]
     end
 
-    subgraph Backend ["FastAPI Backend (:8000)"]
-        UploadEndpoint["POST /api/v1/investigations/upload"]
-        SSEEndpoint["GET /api/v1/investigations/{case_id}/stream"]
-        TTSEndpoint["POST /api/v1/tts/synthesize"]
+    subgraph Hooks ["State & Streaming Hooks"]
+        SimHook["useAgentSimulation.ts (Offline Multi-Agent Engine)"]
+        StreamHook["useInvestigationStream.ts (Live SSE EventSource)"]
+        AudioHook["useAudioStream.ts (ElevenLabs Audio Streamer)"]
     end
 
-    Page --> FileUpload
-    Page --> ThoughtStream
-    Page --> VerdictCard
-    Page -.-> ReactFlowView
-    VerdictCard --> AudioPlayer
+    subgraph Backend ["FastAPI Gateway (:8000)"]
+        UploadAPI["POST /api/v1/investigations/upload"]
+        SSEAPI["GET /api/v1/investigations/{case_id}/stream"]
+        TTSAPI["POST /api/v1/tts/synthesize"]
+    end
 
-    FileUpload -->|CSV FormData| UploadEndpoint
-    UploadEndpoint -->|UploadResponse (case_id + subgraph)| Page
+    Landing -->|Navigate| Investigate
+    Investigate --> Dashboard
+    Dashboard --> UploadZone
+    Dashboard --> DatasetSummary
+    Dashboard --> Swimlanes
+    Dashboard --> Narrative
+    Dashboard --> Evidence
+    Dashboard --> Verdict
+    Dashboard -.-> FlowView
+    Verdict --> AudioUI
 
-    Page -->|case_id| useStream
-    useStream -->|EventSource SSE| SSEEndpoint
-    SSEEndpoint -->|event: thought| ThoughtStream
-    SSEEndpoint -->|event: verdict| VerdictCard
-
-    AudioPlayer --> useAudio
-    useAudio -->|POST json {text}| TTSEndpoint
-    TTSEndpoint -->|audio/mpeg Blob| useAudio
+    UploadZone -->|Offline Simulation| SimHook
+    UploadZone -->|Live Ingestion| UploadAPI
+    UploadAPI -->|case_id| StreamHook
+    StreamHook -->|SSE Stream| SSEAPI
+    AudioUI --> AudioHook
+    AudioHook -->|Audio Synthesis| TTSAPI
 ```
 
 ### State Machine Lifecycle
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Idle: Application Mount
-    Idle --> Ingesting: User selects/drops CSV file
-    Ingesting --> Processing: POST /upload to FastAPI
-    Processing --> Streaming: UploadResponse received (case_id allocated)
-    Streaming --> Reasoning: SSE EventSource opens
-    Reasoning --> Reasoning: Receive "thought" events (Appends to Console)
-    Reasoning --> Adjudicated: Receive "verdict" event (EventSource closed)
-    Adjudicated --> PlayingAudio: User triggers ElevenLabs TTS dictation
-    PlayingAudio --> Adjudicated: Audio playback ends or aborted
-    Adjudicated --> Idle: User clicks "Nueva Auditoría" (Reset State)
+    [*] --> Idle: Mount Application
+    Idle --> Ingesting: Drag-and-drop CSV files (1-5 files)
+    
+    state ModeSelection <<choice>>
+    Ingesting --> ModeSelection: Choose Execution Mode
+    
+    ModeSelection --> SimulationMode: Frontend Simulation Mode
+    ModeSelection --> LivePipelineMode: Live Backend Mode
+    
+    state SimulationMode {
+        [*] --> ParseBrowserCSV: Read up to 200 rows per file
+        ParseBrowserCSV --> ScheduleTracks: Initialize 5 Agent Timelines
+        ScheduleTracks --> StepExecution: Interleaved Tool Actions & Logs
+        StepExecution --> SynthesizeVerdict: Aggregate Simulated Risk Score
+    }
+    
+    state LivePipelineMode {
+        [*] --> UploadToBackend: POST /api/v1/investigations/upload
+        UploadToBackend --> OpenSSE: Connect EventSource /stream
+        OpenSSE --> StreamThoughts: Receive 'thought' events
+        StreamThoughts --> TerminalVerdict: Receive 'verdict' event
+    }
+
+    SimulationMode --> Adjudicated: Assessment Completed
+    LivePipelineMode --> Adjudicated: Verdict Received
+    
+    Adjudicated --> PlayingAudio: User triggers Audio Dictation
+    PlayingAudio --> Adjudicated: Audio playback ends / stopped
+    Adjudicated --> Idle: Click "Reset Investigation"
 ```
 
 ---
 
-## 3. Key Components & Files
+## 3. Key Components & File Breakdown
 
-| File / Component | Primary Responsibility | Key Interfaces / Exports |
-| :--- | :--- | :--- |
-| [`app/layout.tsx`](file:///c:/Users/maxan/OneDrive/Documentos/Repositories/HackMTY%202026/Infosys/Polar/frontend/app/layout.tsx) | Root HTML shell, typography, metadata and global theme wrapper. | `RootLayout`, `metadata` |
-| [`app/page.tsx`](file:///c:/Users/maxan/OneDrive/Documentos/Repositories/HackMTY%202026/Infosys/Polar/frontend/app/page.tsx) | Central dashboard orchestrator coordinating upload, streaming, metric tiles, and verdict states. | `Home` (default client component) |
-| [`app/globals.css`](file:///c:/Users/maxan/OneDrive/Documentos/Repositories/HackMTY%202026/Infosys/Polar/frontend/app/globals.css) | Dark theme root variables, radial/linear gradients, and custom terminal scrollbar styling. | Tailwind base, custom CSS vars |
-| [`components/FileUpload.tsx`](file:///c:/Users/maxan/OneDrive/Documentos/Repositories/HackMTY%202026/Infosys/Polar/frontend/components/FileUpload.tsx) | Drag-and-drop file ingestion zone with CSV validation and upload dispatch. | `FileUpload`, `FileUploadProps` |
-| [`components/AgentSwimlanes.tsx`](file:///frontend/components/AgentSwimlanes.tsx) | Horizontal concurrent specialist timeline on a shared time axis with collapsible stage transition. | `AgentSwimlanes`, `AgentSwimlanesProps` |
-| [`components/StepDetail.tsx`](file:///frontend/components/StepDetail.tsx) | Dedicated narrative panel rendering plain-language explanations, tool outcomes, metrics, and evidence links. | `StepDetail`, `StepDetailProps` |
-| [`components/VerdictCard.tsx`](file:///frontend/components/VerdictCard.tsx) | Executive verdict presentation with risk badges, financial breakdown, UIF/GAFI legal text, and suspect entities list. | `VerdictCard`, `VerdictCardProps` |
-| [`components/AudioPlayer.tsx`](file:///c:/Users/maxan/OneDrive/Documentos/Repositories/HackMTY%202026/Infosys/Polar/frontend/components/AudioPlayer.tsx) | Voice dictation playback button with animated audio equalizer wave visualization. | `AudioPlayer`, `AudioPlayerProps` |
-| [`hooks/useInvestigationStream.ts`](file:///c:/Users/maxan/OneDrive/Documentos/Repositories/HackMTY%202026/Infosys/Polar/frontend/hooks/useInvestigationStream.ts) | Custom hook managing browser `EventSource` connection for SSE events (`thought` and `verdict`). | `useInvestigationStream` |
-| [`hooks/useAudioStream.ts`](file:///c:/Users/maxan/OneDrive/Documentos/Repositories/HackMTY%202026/Infosys/Polar/frontend/hooks/useAudioStream.ts) | Custom hook managing audio fetch, Blob URL synthesis, abort signaling, and `HTMLAudioElement` lifecycle. | `useAudioStream` |
-| [`types/investigation.ts`](file:///c:/Users/maxan/OneDrive/Documentos/Repositories/HackMTY%202026/Infosys/Polar/frontend/types/investigation.ts) | TypeScript contracts for events, graph subgraphs, investigation metrics, and API responses. | `ThoughtEvent`, `VerdictEvent`, `UploadResponse`, `GraphNode`, `GraphEdge`, `InvestigationMetrics` |
-| [`next.config.js`](file:///c:/Users/maxan/OneDrive/Documentos/Repositories/HackMTY%202026/Infosys/Polar/frontend/next.config.js) | Next.js configuration enabling React Strict Mode. | `nextConfig` |
-| [`tailwind.config.js`](file:///c:/Users/maxan/OneDrive/Documentos/Repositories/HackMTY%202026/Infosys/Polar/frontend/tailwind.config.js) | Tailwind CSS theme extension with custom surface palette (`#090d16`, `#111827`, `#1f293d`) and brand emerald shades. | Tailwind config object |
-| [`Dockerfile`](file:///c:/Users/maxan/OneDrive/Documentos/Repositories/HackMTY%202026/Infosys/Polar/frontend/Dockerfile) | Production Docker container configuration using `node:20-alpine` base image. | Container build definition |
+The frontend codebase follows a clean, componentized Next.js 14 layout:
+
+```
+frontend/
+├── Dockerfile
+├── package.json
+├── tsconfig.json
+├── next.config.js
+├── tailwind.config.js
+├── app/
+│   ├── favicon.ico
+│   ├── globals.css
+│   ├── layout.tsx
+│   ├── page.tsx
+│   └── investigate/
+│       └── page.tsx
+├── components/
+│   ├── AgentSwimlanes.tsx
+│   ├── AudioPlayer.tsx
+│   ├── DatasetContext.tsx
+│   ├── EvidenceInspector.tsx
+│   ├── FileUpload.tsx
+│   ├── InvestigationDashboard.tsx
+│   ├── StepDetail.tsx
+│   ├── ThoughtStream.tsx
+│   └── VerdictCard.tsx
+├── hooks/
+│   ├── useAgentSimulation.ts
+│   ├── useAudioStream.ts
+│   └── useInvestigationStream.ts
+├── lib/
+│   └── utils.ts
+└── types/
+    └── investigation.ts
+```
+
+### Component Responsibility Matrix
+
+| File / Module | Responsibility | Key Symbols / Classes | External Dependencies |
+| :--- | :--- | :--- | :--- |
+| `app/layout.tsx` | Global HTML root shell, font configurations, metadata, and theme container. | `RootLayout`, `metadata` | `next` |
+| `app/page.tsx` | Polar marketing and platform landing page with CTAs navigating to `/investigate`. | `HomePage` | `next`, `lucide-react` |
+| `app/investigate/page.tsx` | Next.js route entry point hosting the interactive multi-agent investigation workspace. | `InvestigatePage` | `next` |
+| `components/InvestigationDashboard.tsx` | Top-level workspace coordinator managing datasets, swimlane progress, and view transitions. | `InvestigationDashboard` | `react`, `lucide-react` |
+| `components/FileUpload.tsx` | Multi-file drag-and-drop CSV ingestion zone supporting 1-5 files (up to 20 MB total). | `FileUpload`, `FileUploadProps` | `react`, `lucide-react` |
+| `components/DatasetContext.tsx` | Metric cards and dataset summary chips detailing total volume, record counts, and accounts. | `DatasetContext` | `react`, `lucide-react` |
+| `components/AgentSwimlanes.tsx` | Synchronized concurrent timeline rendering tracks for the orchestrator and 4 specialist agents. | `AgentSwimlanes`, `AgentTrack` | `react`, `lucide-react` |
+| `components/StepDetail.tsx` | Narrative panel displaying detailed tool calls, input parameters, execution telemetry, and evidence citations. | `StepDetail` | `react`, `lucide-react` |
+| `components/EvidenceInspector.tsx` | Tabular inspector displaying verified transaction records, detected cycle paths, and pass-through nodes. | `EvidenceInspector` | `react`, `lucide-react` |
+| `components/VerdictCard.tsx` | Executive verdict summary displaying risk badges, financial breakdown, UIF/GAFI legal text, and suspect entities list. | `VerdictCard` | `react`, `lucide-react` |
+| `components/ThoughtStream.tsx` | Collapsible terminal rendering live SSE thought events from the backend streaming pipeline. | `ThoughtStream` | `react`, `lucide-react` |
+| `components/AudioPlayer.tsx` | Voice verdict dictation button featuring animated equalizer wave visualization. | `AudioPlayer` | `react`, `lucide-react` |
+| `hooks/useAgentSimulation.ts` | Complete browser-side multi-agent simulation engine with scheduled tracks and timer cleanup. | `useAgentSimulation` | `react` |
+| `hooks/useInvestigationStream.ts` | Browser `EventSource` connection hook managing real-time SSE `thought` and `verdict` events. | `useInvestigationStream` | `react` |
+| `hooks/useAudioStream.ts` | Custom hook managing audio fetch, Blob URL synthesis, abort signaling, and `HTMLAudioElement` playback. | `useAudioStream` | `react` |
+| `lib/utils.ts` | Shared utility helpers including Tailwind class merger (`cn`) and MXN currency formatter (`formatCurrencyMXN`). | `cn()`, `formatCurrencyMXN()` | `clsx`, `tailwind-merge` |
+| `types/investigation.ts` | Complete TypeScript interface definitions for events, subgraphs, investigation metrics, and API responses. | `ThoughtEvent`, `VerdictEvent`, `UploadResponse`, `SubgraphData` | TypeScript |
 
 ---
 
-## 4. Dependencies & Interactions
+## 4. Multi-Agent Investigation Simulation Engine
 
-### Internal System Interactions
-- **Backend API (`/api/v1/investigations/upload`)**: Consumed by `FileUpload.tsx` to initiate case creation and deterministic graph pruning.
-- **Backend SSE Stream (`/api/v1/investigations/{caseId}/stream`)**: Consumed by `useInvestigationStream.ts` for real-time thought events and the final verdict.
-- **Backend Audio Proxy (`/api/v1/tts/synthesize`)**: Consumed by `useAudioStream.ts` to request audio bytes generated from ElevenLabs.
+To enable offline demonstrations and testing without backend infrastructure, the workspace incorporates a local multi-agent simulation engine via `hooks/useAgentSimulation.ts`:
 
-### External Third-Party Libraries
-- **`next` (`^14.2.3`) & `react` (`^18.3.1`)**: Core App Router runtime and UI rendering engine.
-- **`lucide-react` (`^0.363.0`)**: Comprehensive icon set used across dashboard tiles, upload widgets, terminal status, and audio playback controls.
-- **`clsx` & `tailwind-merge`**: Utility helpers for conditional and merged Tailwind CSS class strings.
-- **`@xyflow/react` (Target Integration)**: Planned dependency for node-edge graph visualization of AML money trails (see [React Flow Architecture Blueprint](./react-flow-blueprint.md)).
+### 4.1 Ingestion & Parsing
+- Ingests 1 to 5 user-supplied CSV files (up to 20 MB total).
+- Reads up to 200 rows per file client-side using `FileReader`.
+- Performs canonical alias matching for IBM AMLSim column names (`origin`, `destination`, `amount`, `timestamp`).
+- Extracts sample account identifiers, transaction amounts, and volume statistics to populate realistic forensic evidence.
 
-### Consumers
-- **AML Compliance Officers & Forensic Auditors**: End-users who upload transaction ledgers, observe live inference, and evaluate legal recommendations.
-- **Demonstration / Pericial Hub Stakeholders**: Users requiring accessible audio dictation of forensic reports.
+### 4.2 Concurrent Specialist Agent Tracks
+The simulation executes 5 specialized agent tracks across a synchronized time axis:
+1. **Lead Forensic Orchestrator**: Manages investigation lifecycle, delegates sub-tasks, and synthesizes the judicial dictamen.
+2. **Ingestion & Data Validation Specialist**: Normalizes transaction ledgers, filters zero-balance noise, and validates schema integrity.
+3. **Circular Flow Specialist**: Extracts directed cycles and uncovers circular layering (*smurfing*) rings.
+4. **Pass-Through Velocity Analyst**: Analyzes high-velocity transit accounts with flow retention ratios $\ge 90\%$ within $\le 48\text{h}$.
+5. **Risk & Legal Compliance Auditor**: Cross-references findings against Mexican tax/AML statutes (CFF Art. 69-B, NIF A-2, UIF ROI guidelines).
+
+### 4.3 Simulation Integrity & Transparency
+- Persistent disclaimers clarify that the simulation is illustrative and does not connect to external AI models or financial institutions.
+- Resetting the investigation cancels all pending execution timers and cleanly resets local component state.
 
 ---
 
 ## 5. Public APIs, Hooks & Data Contracts
 
-### 1. `useInvestigationStream` Hook
-Manages the Server-Sent Events lifecycle for a specific investigation case.
+### 5.1 `useInvestigationStream` Hook
+Manages the Server-Sent Events lifecycle for a live backend investigation case:
 
 ```typescript
-interface UseInvestigationStreamReturn {
-  thoughts: ThoughtEvent[];         // Progressive stream of reasoning thoughts
-  verdict: VerdictEvent | null;     // Final forensic verdict (terminates stream)
-  isStreaming: boolean;             // True while SSE connection is active
-  error: string | null;             // SSE connection error string
+export interface UseInvestigationStreamReturn {
+  thoughts: ThoughtEvent[];               // Progressive stream of reasoning thoughts
+  verdict: VerdictEvent | null;           // Final forensic verdict (terminates stream)
+  isStreaming: boolean;                   // True while SSE connection is active
+  error: string | null;                   // SSE connection error message
   startStream: (caseId: string) => void;  // Opens EventSource to backend
-  resetStream: () => void;          // Closes EventSource and clears state
+  resetStream: () => void;                // Closes EventSource and clears state
 }
 ```
 
-### 2. `useAudioStream` Hook
-Controls streaming audio synthesis and playback.
+### 5.2 `useAudioStream` Hook
+Controls streaming audio synthesis and playback:
 
 ```typescript
-interface UseAudioStreamReturn {
-  isPlaying: boolean;               // True while audio is actively playing
-  isLoading: boolean;               // True while fetching audio blob from proxy
-  error: string | null;             // Playback or fetch error message
+export interface UseAudioStreamReturn {
+  isPlaying: boolean;                     // True while audio is actively playing
+  isLoading: boolean;                     // True while fetching audio blob from proxy
+  error: string | null;                   // Playback or fetch error message
   playAudio: (text: string) => Promise<void>; // Sends text to TTS and initiates audio
-  stopAudio: () => void;            // Aborts fetch or halts audio playback
+  stopAudio: () => void;                  // Aborts fetch or halts audio playback
 }
 ```
 
-### 3. Core Data Contracts (`types/investigation.ts`)
+### 5.3 Core Data Contracts (`types/investigation.ts`)
 
 ```typescript
-// SSE Thought Event
 export interface ThoughtEvent {
   step: number;
   phase: string;
@@ -176,7 +261,6 @@ export interface ThoughtEvent {
   timestamp: string;
 }
 
-// Final Forensic Verdict Event
 export interface VerdictEvent {
   case_id: string;
   risk_level: "CRÍTICO" | "ALTO" | "MEDIO" | "BAJO";
@@ -195,7 +279,6 @@ export interface VerdictEvent {
   completed_at: string;
 }
 
-// Graph Subgraph for Topology Rendering
 export interface SubgraphData {
   nodes: GraphNode[];
   edges: GraphEdge[];
@@ -225,53 +308,70 @@ export interface GraphEdge {
 
 ## 6. Target Architecture: React Flow Graph Visualizer
 
-The backend delivers reduced topological subgraphs containing pruned nodes, edges, cycle annotations, and passthrough metrics within `UploadResponse.subgraph`.
+The backend delivers reduced topological subgraphs containing pruned nodes, edges, cycle annotations, and pass-through metrics within `UploadResponse.subgraph`.
 
-To satisfy forensic visual inspection requirements, the frontend is architected to incorporate `@xyflow/react`:
-- **Interactive Money Trail**: Interactive node-link canvas showing high-risk entities and transaction edges.
-- **Topological Layout Engine**: Automatic DAG/hierarchical layering using `@dagrejs/dagre` or ElkJS.
-- **Color-Coded Nodes**: Visual distinction between cyclic originators, pass-through conduits, and destination sinks.
-- **Animated Transaction Flows**: Animated stroke dashes on edges indicating flow velocity and suspected laundering cycles.
+To support visual money-trail analysis, the frontend is architected to integrate `@xyflow/react`:
+- **Interactive Money Trail Canvas**: Interactive node-link canvas rendering high-risk entities and transaction edges.
+- **Topological Layout Engine**: Automatic hierarchical layering computed via `@dagrejs/dagre`.
+- **Custom Nodes & Edges**: Bank account cards displaying inflow/outflow metrics and animated transaction wires highlighting active cycles.
 
 > [!NOTE]
 > For the complete technical blueprint, node schemas, layout algorithms, and implementation code, consult the dedicated [React Flow Architecture Blueprint](./react-flow-blueprint.md).
 
 ---
 
-## 7. Edge Cases, Gotchas & Engineering Considerations
+## 7. Testing, Build & Quality Assurance
 
-### 1. Missing Utility Module (`@/lib/utils`)
-- **Issue**: Both [`app/page.tsx`](file:///c:/Users/maxan/OneDrive/Documentos/Repositories/HackMTY%202026/Infosys/Polar/frontend/app/page.tsx#L19) and [`components/VerdictCard.tsx`](file:///c:/Users/maxan/OneDrive/Documentos/Repositories/HackMTY%202026/Infosys/Polar/frontend/components/VerdictCard.tsx#L16) import `formatCurrencyMXN` from `@/lib/utils`. However, the file `frontend/lib/utils.ts` was not initially committed to the repository.
-- **Impact**: Running `npm run build` or `next build` will trigger a TypeScript module resolution error (`Cannot find module '@/lib/utils'`).
-- **Resolution**: Create `frontend/lib/utils.ts` exporting:
-  ```typescript
-  import { type ClassValue, clsx } from "clsx";
-  import { twMerge } from "tailwind-merge";
-
-  export function cn(...inputs: ClassValue[]) {
-    return twMerge(clsx(inputs));
-  }
-
-  export function formatCurrencyMXN(amount: number): string {
-    return new Intl.NumberFormat("es-MX", {
-      style: "currency",
-      currency: "MXN",
-      minimumFractionDigits: 2,
-    }).format(amount);
-  }
+### Verification Commands
+- **Non-Emitting Typecheck**:
+  ```bash
+  cd frontend
+  npx --no-install tsc --noEmit --incremental false
+  ```
+  *Note*: This checks strict TypeScript rules without writing to the `.next` build cache.
+- **Production Build**:
+  ```bash
+  npm run build
+  ```
+- **Linting**:
+  ```bash
+  npm run lint
   ```
 
-### 2. Browser `EventSource` Protocol Constraints
-- Standard browser `EventSource` only supports HTTP `GET` requests and cannot set custom headers (such as `Authorization: Bearer <token>`).
-- If authorization is added to `/api/v1/investigations/{case_id}/stream`, use an alternative client library such as `@microsoft/fetch-event-source` or pass an ephemeral query token.
+### Build Nuances & Windows File Locking
+- On Windows systems, concurrent development processes or anti-virus scanners may temporarily hold file locks on `.next/trace`. If encountered, resolve by ensuring other dev servers are stopped before invoking `npm run build`.
 
-### 3. Object URL Garbage Collection
-- `useAudioStream` converts audio response streams into an in-memory `Blob` and creates a URL via `URL.createObjectURL(blob)`.
-- It properly revokes the URL on `audio.onended` and `audio.onerror`. However, calling `stopAudio()` prematurely halts playback without revoking the previous object URL if not tracked. Ensure object URLs are explicitly tracked in a ref and revoked during cancellations.
+---
 
-### 4. Client-Side Rendering (`"use client"`)
-- Every component consuming browser APIs (`EventSource`, `HTMLAudioElement`, `FileReader`, DOM scrolling `scrollIntoView`) must declare `"use client"` at the very top.
-- SSR rendering of these components in Next.js will throw `ReferenceError: window is not defined` if rendered without the client directive.
+## 8. Edge Cases, Performance & Gotchas
 
-### 5. Environment Configuration
-- Default API fallback is hardcoded to `http://localhost:8000`. In containerized or production deployments, `NEXT_PUBLIC_API_URL` must be passed at build time (or configured through environment variables) to reach the backend gateway correctly.
+### 8.1 Missing Utility Module (`@/lib/utils.ts`)
+- **Issue**: Standard `.gitignore` rules with `lib/` can inadvertently ignore `frontend/lib/utils.ts`.
+- **Resolution**: Ensure `.gitignore` anchors rules to root (`/lib/`) so `frontend/lib/utils.ts` (`cn`, `formatCurrencyMXN`) remains tracked in source control.
+
+### 8.2 Browser `EventSource` Protocol Constraints
+- Standard browser `EventSource` only supports HTTP `GET` requests and cannot supply custom headers (such as `Authorization: Bearer <token>`).
+- If token authorization is required in production, pass an ephemeral query token or utilize `@microsoft/fetch-event-source`.
+
+### 8.3 Object URL Garbage Collection
+- `useAudioStream` converts audio responses into in-memory `Blob` objects and creates temporary URLs via `URL.createObjectURL(blob)`.
+- Always track active URLs in a `useRef` and explicitly call `URL.revokeObjectURL(url)` during teardown or before generating a new audio clip to prevent browser memory leaks.
+
+### 8.4 Client-Side Directive (`"use client"`)
+- Every component consuming browser APIs (`EventSource`, `HTMLAudioElement`, `FileReader`, DOM scrolling) must declare `"use client"` at the top of the file to prevent SSR hydration errors in Next.js.
+
+### 8.5 Separation of Simulation and Live Analysis
+- When enhancing the UI, maintain strict architectural separation between local simulation (`useAgentSimulation`) and live backend analysis (`useInvestigationStream`). Never fabricate backend requests in simulation mode.
+
+---
+
+## 9. Configuration Reference
+
+All frontend environment variables and tokens:
+
+| Variable | Scope | Default Value | Description |
+| :--- | :--- | :--- | :--- |
+| `NEXT_PUBLIC_API_URL` | Browser & SSR | `"http://localhost:8000"` | Base URL of the FastAPI backend service |
+| `PORT` | Node Runtime | `3000` | Port on which the Next.js application server listens |
+| `NODE_ENV` | Build & Runtime | `"development"` | Node execution environment (`development`, `production`, `test`) |
+
