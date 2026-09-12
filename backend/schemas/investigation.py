@@ -256,3 +256,26 @@ class InvestigationDetailResponse(BaseModel):
             }
 
         return data
+
+
+# -----------------------------------------------------------------------------
+# Data Estate Audit Schemas
+# -----------------------------------------------------------------------------
+class EstateAuditRequest(BaseModel):
+    estate_path: str = Field(..., description="Absolute path or URI to the financial estate database (.db or postgres://)")
+    seed: int = Field(default=1, description="Random seed for deterministic audit execution")
+    company_rfc: Optional[str] = Field(None, description="RFC of the company being audited")
+    company_name: str = Field(default="Empresa Auditada S.A. de C.V.", description="Legal name of the audited company")
+    n8n_url: Optional[str] = Field(None, description="Optional n8n webhook URL for narrative generation")
+
+
+class EstateAuditResponse(BaseModel):
+    seed: int
+    findings: List[Dict[str, Any]] = Field(default_factory=list)
+    leads_not_pursued: List[Dict[str, Any]] = Field(default_factory=list)
+    run_metadata: Dict[str, Any] = Field(default_factory=dict)
+    case_file_markdown: str = Field(default="", description="Rendered markdown case file with Mermaid diagrams")
+    status: str = Field(default="COMPLETED")
+    validation_passed: Optional[bool] = Field(None)
+    validation_errors: List[str] = Field(default_factory=list)
+
