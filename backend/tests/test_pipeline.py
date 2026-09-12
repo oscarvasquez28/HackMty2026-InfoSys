@@ -97,3 +97,22 @@ async def test_tts_synthesize_proxy():
         assert tts_resp.status_code == 200
         assert "audio/mpeg" in tts_resp.headers["content-type"]
         assert len(tts_resp.content) > 0
+
+
+def test_read_amlsim_csv_synthetic_fallback():
+    """Unit test: verifies that read_amlsim_csv handles missing timestamp column."""
+    from backend.services.ingestion import read_amlsim_csv
+    csv_bytes = b"origin,destination,amount\nACC_1,ACC_2,100.0\nACC_2,ACC_3,200.0"
+    df, meta = read_amlsim_csv(csv_bytes)
+    assert df.height == 2
+    assert "timestamp" in df.columns
+    assert df["timestamp"].to_list() == [0.0, 1.0]
+
+
+def test_read_amlsim_csv_null_timestamp_cells():
+    """Unit test: verifies that read_amlsim_csv defaults null timestamp cells to 0.0."""
+    from backend.services.ingestion import read_amlsim_csv
+    csv_bytes = b"origin,destination,amount,timestamp\nACC_1,ACC_2,100.0,\nACC_2,ACC_3,200.0,5.0"
+    df, meta = read_amlsim_csv(csv_bytes)
+    assert df.height == 2
+    assert df["timestamp"].to_list() == [0.0, 5.0]

@@ -11,7 +11,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+/lib/
 lib64/
 parts/
 sdist/
@@ -46,4 +46,7 @@ yarn-error.log*
 # OS
 .DS_Store
 Thumbs.db
+
 .agents
+data
+

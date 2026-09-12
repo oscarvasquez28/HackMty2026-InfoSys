@@ -5,10 +5,10 @@ import polars as pl
 
 # Mapping of common column aliases found in IBM AMLSim and banking transaction logs
 COLUMN_ALIASES = {
-    "origin": ["origin", "nameorig", "from_account", "source", "orig_account", "orig"],
-    "destination": ["destination", "namedest", "to_account", "target", "dest_account", "dest"],
-    "amount": ["amount", "value", "monto", "sum"],
-    "timestamp": ["timestamp", "step", "time", "date", "datetime", "trans_time"],
+    "origin": ["origin", "nameorig", "from_account", "source", "orig_account", "orig", "orig_acct"],
+    "destination": ["destination", "namedest", "to_account", "target", "dest_account", "dest", "bene_acct"],
+    "amount": ["amount", "value", "monto", "sum", "base_amt"],
+    "timestamp": ["timestamp", "step", "time", "date", "datetime", "trans_time", "tran_timestamp"],
 }
 
 
@@ -69,9 +69,27 @@ def read_amlsim_csv(source: BinaryIO | bytes | str) -> Tuple[pl.DataFrame, Dict[
     ]
 
     if has_timestamp:
-        select_exprs.append(pl.col(timestamp_col).cast(pl.Float64).alias("timestamp"))
+        ts_dtype = df[timestamp_col].dtype
+        if ts_dtype in [pl.Utf8, pl.String]:
+            # Try to parse string to datetime epoch seconds, falling back to float cast or null
+            ts_expr = (
+                pl.col(timestamp_col)
+                .str.to_datetime(time_zone="UTC", strict=False)
+                .dt.epoch("s")
+                .cast(pl.Float64)
+                .fill_null(pl.col(timestamp_col).cast(pl.Float64, strict=False))
+                .fill_null(0.0)
+                .alias("timestamp")
+            )
+            select_exprs.append(ts_expr)
+        else:
+            select_exprs.append(
+                pl.col(timestamp_col).fill_null(0.0).cast(pl.Float64, strict=False).alias("timestamp")
+            )
     else:
-        select_exprs.append(pl.int_range(0, df.height, dtype=pl.Float64).alias("timestamp"))
+        select_exprs.append(
+            pl.int_range(0, df.height, dtype=pl.Int64).cast(pl.Float64).alias("timestamp")
+        )
 
     cleaned_df = (
         df.select(select_exprs)

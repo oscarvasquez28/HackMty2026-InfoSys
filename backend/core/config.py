@@ -1,5 +1,5 @@
 import json
-from typing import List, Union
+from typing import List, Optional, Union
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -37,14 +37,33 @@ class Settings(BaseSettings):
     ELEVENLABS_API_KEY: str = ""
     ELEVENLABS_VOICE_ID: str = "21m00Tcm4TlvDq8ikWAM"  # Default Voice ID (Rachel)
     ELEVENLABS_MODEL_ID: str = "eleven_multilingual_v2"
+    TTS_TIMEOUT: float = 30.0
+    TTS_CONNECT_TIMEOUT: float = 5.0
 
     # Algorithmic Graph Thresholds
     MAX_CYCLE_LENGTH: int = 5
     PASS_THROUGH_RATIO_THRESHOLD: float = 0.90
     PASS_THROUGH_WINDOW_HOURS: float = 48.0
 
+    # Database Configuration (TigerData PostgreSQL + pgvector)
+    DATABASE_URL: Optional[str] = None
+    DB_POOL_SIZE: int = 20
+    DB_MAX_OVERFLOW: int = 10
+    DB_POOL_PRE_PING: bool = True
+    DB_POOL_RECYCLE: int = 3600
+    DB_SSL_REQUIRE: bool = True
+    DB_ECHO: bool = False
+
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def assemble_database_url(cls, v: Optional[str]) -> Optional[str]:
+        if isinstance(v, str):
+            v_stripped = v.strip()
+            return v_stripped if v_stripped else None
+        return v
+
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=(".env", "backend/.env"),
         env_file_encoding="utf-8",
         case_sensitive=True,
         extra="ignore",
