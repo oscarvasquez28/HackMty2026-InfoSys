@@ -1,0 +1,32 @@
+{
+  "invoices": [
+    { "uuid": "INV-00311", "issuer_rfc": "BBBB020202BB2", "receiver_rfc": "MNE150301AB1", "issue_date": "2026-04-10", "subtotal": 50000.0, "iva": 8000.0, "total": 58000.0, "concepto_text": "Mantenimiento preventivo de línea 2", "uso_cfdi": "G03", "forma_pago": "03", "metodo_pago": "PUE", "status": "vigente" },
+    { "uuid": "INV-00341", "issuer_rfc": "EEEE050505EE5", "receiver_rfc": "MNE150301AB1", "issue_date": "2026-05-04", "subtotal": 43017.24, "iva": 6882.76, "total": 49900.0, "concepto_text": "Papelería y consumibles", "uso_cfdi": "G03", "forma_pago": "03", "metodo_pago": "PUE", "status": "cancelado" },
+    { "uuid": "INV-00342", "issuer_rfc": "EEEE050505EE5", "receiver_rfc": "MNE150301AB1", "issue_date": "2026-05-06", "subtotal": 43017.24, "iva": 6882.76, "total": 49900.0, "concepto_text": "Papelería y consumibles (corrección)", "uso_cfdi": "G03", "forma_pago": "03", "metodo_pago": "PUE", "status": "vigente" }
+  ],
+  "bank_txns": [
+    { "txn_id": "BNK-00201", "date": "2026-02-17", "from_clabe": "000000000000000099", "to_clabe": "000000000000000001", "amount": 92800.0, "reference": "Pago factura INV-00101", "channel": "SPEI" },
+    { "txn_id": "BNK-00202", "date": "2026-03-16", "from_clabe": "000000000000000099", "to_clabe": "000000000000000001", "amount": 46400.0, "reference": "Pago factura INV-00102", "channel": "SPEI" },
+    { "txn_id": "BNK-00402", "date": "2026-04-12", "from_clabe": "000000000000000002", "to_clabe": "000000000000000501", "amount": 17400.0, "reference": "PO-00301", "channel": "SPEI" },
+    { "txn_id": "BNK-00410", "date": "2026-05-08", "from_clabe": "000000000000000099", "to_clabe": "000000000000000005", "amount": 49900.0, "reference": "Pago factura INV-00342", "channel": "SPEI" }
+  ],
+  "purchase_orders": [
+    { "po_id": "PO-00301", "vendor_rfc": "BBBB020202BB2", "date": "2026-04-08", "amount": 58000.0, "requester": "EMP:0001", "approver": "EMP:0001", "description": "Mantenimiento preventivo de línea 2" },
+    { "po_id": "PO-00288", "vendor_rfc": "FFFF060606FF6", "date": "2026-01-28", "amount": 35000.0, "requester": "EMP:0022", "approver": "EMP:0003", "description": "Diagnóstico de procesos" }
+  ],
+  "contracts": [
+    { "contract_id": "CTR-00007", "vendor_rfc": "CCCC030303CC3", "start_date": "2025-11-02", "value": 1200000.0, "scope_text": "Servicios de transporte y logística, alcance ampliado 2026" },
+    { "contract_id": "CTR-00031", "vendor_rfc": "FFFF060606FF6", "start_date": "2026-01-25", "value": 35000.0, "scope_text": "Diagnóstico de procesos de planta" }
+  ],
+  "employees": [
+    { "emp_id": "EMP:0001", "name": "Persona Ejemplo Uno", "role": "Gerente de Compras", "bank_clabe": "000000000000000501", "hire_date": "2021-03-01" },
+    { "emp_id": "EMP:0014", "name": "Persona Ejemplo Catorce", "role": "Analista de Almacén", "bank_clabe": "012000000000000514", "hire_date": "2023-08-15" }
+  ],
+  "efos_list": [
+    { "rfc": "AAAA010101AA1", "legal_name": "Servicios Integrales Ejemplo SA de CV", "status": "definitivo", "publication_date": "2025-12-11" }
+  ],
+  "ledger": [
+    { "entry_id": 5520, "date": "2026-02-03", "account_code": "5000", "account_name": "Gastos operativos", "debit": 92800.0, "credit": 0.0, "description": "Registro factura", "invoice_uuid": "INV-00101", "cost_center": "CC-100 Produccion", "approver": null },
+    { "entry_id": 5521, "date": "2026-02-20", "account_code": "5000", "account_name": "Gastos operativos", "debit": 35000.0, "credit": 0.0, "description": "Aceptación de entregables diagnóstico", "invoice_uuid": null, "cost_center": "CC-100 Produccion", "approver": "Contralor de planta" }
+  ]
+}

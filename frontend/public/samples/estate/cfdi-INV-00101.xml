@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cfdi:Comprobante xmlns:cfdi="http://www.sat.gob.mx/cfd/4" xmlns:tfd="http://www.sat.gob.mx/TimbreFiscalDigital" Version="4.0" Serie="A" Folio="101" Fecha="2026-02-03T10:00:00" FormaPago="03" SubTotal="80000.00" Moneda="MXN" Total="92800.00" TipoDeComprobante="I" Exportacion="01" MetodoPago="PUE" LugarExpedicion="64000">
+  <cfdi:Emisor Rfc="AAAA010101AA1" Nombre="SERVICIOS INTEGRALES EJEMPLO" RegimenFiscal="601"/>
+  <cfdi:Receptor Rfc="MNE150301AB1" Nombre="MANUFACTURAS DEL NORTE EJEMPLO" DomicilioFiscalReceptor="64000" RegimenFiscalReceptor="601" UsoCFDI="G03"/>
+  <cfdi:Conceptos>
+    <cfdi:Concepto ClaveProdServ="80101500" Cantidad="1" ClaveUnidad="E48" Descripcion="Consultoría estratégica" ValorUnitario="80000.00" Importe="80000.00" ObjetoImp="02">
+      <cfdi:Impuestos><cfdi:Traslados><cfdi:Traslado Base="80000.00" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="12800.00"/></cfdi:Traslados></cfdi:Impuestos>
+    </cfdi:Concepto>
+  </cfdi:Conceptos>
+  <cfdi:Impuestos TotalImpuestosTrasladados="12800.00"><cfdi:Traslados><cfdi:Traslado Base="80000.00" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="12800.00"/></cfdi:Traslados></cfdi:Impuestos>
+  <cfdi:Complemento><tfd:TimbreFiscalDigital Version="1.1" UUID="INV-00101" FechaTimbrado="2026-02-03T10:05:00" RfcProvCertif="SAT970701NN3" NoCertificadoSAT="00000000000000000000"/></cfdi:Complemento>
+</cfdi:Comprobante>

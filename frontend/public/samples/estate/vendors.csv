@@ -1,0 +1,7 @@
+rfc,legal_name,registered_date,address,bank_clabe,category,contact_email
+AAAA010101AA1,Servicios Integrales Ejemplo SA de CV,2026-01-20,"Calle Ejemplo 14, Col. Centro, Monterrey",000000000000000001,Consultoria,contacto@serviciosejemplo.mx
+BBBB020202BB2,Mantenimiento Industrial Ejemplo SC,2024-06-30,"Av. Ejemplo 200, Monterrey",000000000000000002,Mantenimiento,dos@example.mx
+CCCC030303CC3,Logística Ejemplo Tres SA de CV,2023-03-15,"Blvd. Ejemplo 300, Apodaca",012000000000000003,Logistica,tres@example.mx
+DDDD040404DD4,Suministros Ejemplo Cuatro SA de CV,2022-09-01,"Calle Ejemplo 400, Monterrey",012000000000000004,Suministros,cuatro@example.mx
+EEEE050505EE5,Papelería Ejemplo Cinco SA de CV,2021-05-10,"Av. Ejemplo 500, San Nicolas",000000000000000005,Papeleria,cinco@example.mx
+FFFF060606FF6,Consultores Ejemplo Seis SC,2026-01-10,"Calle Ejemplo 600, Monterrey",000000000000000006,Consultoria,seis@example.mx
