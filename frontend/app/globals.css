@@ -194,3 +194,83 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Case file viewer: focus rings, print layout, and export chrome (see CaseFileWorkspace.tsx). */
+.case-workspace :is(button, a, summary, input, select, [tabindex]):focus-visible {
+  outline: 2px solid #79c7f5;
+  outline-offset: 3px;
+}
+
+.case-paper :is(button, a, summary, input, select, [tabindex]):focus-visible {
+  outline-color: #1c4f8c;
+}
+
+.case-paper tr:target {
+  scroll-margin-top: 6rem;
+}
+
+@media print {
+  @page {
+    margin: 16mm 14mm;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+  }
+
+  .case-workspace {
+    background: #ffffff !important;
+    min-height: 0 !important;
+  }
+
+  .case-workspace * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  [data-print="hide"] {
+    display: none !important;
+  }
+
+  /* UA stylesheet hides [hidden]; `revert` would keep it hidden, so set explicit displays. */
+  [data-collapsible-body][hidden] {
+    display: block !important;
+  }
+
+  tr[data-filterable-row][hidden] {
+    display: table-row !important;
+  }
+
+  .case-paper {
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  .case-paper section[data-finding-section] + section[data-finding-section] {
+    break-before: page;
+  }
+
+  .case-avoid-break,
+  .case-paper tr,
+  .case-paper figure {
+    break-inside: avoid;
+  }
+
+  .case-paper thead {
+    display: table-header-group;
+  }
+
+  .case-scroll {
+    overflow: visible !important;
+  }
+
+  .case-paper a {
+    color: inherit;
+    text-decoration: none;
+  }
+}

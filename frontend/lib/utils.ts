@@ -12,3 +12,15 @@ export function formatCurrencyMXN(amount: number): string {
     minimumFractionDigits: 2,
   }).format(amount);
 }
+
+export function formatPesos(amount: number): string {
+  return `${formatCurrencyMXN(amount)} MXN`;
+}
+
+export function formatSeconds(seconds: number): string {
+  return `${seconds.toFixed(1)}s`;
+}
+
+export function formatInteger(value: number): string {
+  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(value);
+}

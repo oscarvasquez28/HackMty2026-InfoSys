@@ -4,6 +4,8 @@ module.exports = {
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./hooks/**/*.{ts,tsx}",
+    "./lib/**/*.{ts,tsx}",
   ],
   theme: {
     extend: {
@@ -27,6 +29,25 @@ module.exports = {
           300: "#A6DEFF",
           500: "#79C7F5",
           600: "#389DDD",
+        },
+        paper: {
+          DEFAULT: "#FBFAF7",
+          raised: "#F2EFE8",
+          border: "#D8D2C6",
+          ink: "#161B22",
+          muted: "#5A6270",
+        },
+        evidence: {
+          proven: "#8E1B1F",
+          "proven-soft": "#F6E1DF",
+          probable: "#9A5A06",
+          "probable-soft": "#FBEBD2",
+          reconciled: "#1E6A3B",
+          "reconciled-soft": "#DFF0E3",
+          held: "#1C4F8C",
+          "held-soft": "#E2EBF6",
+          neutral: "#4B5563",
+          "neutral-soft": "#ECEAE5",
         },
       },
       boxShadow: {
