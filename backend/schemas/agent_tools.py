@@ -35,6 +35,10 @@ class TargetEntity(str, Enum):
     PASSTHROUGH_ACCOUNTS = "passthrough_accounts"
     LEGAL_PRECEDENTS = "legal_precedents"
     LEGAL_VECTORS = "legal_vectors"
+    ACCOUNTS = "accounts"
+    PARTIES = "parties"
+    CASH_TRANSACTIONS = "cash_transactions"
+    ACCOUNT_MAPPINGS = "account_mappings"
 
 
 class FilterOperator(str, Enum):
@@ -153,6 +157,74 @@ TARGET_FIELD_WHITELISTS: Dict[str, Dict[str, type]] = {
         "law_name": str,
         "content": str,
     },
+    TargetEntity.ACCOUNTS.value: {
+        "acct_id": str,
+        "dsply_nm": str,
+        "type": str,
+        "acct_stat": str,
+        "acct_rptng_crncy": str,
+        "prior_sar_count": int,
+        "branch_id": str,
+        "open_dt": str,
+        "close_dt": str,
+        "initial_deposit": float,
+        "bank_id": str,
+        "first_name": str,
+        "last_name": str,
+        "street_addr": str,
+        "city": str,
+        "state": str,
+        "country": str,
+        "zip": str,
+        "gender": str,
+        "birth_date": str,
+        "ssn": str,
+    },
+    TargetEntity.PARTIES.value: {
+        "party_id": str,
+        "party_type": str,
+        "is_individual": bool,
+        "first_name": str,
+        "last_name": str,
+        "legal_name": str,
+        "name": str,
+        "name_alias": str,
+        "birth_place_country": str,
+        "country_of_residency": str,
+        "country_of_incorporation": str,
+        "nationality": str,
+        "occupation": str,
+        "organization_symbol": str,
+        "source_of_income": str,
+        "title": str,
+        "website": str,
+        "gender": str,
+        "marital_status": str,
+        "is_active": bool,
+        "listed_company": bool,
+        "primary_phone": str,
+        "personal_email": str,
+        "company_email": str,
+    },
+    TargetEntity.CASH_TRANSACTIONS.value: {
+        "tran_id": str,
+        "account_id": str,
+        "bene_acct": str,
+        "tx_type": str,
+        "amount": float,
+        "timestamp": str,
+        "branch_id": str,
+        "is_sar": bool,
+        "alert_id": str,
+    },
+    TargetEntity.ACCOUNT_MAPPINGS.value: {
+        "cust_acct_mapping_id": str,
+        "acct_id": str,
+        "cust_id": str,
+        "cust_acct_role": str,
+        "src_sys": str,
+        "data_dump_dt": str,
+    },
 }
 
 CASE_SCOPED_TARGETS = {
@@ -196,12 +268,13 @@ class TransactionQueryRequest(BaseModel):
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
     case_id: Union[uuid.UUID, str] = Field(..., description="Investigation case UUID to query within")
+    entity_id: Optional[str] = Field(None, description="Filter transactions where origin or destination matches entity_id")
     origin: Optional[str] = Field(None, description="Filter by origin account ID (exact or prefix)")
     destination: Optional[str] = Field(None, description="Filter by destination account ID (exact or prefix)")
     min_amount: Optional[float] = Field(None, ge=0.0, description="Minimum transfer amount in MXN")
     max_amount: Optional[float] = Field(None, ge=0.0, description="Maximum transfer amount in MXN")
-    start_time: Optional[datetime] = Field(None, description="Lower bound timestamp (inclusive, UTC)")
-    end_time: Optional[datetime] = Field(None, description="Upper bound timestamp (inclusive, UTC)")
+    start_time: Optional[datetime] = Field(None, validation_alias=AliasChoices("start_time", "start_date"), description="Lower bound timestamp (inclusive, UTC)")
+    end_time: Optional[datetime] = Field(None, validation_alias=AliasChoices("end_time", "end_date"), description="Upper bound timestamp (inclusive, UTC)")
     is_suspicious: Optional[bool] = Field(None, description="Filter by suspicion flag (True/False/None for all)")
     limit: int = Field(default=50, ge=1, le=1000, description="Pagination page size limit (1-1000)")
     offset: int = Field(default=0, ge=0, description="Pagination offset (>= 0)")
@@ -529,3 +602,283 @@ class DynamicQueryResponse(BaseModel):
                 records = data.get("records", [])
                 data["count"] = len(records)
         return data
+
+
+# =============================================================================
+# 6. Specialized Forensic Auditor Tool Schemas
+# =============================================================================
+
+# Tool 1: find_related_entities
+class RelatedEntityItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    entity_id: str = Field(..., description="Related account/entity ID")
+    party_name: Optional[str] = Field(None, description="Party name or legal name if known")
+    party_type: Optional[str] = Field(None, description="Individual or Organization")
+    relationship_type: str = Field(..., description="Relationship type e.g. FREQUENT_COUNTERPARTY, SAME_OWNER, PARENT_SUBSIDIARY")
+    tx_count: int = Field(..., ge=1, description="Number of direct or bidirectional transactions")
+    total_volume: float = Field(..., ge=0.0, description="Total transaction volume exchanged")
+    inflow_from_target: float = Field(default=0.0, ge=0.0, description="Volume sent from target entity")
+    outflow_to_target: float = Field(default=0.0, ge=0.0, description="Volume sent to target entity")
+
+
+class RelatedEntitiesRequest(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    entity_id: str = Field(..., description="Target account or entity ID to analyze relationships for")
+    case_id: Optional[Union[uuid.UUID, str]] = Field(None, description="Optional investigation case ID")
+    min_tx_count: int = Field(default=2, ge=1, description="Minimum transactions required to qualify as constant/related")
+    min_volume: Optional[float] = Field(default=None, ge=0.0, description="Optional minimum cumulative volume")
+    limit: int = Field(default=50, ge=1, le=500)
+    offset: int = Field(default=0, ge=0)
+
+
+class RelatedEntitiesResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    target_entity_id: str = Field(...)
+    case_id: Optional[str] = Field(None)
+    total_related: int = Field(..., ge=0)
+    items: List[RelatedEntityItem] = Field(default_factory=list)
+
+
+# Tool 2: compare_entities
+class EntityOwnerComparisonItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    entity_id: str = Field(...)
+    owner_id: Optional[str] = Field(None, description="Customer / party ID of owner")
+    owner_name: Optional[str] = Field(None, description="Owner full personal or corporate legal name")
+    owner_type: Optional[str] = Field(None, description="Individual or Organization")
+    ssn: Optional[str] = Field(None, description="SSN or tax identification")
+    shared_with: List[str] = Field(default_factory=list, description="Other entities sharing the same physical or moral owner")
+    has_common_owner: bool = Field(default=False)
+
+
+class CompareEntitiesRequest(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    entity_ids: List[str] = Field(..., min_length=1, description="List of account/entity IDs to cross-examine for common ownership")
+    case_id: Optional[Union[uuid.UUID, str]] = Field(None, description="Optional case ID")
+
+
+class CompareEntitiesResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    entities_analyzed: int = Field(..., ge=0)
+    groups_by_owner: Dict[str, List[str]] = Field(default_factory=dict, description="Grouping of entities by common owner ID/name")
+    comparisons: List[EntityOwnerComparisonItem] = Field(default_factory=list)
+
+
+# Tool 4: analyze_payment_patterns
+class AnalyzePaymentPatternsRequest(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    case_id: Union[uuid.UUID, str] = Field(..., description="Investigation case ID")
+    entity_id: Optional[str] = Field(None, description="Optional filter for patterns involving a specific account")
+
+
+class AnalyzePaymentPatternsResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    case_id: str = Field(...)
+    has_fraudulent_patterns: bool = Field(...)
+    has_circular_patterns: bool = Field(...)
+    has_mule_patterns: bool = Field(...)
+    detected_cycles_count: int = Field(default=0, ge=0)
+    passthrough_mules_count: int = Field(default=0, ge=0)
+    summary: str = Field(...)
+
+
+# Tool 5: search_financial_history
+class FinancialHistoryRequest(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    account_id: Optional[str] = Field(None, description="Account ID to look up owner financial history")
+    party_id: Optional[str] = Field(None, description="Customer / party ID to look up")
+
+
+class FinancialHistoryResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    account_id: Optional[str] = None
+    party_id: Optional[str] = None
+    owner_name: Optional[str] = None
+    owner_type: Optional[str] = None
+    account_details: Optional[Dict[str, Any]] = None
+    party_details: Optional[Dict[str, Any]] = None
+    associated_accounts: List[Dict[str, Any]] = Field(default_factory=list)
+    initial_deposit: Optional[float] = None
+    account_status: Optional[str] = None
+    prior_sar_count: Optional[int] = 0
+
+
+# Tool 6: get_cashout
+class CashoutItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    tran_id: str = Field(...)
+    account_id: str = Field(...)
+    tx_type: str = Field(default="CASH-OUT")
+    amount: float = Field(..., ge=0.0)
+    timestamp: Optional[str] = None
+    branch_id: Optional[str] = None
+    is_sar: bool = False
+
+
+class CashoutRequest(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    account_id: str = Field(..., description="Account ID to query ATM cashouts for")
+    min_amount: Optional[float] = Field(None, ge=0.0)
+    max_amount: Optional[float] = Field(None, ge=0.0)
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    limit: int = Field(default=50, ge=1, le=1000)
+    offset: int = Field(default=0, ge=0)
+
+
+class CashoutResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    account_id: str = Field(...)
+    total_cashouts: int = Field(..., ge=0)
+    total_amount: float = Field(default=0.0, ge=0.0)
+    items: List[CashoutItem] = Field(default_factory=list)
+
+
+# Tool 7: trace_money_flow
+class FlowPathItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    path: List[str] = Field(..., description="Node sequence e.g. [A, B, C]")
+    hops: int = Field(..., ge=1)
+    total_flow_amount: float = Field(default=0.0, ge=0.0)
+    step_details: List[Dict[str, Any]] = Field(default_factory=list)
+
+
+class TraceMoneyFlowRequest(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    source_account: Optional[str] = Field(None, description="Starting account for tracing")
+    destination_account: Optional[str] = Field(None, description="Ending account for tracing")
+    case_id: Optional[Union[uuid.UUID, str]] = Field(None, description="Optional case ID")
+    max_depth: int = Field(default=4, ge=1, le=10, description="Maximum traversal depth")
+    limit: int = Field(default=20, ge=1, le=100)
+
+
+class TraceMoneyFlowResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    case_id: Optional[str] = None
+    source_account: Optional[str] = None
+    destination_account: Optional[str] = None
+    total_paths: int = Field(..., ge=0)
+    paths: List[FlowPathItem] = Field(default_factory=list)
+
+
+# Tool 8: find_related_transactions
+class RelatedTransactionGroup(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    direct_transaction: Optional[Dict[str, Any]] = None
+    secondary_transactions: List[Dict[str, Any]] = Field(default_factory=list)
+    tertiary_transactions: List[Dict[str, Any]] = Field(default_factory=list)
+    total_secondary: int = 0
+    total_tertiary: int = 0
+
+
+class RelatedTransactionsRequest(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    transaction_id: str = Field(..., description="Core transaction UUID or ID")
+    case_id: Optional[Union[uuid.UUID, str]] = Field(None)
+    hops: int = Field(default=2, ge=1, le=3, description="1 for direct, 2 for secondary, 3 for tertiary")
+    limit: int = Field(default=50, ge=1, le=500)
+
+
+class RelatedTransactionsResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    transaction_id: str = Field(...)
+    hops: int = Field(default=2)
+    results: RelatedTransactionGroup
+
+
+# Tool 9: find_transaction_chains
+class TransactionChainItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    chain_id: str = Field(...)
+    path: List[str] = Field(...)
+    length: int = Field(..., ge=1)
+    intermediaries: List[str] = Field(default_factory=list, description="Transit accounts / possible mules")
+    total_volume: float = Field(default=0.0, ge=0.0)
+    transactions: List[Dict[str, Any]] = Field(default_factory=list)
+
+
+class TransactionChainsRequest(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    source_account: str = Field(..., description="Originating account")
+    destination_account: str = Field(..., description="Destination account")
+    case_id: Optional[Union[uuid.UUID, str]] = Field(None)
+    max_hops: int = Field(default=5, ge=1, le=8)
+    limit: int = Field(default=20, ge=1, le=100)
+
+
+class TransactionChainsResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    source_account: str = Field(...)
+    destination_account: str = Field(...)
+    case_id: Optional[str] = None
+    total_chains: int = Field(..., ge=0)
+    chains: List[TransactionChainItem] = Field(default_factory=list)
+
+
+# Tool 10: find_shared_entities
+class SharedEntityPairItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    entities: List[str] = Field(..., description="Entities with shared flow patterns e.g. [A, B]")
+    common_target_sequence: List[str] = Field(..., description="Common sequence downstream e.g. [C, D]")
+    similarity_type: str = Field(default="SHARED_DOWNSTREAM_PATH")
+    shared_hops: int = Field(default=2)
+
+
+class SharedEntitiesRequest(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    case_id: Optional[Union[uuid.UUID, str]] = Field(None)
+    min_shared_hops: int = Field(default=2, ge=1, le=5)
+    limit: int = Field(default=50, ge=1, le=500)
+
+
+class SharedEntitiesResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    case_id: Optional[str] = None
+    total_shared_pairs: int = Field(..., ge=0)
+    items: List[SharedEntityPairItem] = Field(default_factory=list)
+
+
+# Tool 11: detect_circular_flow
+class DetectCircularFlowRequest(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    case_id: Optional[Union[uuid.UUID, str]] = Field(None)
+    entity_id: Optional[str] = Field(None, description="Optional specific account to find cycles for")
+    max_cycle_length: int = Field(default=5, ge=2, le=8)
+    min_volume: Optional[float] = Field(None, ge=0.0)
+    limit: int = Field(default=50, ge=1, le=500)
+
+
+class DetectCircularFlowResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    case_id: Optional[str] = None
+    total_cycles: int = Field(..., ge=0)
+    cycles: List[CyclePatternItem] = Field(default_factory=list)
+    total_cyclical_volume: float = Field(default=0.0, ge=0.0)
+
