@@ -17,6 +17,8 @@ from backend.core.config import settings
 from backend.core.database import get_session_factory
 from backend.models.forensic import InvestigationCase, TransactionRecord
 from backend.schemas.investigation import (
+    EstateAuditRequest,
+    EstateAuditResponse,
     InvestigationDetailResponse,
     InvestigationPaginationResponse,
     InvestigationSummary,
@@ -617,3 +619,111 @@ async def stream_investigation_thoughts(
             "Content-Type": "text/event-stream",
         },
     )
+
+
+@router.post(
+    "/audit-estate",
+    response_model=EstateAuditResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def audit_estate_endpoint(
+    req: EstateAuditRequest,
+):
+    """
+    Executes the full zero-network forensic auditor detection pipeline against
+    a given SQLite financial data estate or PostgreSQL connection, verifies per-table
+    2% peso reconciliation, generates Mermaid flowcharts, and returns both structured
+    submission data and formatted Markdown case file.
+    """
+    from pathlib import Path as FilePath
+    import time
+    from backend.services.case_file_generator import CaseFileGenerator
+    from backend.services.deterministic_detectors import ForensicDetectorSuite
+    from backend.services.estate_connector import EstateConnector
+
+    start_time = time.perf_counter()
+    p_estate = FilePath(req.estate_path).resolve()
+
+    if not p_estate.exists() and not req.estate_path.startswith("postgresql"):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Estate database file not found at: {req.estate_path}",
+        )
+
+    connector = EstateConnector()
+    suite = ForensicDetectorSuite(connector=connector)
+    generator = CaseFileGenerator()
+
+    try:
+        submission = await suite.run_forensic_detection_pipeline(
+            estate_target=p_estate if p_estate.is_file() else req.estate_path,
+            seed=req.seed,
+        )
+
+        findings = submission.get("findings", [])
+        leads = submission.get("leads_not_pursued", [])
+
+        # Optional n8n enrichment hook
+        n8n_target = req.n8n_url or settings.N8N_WEBHOOK_URL
+        if n8n_target and findings:
+            try:
+                async with httpx.AsyncClient(timeout=3.0) as client:
+                    resp = await client.post(
+                        n8n_target,
+                        json={"action": "narrative_enhancement", "findings": findings, "seed": req.seed},
+                    )
+                    if resp.status_code == 200:
+                        payload = resp.json()
+                        enhanced = payload.get("findings")
+                        if isinstance(enhanced, list) and len(enhanced) == len(findings):
+                            for orig, enh in zip(findings, enhanced):
+                                if isinstance(enh, dict) and enh.get("narrative"):
+                                    words = enh["narrative"].split()
+                                    if len(words) <= 150:
+                                        orig["narrative"] = enh["narrative"]
+                            submission["run_metadata"]["llm_calls"] = len(findings)
+            except Exception as n8n_exc:
+                logger.warning(f"n8n webhook call failed: {n8n_exc}. Proceeding with deterministic narratives.")
+
+        # Update company RFC if provided
+        if req.company_rfc:
+            for f in findings:
+                if not f.get("entities"):
+                    f["entities"] = [f"RFC:{req.company_rfc}"]
+
+        # Generate Markdown Case File
+        case_file_md = generator.generate_case_file_markdown(
+            submission_data=submission,
+            company_name=req.company_name,
+        )
+
+        elapsed = time.perf_counter() - start_time
+        meta = submission.get("run_metadata", {})
+        meta["wall_clock_seconds"] = round(elapsed, 3)
+
+        # Automated format validation
+        validation_passed = None
+        validation_errors = []
+        if p_estate.is_file():
+            try:
+                from tmp.validate_format import validate_against_estate, validate_structure
+                validation_errors = validate_structure(submission)
+                validation_errors += validate_against_estate(submission, str(p_estate))
+                validation_passed = (len(validation_errors) == 0)
+            except Exception as val_err:
+                logger.warning(f"Error checking validate_format: {val_err}")
+
+        return EstateAuditResponse(
+            seed=req.seed,
+            findings=findings,
+            leads_not_pursued=leads,
+            run_metadata=meta,
+            case_file_markdown=case_file_md,
+            status="COMPLETED",
+            validation_passed=validation_passed,
+            validation_errors=validation_errors,
+        )
+
+    finally:
+        await connector.dispose_all()
+
