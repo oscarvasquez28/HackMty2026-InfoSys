@@ -18,7 +18,11 @@ def build_transaction_graph(df: pl.DataFrame) -> nx.DiGraph:
         u = str(row["origin"])
         v = str(row["destination"])
         amount = float(row["amount"])
-        timestamp = float(row["timestamp"])
+        raw_ts = row.get("timestamp")
+        try:
+            timestamp = float(raw_ts) if raw_ts is not None else 0.0
+        except (ValueError, TypeError):
+            timestamp = 0.0
 
         if not G.has_node(u):
             G.add_node(u, total_in=0.0, total_out=0.0, in_timestamps=[], out_timestamps=[])
@@ -65,10 +69,11 @@ def detect_closed_cycles(
     cycle_edges: Set[Tuple[str, str]] = set()
 
     # NetworkX simple_cycles generates elementary cycles
+    # Pass length_bound to prune search tree combinatorics early and cap total cycles found
+    max_cycles_cap = 5000
     try:
-        raw_cycles = nx.simple_cycles(G)
+        raw_cycles = nx.simple_cycles(G, length_bound=max_cycle_length)
         for c in raw_cycles:
-            # We filter by max_cycle_length to prevent deep path computational stalls
             if 2 <= len(c) <= max_cycle_length:
                 detected_cycles.append(c)
                 for node in c:
@@ -77,9 +82,8 @@ def detect_closed_cycles(
                     u = c[i]
                     v = c[(i + 1) % len(c)]
                     cycle_edges.add((u, v))
-            elif len(c) > max_cycle_length:
-                # Continue generator without deep exploration
-                continue
+                if len(detected_cycles) >= max_cycles_cap:
+                    break
     except Exception:
         # Fallback if graph is exceedingly complex
         pass
