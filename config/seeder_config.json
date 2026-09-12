@@ -1,0 +1,123 @@
+{
+  "_comment": "Configuration file for Forensic Data Estate Seeder (estate_schema.sql)",
+  "general": {
+    "seed": 42,
+    "output_db_path": "data/estate.db",
+    "ground_truth_path": "data/ground_truth.json",
+    "submission_path": "data/submission.json",
+    "audit_period": {
+      "start_date": "2025-01-01",
+      "end_date": "2026-03-31"
+    },
+    "company": {
+      "rfc": "EMP920101AB1",
+      "legal_name": "Industrias Corporativas del Norte SA de CV",
+      "primary_clabe": "000000000000000099",
+      "operating_clabes": [
+        "000000000000000099",
+        "000000000000000098"
+      ]
+    }
+  },
+  "baseline_operations": {
+    "num_normal_vendors": 25,
+    "num_normal_employees": 20,
+    "num_normal_invoices": 60,
+    "num_normal_pos": 40,
+    "num_normal_contracts": 10,
+    "include_payroll": true,
+    "vendor_categories": [
+      "Consultoria",
+      "Mantenimiento Industrial",
+      "Logistica y Transporte",
+      "Sistemas y TI",
+      "Seguridad Privada",
+      "Papeleria y Suministros",
+      "Servicios Legales y Fiscales",
+      "Limpieza y Gestion de Instalaciones",
+      "Capacitacion y Recursos Humanos"
+    ],
+    "invoice_amount_range": {
+      "min": 15000.0,
+      "max": 180000.0
+    }
+  },
+  "schemes": {
+    "phantom_vendor": {
+      "enabled": true,
+      "count": 1,
+      "efos_status": "definitivo",
+      "invoices_count": 2,
+      "min_amount": 75000.0,
+      "max_amount": 160000.0,
+      "service_concept": "Servicios de asesoria estrategica en optimizacion de infraestructura intangible",
+      "difficulty": "easy"
+    },
+    "kickback": {
+      "enabled": true,
+      "count": 1,
+      "invoices_count": 2,
+      "invoice_amount": 125000.0,
+      "kickback_percentage": 0.20,
+      "employee_role": "Gerente de Compras",
+      "difficulty": "medium"
+    },
+    "round_tripping": {
+      "enabled": true,
+      "count": 1,
+      "cycle_length": 3,
+      "cycle_amount": 250000.0,
+      "retention_loss_pct": 0.02,
+      "days_interval": 2,
+      "difficulty": "hard"
+    },
+    "threshold_splitting": {
+      "enabled": true,
+      "count": 1,
+      "threshold_limit": 50000.0,
+      "split_count": 4,
+      "amount_per_split": 48600.0,
+      "days_span": 3,
+      "difficulty": "easy"
+    },
+    "revenue_inflation": {
+      "enabled": true,
+      "count": 1,
+      "invoices_count": 2,
+      "invoice_amount": 320000.0,
+      "settlement_type": "circular_transfer",
+      "difficulty": "medium"
+    }
+  },
+  "decoys": {
+    "enabled": true,
+    "planted_count": 5,
+    "types": {
+      "split_urgent_order": {
+        "enabled": true,
+        "description": "Urgent shipment split into 3 parts due to truck weight constraints, documented in PO"
+      },
+      "high_value_board_approved": {
+        "enabled": true,
+        "description": "High-ticket asset purchase ($350k) with documented Board of Directors approval in ledger and PO"
+      },
+      "high_velocity_logistics": {
+        "enabled": true,
+        "description": "High turnover logistics vendor with long-term framework contract and clean tax compliance"
+      },
+      "employee_relocation_bonus": {
+        "enabled": true,
+        "description": "Executive relocation reimbursement transfer directly to employee CLABE with HR authorization"
+      },
+      "similar_name_clean_tax": {
+        "enabled": true,
+        "description": "Vendor with similar name or banking branch as an EFOS entity, but verified SAT 32-D clean compliance"
+      }
+    }
+  },
+  "batch_generation": {
+    "default_count": 5,
+    "default_start_seed": 101,
+    "default_output_dir": "data/datasets"
+  }
+}
