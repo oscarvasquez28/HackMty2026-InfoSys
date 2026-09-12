@@ -1,0 +1,67 @@
+{
+  "_about": "Deliberately invalid case file for testing the format validator and renderer edge cases. Every top-level format error listed in doc/frontend/case-file-plan.md Appendix B.2 is present here on purpose.",
+  "seed": 13,
+  "findings": [
+    {
+      "finding_id": "F-A",
+      "scheme_type": "EFOS_INVOICE_MILL",
+      "entities": ["AAAA010101AA1"],
+      "rule_broken": "SAT Articulo 69-B",
+      "narrative": "The vendor invoiced services that were never delivered. The vendor invoiced services that were never delivered. The vendor invoiced services that were never delivered. The vendor invoiced services that were never delivered. The vendor invoiced services that were never delivered. The vendor invoiced services that were never delivered. The vendor invoiced services that were never delivered. The vendor invoiced services that were never delivered. The vendor invoiced services that were never delivered. The vendor invoiced services that were never delivered. The vendor invoiced services that were never delivered. The vendor invoiced services that were never delivered. The vendor invoiced services that were never delivered. The vendor invoiced services that were never delivered. The vendor invoiced services that were never delivered. The vendor invoiced services that were never delivered. The vendor invoiced services that were never delivered. The vendor invoiced services that were never delivered. The vendor invoiced services that were never delivered. The vendor invoiced services that were never delivered.",
+      "peso_amount": 100000.0,
+      "confidence": "proven",
+      "mermaid_source": "flowchart LR\n  A -->",
+      "money_trail": [
+        { "from": "RFC:MNE150301AB1", "to": "RFC:AAAA010101AA1", "amount": 90000.0, "date": "2026-02-01", "exhibit_id": "EX-01" },
+        { "from": "RFC:ZZZZ999999ZZ9", "to": "EMP:0099", "amount": 90000.0, "date": "2026-02-05", "exhibit_id": "EX-99" }
+      ],
+      "exhibits": [
+        { "exhibit_id": "EX-01", "source_table": "invoices", "record_id": "INV-09001", "amount": 90000.0, "note": "Invoice for services with no delivery evidence." },
+        { "exhibit_id": "EX-02", "source_table": "bank_txns", "record_id": "BNK-09001", "amount": 90000.0, "note": "Payment settling INV-09001." }
+      ]
+    },
+    {
+      "finding_id": "F-B",
+      "scheme_type": "threshold_splitting",
+      "entities": ["RFC:EEEE050505EE5"],
+      "narrative": "Two invoices were issued three days apart, each just under the approval limit.",
+      "rule_broken": "Statistical outlier: invoice amounts 3.2 standard deviations above the vendor mean",
+      "peso_amount": 99800.0,
+      "confidence": "certain",
+      "exhibits": [
+        { "exhibit_id": "EX-01", "source_table": "invoices", "record_id": "INV-00341", "amount": 49900.0, "note": "First invoice of $49,900.00." },
+        { "exhibit_id": "EX-02", "source_table": "invoices", "record_id": "INV-00342", "amount": 49900.0, "note": "Second invoice of $49,900.00 three days later." },
+        { "exhibit_id": "EX-03", "source_table": "vendors", "record_id": "EEEE050505EE5", "note": "Vendor master record." }
+      ]
+    }
+  ],
+  "leads_not_pursued": [
+    {
+      "entity": "RFC:CCCC030303CC3",
+      "signal": "Invoice velocity detector.",
+      "reason": "insufficient evidence",
+      "tool_calls_made": []
+    },
+    {
+      "entity": "EMP:0014",
+      "signal": "CLABE linkage detector.",
+      "reason": "Full 18-digit CLABEs differ and no transfers link the accounts.",
+      "tool_calls_made": ["query_employees"],
+      "closed_by": "auditor",
+      "closure_category": "no_bank_correlation"
+    },
+    {
+      "entity": "RFC:FFFF060606FF6",
+      "signal": "",
+      "reason": "Purchase order PO-00288 predates the first invoice by 30 days.",
+      "tool_calls_made": ["query_purchase_orders"],
+      "closed_by": "investigator",
+      "closure_category": "misc_reason"
+    }
+  ],
+  "run_metadata": {
+    "llm_calls": 12,
+    "mxn_cost": 4.5,
+    "deterministic": false
+  }
+}

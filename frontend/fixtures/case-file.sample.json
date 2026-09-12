@@ -1,0 +1,160 @@
+{
+  "_about": "Illustrative sample case file for UI development. Fictional entities; not a real audit and not output of the Polar auditor.",
+  "seed": 7,
+  "header": {
+    "company": "Manufacturas del Norte Ejemplo SA de CV",
+    "company_rfc": "MNE150301AB1",
+    "audit_period": { "start": "2026-01-01", "end": "2026-06-30" }
+  },
+  "executive_summary": {
+    "plain_narrative": "The audit of Manufacturas del Norte Ejemplo covering January to June 2026 found two cases of likely fraud worth $156,600.00 MXN in total. The company paid a vendor that the tax authority lists as an issuer of invoices for non-existent operations, and a purchasing manager received 30% of a vendor payment back into a personal account. Four other suspicious signals were investigated and closed with documentary evidence."
+  },
+  "entity_names": {
+    "RFC:MNE150301AB1": "Manufacturas del Norte Ejemplo SA de CV",
+    "RFC:AAAA010101AA1": "Servicios Integrales Ejemplo SA de CV",
+    "RFC:BBBB020202BB2": "Mantenimiento Industrial Ejemplo SC",
+    "EMP:0001": "Persona Ejemplo Uno",
+    "RFC:CCCC030303CC3": "Logística Ejemplo Tres SA de CV",
+    "EMP:0014": "Persona Ejemplo Catorce",
+    "RFC:EEEE050505EE5": "Papelería Ejemplo Cinco SA de CV",
+    "RFC:FFFF060606FF6": "Consultores Ejemplo Seis SC"
+  },
+  "findings": [
+    {
+      "finding_id": "F-01",
+      "scheme_type": "phantom_vendor",
+      "entities": ["RFC:AAAA010101AA1"],
+      "rule_broken": "SAT Articulo 69-B, Codigo Fiscal de la Federacion",
+      "rule_detail": {
+        "code": "SAT_ART_69B",
+        "authority": "SAT",
+        "article": "Article 69-B, Código Fiscal de la Federación",
+        "legal_text_citation": "Invoices issued by a taxpayer listed as definitivo under Article 69-B are presumed to cover non-existent operations and have no tax effect; the company deducted both invoices without evidence of materiality."
+      },
+      "narrative": "Between February and March 2026 the company paid $139,200.00 MXN to Servicios Integrales Ejemplo SA de CV for strategic consulting. The vendor's tax ID has been on the SAT blacklist of companies that issue invoices for non-existent operations since December 2025. The vendor was registered only 14 days before its first invoice, lists a residential address, and no purchase order or contract supports either invoice. Both invoices were paid in full by bank transfer within two weeks of issue.",
+      "peso_amount": 139200.0,
+      "confidence": "proven",
+      "money_trail": [
+        { "from": "RFC:AAAA010101AA1", "to": "RFC:MNE150301AB1", "amount": 92800.0, "date": "2026-02-03", "exhibit_id": "EX-01" },
+        { "from": "RFC:MNE150301AB1", "to": "RFC:AAAA010101AA1", "amount": 92800.0, "date": "2026-02-17", "exhibit_id": "EX-03" },
+        { "from": "RFC:AAAA010101AA1", "to": "RFC:MNE150301AB1", "amount": 46400.0, "date": "2026-03-02", "exhibit_id": "EX-02" },
+        { "from": "RFC:MNE150301AB1", "to": "RFC:AAAA010101AA1", "amount": 46400.0, "date": "2026-03-16", "exhibit_id": "EX-04" }
+      ],
+      "mermaid_source": "flowchart LR\n  C[\"Manufacturas del Norte Ejemplo · RFC:MNE150301AB1\"]\n  V[\"Servicios Integrales Ejemplo · RFC:AAAA010101AA1\"]\n  V -->|\"Step 1 · Invoice INV-00101 · $92,800.00 · EX-01\"| C\n  C -->|\"Step 2 · SPEI BNK-00201 · $92,800.00 · EX-03\"| V\n  V -->|\"Step 3 · Invoice INV-00102 · $46,400.00 · EX-02\"| C\n  C -->|\"Step 4 · SPEI BNK-00202 · $46,400.00 · EX-04\"| V\n  classDef flagged fill:#F6E1DF,stroke:#8E1B1F,stroke-width:2px,color:#161B22\n  class V flagged",
+      "exhibits": [
+        { "exhibit_id": "EX-01", "source_table": "invoices", "record_id": "INV-00101", "amount": 92800.0, "note": "CFDI invoice from the vendor for strategic consulting with no matching purchase order." },
+        { "exhibit_id": "EX-02", "source_table": "invoices", "record_id": "INV-00102", "amount": 46400.0, "note": "Second CFDI invoice from the vendor for the same unspecified consulting services." },
+        { "exhibit_id": "EX-03", "source_table": "bank_txns", "record_id": "BNK-00201", "amount": 92800.0, "note": "SPEI transfer from the company to the vendor's CLABE settling INV-00101." },
+        { "exhibit_id": "EX-04", "source_table": "bank_txns", "record_id": "BNK-00202", "amount": 46400.0, "note": "SPEI transfer from the company to the vendor's CLABE settling INV-00102." },
+        { "exhibit_id": "EX-05", "source_table": "vendors", "record_id": "AAAA010101AA1", "note": "Vendor was registered on 2026-01-20, 14 days before its first invoice, with a residential address." },
+        { "exhibit_id": "EX-06", "source_table": "efos_list", "record_id": "AAAA010101AA1", "note": "The vendor's RFC is on the SAT Article 69-B list with status definitivo since 2025-12-11." }
+      ],
+      "adversarial_review": {
+        "reviewer_agent_role": "challenger",
+        "challenger_argument": "The vendor delivered consulting services and both CFDI invoices are valid (status vigente), so the payments are legitimate expenses.",
+        "why_finding_held": "A valid CFDI status does not prove materiality: the vendor is listed as definitivo on the Article 69-B list (EX-06), and no purchase order, contract, or deliverable exists for either invoice."
+      }
+    },
+    {
+      "finding_id": "F-02",
+      "scheme_type": "kickback",
+      "entities": ["RFC:BBBB020202BB2", "EMP:0001"],
+      "rule_broken": "Codigo Penal Federal Articulo 388 (administracion fraudulenta)",
+      "rule_detail": {
+        "code": "CPF_ART_388",
+        "authority": "Código Penal Federal",
+        "article": "Article 388, Administración fraudulenta",
+        "legal_text_citation": "A person entrusted with managing another's assets who harms them by altering the conditions of operations for personal gain; the purchasing manager approved the order and received 30% of its value back from the vendor."
+      },
+      "narrative": "In April 2026 the purchasing manager requested and personally approved a $58,000.00 MXN maintenance order with Mantenimiento Industrial Ejemplo SC. Two days after the vendor invoiced the company, the vendor transferred $17,400.00 MXN, exactly 30% of the invoice, to the manager's personal bank account. No loan, contract, or other business reason for that transfer exists in the company's records. The pattern matches a kickback: company money paid to a vendor is partly returned to the employee who approved the purchase.",
+      "peso_amount": 17400.0,
+      "confidence": "probable",
+      "money_trail": [
+        { "from": "RFC:MNE150301AB1", "to": "RFC:BBBB020202BB2", "amount": 58000.0, "date": "2026-04-10", "exhibit_id": "EX-02" },
+        { "from": "RFC:BBBB020202BB2", "to": "EMP:0001", "amount": 17400.0, "date": "2026-04-12", "exhibit_id": "EX-03" }
+      ],
+      "exhibits": [
+        { "exhibit_id": "EX-01", "source_table": "purchase_orders", "record_id": "PO-00301", "amount": 58000.0, "note": "Purchase order for maintenance services was both requested and approved by EMP:0001, bypassing segregation of duties." },
+        { "exhibit_id": "EX-02", "source_table": "invoices", "record_id": "INV-00311", "amount": 58000.0, "note": "Vendor invoice for the same maintenance services, matching the purchase order amount." },
+        { "exhibit_id": "EX-03", "source_table": "bank_txns", "record_id": "BNK-00402", "amount": 17400.0, "note": "SPEI transfer with reference PO-00301 from the vendor's CLABE to the employee's personal CLABE." },
+        { "exhibit_id": "EX-04", "source_table": "employees", "record_id": "EMP:0001", "note": "The employee record lists bank CLABE 000000000000000501, the destination of transfer BNK-00402." },
+        { "exhibit_id": "EX-05", "source_table": "vendors", "record_id": "BBBB020202BB2", "note": "The vendor's registered CLABE 000000000000000002 is the origin account of transfer BNK-00402." }
+      ],
+      "reconciliation": {
+        "claimed_pesos": 17400.0,
+        "exhibits_sum": 17400.0,
+        "variance_percentage": 0.0,
+        "matched_table": "bank_txns",
+        "per_table_breakdown": [
+          { "table": "purchase_orders", "subtotal": 58000.0 },
+          { "table": "invoices", "subtotal": 58000.0 },
+          { "table": "bank_txns", "subtotal": 17400.0 }
+        ]
+      },
+      "adversarial_review": {
+        "reviewer_agent_role": "challenger",
+        "challenger_argument": "The transfer to the employee could be a personal loan repayment between acquaintances, unrelated to the purchase order.",
+        "why_finding_held": "No loan agreement appears in contracts, the transfer references PO-00301, and its amount is exactly 30% of the invoice total. The finding stays probable because the company-to-vendor bank payment is not yet linked."
+      }
+    }
+  ],
+  "leads_not_pursued": [
+    {
+      "entity": "RFC:CCCC030303CC3",
+      "signal": "Vendor invoice volume rose 400% quarter over quarter (invoice velocity detector).",
+      "reason": "Contract CTR-00007 signed 2025-11-02 covers the expanded scope; all 12 invoices match approved purchase orders within limits and each was settled by SPEI to the vendor's registered CLABE.",
+      "tool_calls_made": ["query_invoices", "query_contracts", "query_purchase_orders", "match_bank_txns"],
+      "closed_by": "investigator",
+      "closure_category": "materiality_verified"
+    },
+    {
+      "entity": "EMP:0014",
+      "signal": "Employee bank CLABE shares the bank prefix of vendor DDDD040404DD4 (employee-vendor CLABE linkage detector).",
+      "reason": "Only the 3-digit bank institution prefix (012) matches; the full 18-digit CLABEs differ and no bank_txns record moves funds between the two accounts in the audit period.",
+      "tool_calls_made": ["query_employees", "query_vendors", "trace_bank_txns"],
+      "closed_by": "challenger",
+      "closure_category": "no_bank_correlation"
+    },
+    {
+      "entity": "RFC:EEEE050505EE5",
+      "signal": "Two invoices of $49,900.00 within 3 days, just under the $50,000.00 approval limit (threshold splitting detector).",
+      "reason": "Invoice INV-00341 was cancelled (status cancelado) and reissued as INV-00342 with a corrected concepto; a single payment BNK-00410 of $49,900.00 settled it.",
+      "tool_calls_made": ["query_invoices", "query_purchase_orders", "match_bank_txns"],
+      "closed_by": "validator",
+      "closure_category": "administrative_error"
+    },
+    {
+      "entity": "RFC:FFFF060606FF6",
+      "signal": "Vendor registered 20 days before its first invoice (new vendor detector).",
+      "reason": "Purchase order PO-00288 and contract CTR-00031 predate the first invoice, and the delivery acceptance in ledger entry 5521 was approved by the plant controller.",
+      "tool_calls_made": ["query_vendors", "query_purchase_orders", "query_contracts", "query_ledger"],
+      "closed_by": "investigator"
+    }
+  ],
+  "run_metadata": {
+    "llm_calls": 38,
+    "mxn_cost": 18.45,
+    "wall_clock_seconds": 14.2,
+    "cost_by_role": { "investigator": 11.2, "challenger": 5.1, "validator": 2.15 },
+    "deterministic": true
+  },
+  "method_and_limits": {
+    "architecture_summary": "Deterministic detectors scan the estate for known risk signals. An investigator agent examines each lead with read-only database tools, a challenger agent argues the defense, and a deterministic validator rejects any finding whose cited records do not exist or whose amount does not reconcile within 2%.",
+    "out_of_scope": [
+      "Payroll records beyond the employees table.",
+      "CFDI XML signatures; only invoice table fields were examined.",
+      "Transactions outside the audit period 2026-01-01 to 2026-06-30."
+    ],
+    "undetectable_fraud_types": [
+      "Cash bribes paid outside the banking system.",
+      "Collusion documented only in email, messaging, or verbal agreements.",
+      "Kickbacks routed through accounts not registered in vendors or employees."
+    ],
+    "reproducibility_steps": [
+      "Generate the estate with seed 7 using the project seeder.",
+      "Run the auditor against the estate path with network access disabled.",
+      "Validate the output: python validate_format.py --submission submission.json --estate estate.db",
+      "Open the exported case file; the same seed yields an identical file."
+    ]
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "_about": "Illustrative sample case file for UI development: a run with zero findings. Fictional entities; not a real audit and not output of the Polar auditor.",
+  "seed": 21,
+  "header": {
+    "company": "Manufacturas del Norte Ejemplo SA de CV",
+    "company_rfc": "MNE150301AB1",
+    "audit_period": { "start": "2026-07-01", "end": "2026-12-31" }
+  },
+  "executive_summary": {
+    "plain_narrative": "The audit of Manufacturas del Norte Ejemplo covering July to December 2026 made no accusation. Three suspicious signals were investigated and each was closed with documentary evidence, listed in section 4."
+  },
+  "entity_names": {
+    "RFC:MNE150301AB1": "Manufacturas del Norte Ejemplo SA de CV",
+    "RFC:CCCC030303CC3": "Logística Ejemplo Tres SA de CV",
+    "EMP:0014": "Persona Ejemplo Catorce",
+    "RFC:EEEE050505EE5": "Papelería Ejemplo Cinco SA de CV"
+  },
+  "findings": [],
+  "leads_not_pursued": [
+    {
+      "entity": "RFC:CCCC030303CC3",
+      "signal": "Vendor invoice volume rose 400% quarter over quarter (invoice velocity detector).",
+      "reason": "Contract CTR-00007 signed 2025-11-02 covers the expanded scope; all 12 invoices match approved purchase orders within limits and each was settled by SPEI to the vendor's registered CLABE.",
+      "tool_calls_made": ["query_invoices", "query_contracts", "query_purchase_orders", "match_bank_txns"],
+      "closed_by": "investigator",
+      "closure_category": "materiality_verified"
+    },
+    {
+      "entity": "EMP:0014",
+      "signal": "Employee bank CLABE shares the bank prefix of vendor DDDD040404DD4 (employee-vendor CLABE linkage detector).",
+      "reason": "Only the 3-digit bank institution prefix (012) matches; the full 18-digit CLABEs differ and no bank_txns record moves funds between the two accounts in the audit period.",
+      "tool_calls_made": ["query_employees", "query_vendors", "trace_bank_txns"],
+      "closed_by": "challenger",
+      "closure_category": "no_bank_correlation"
+    },
+    {
+      "entity": "RFC:EEEE050505EE5",
+      "signal": "Two invoices of $49,900.00 within 3 days, just under the $50,000.00 approval limit (threshold splitting detector).",
+      "reason": "Invoice INV-00341 was cancelled (status cancelado) and reissued as INV-00342 with a corrected concepto; a single payment BNK-00410 of $49,900.00 settled it.",
+      "tool_calls_made": ["query_invoices", "query_purchase_orders", "match_bank_txns"],
+      "closed_by": "validator",
+      "closure_category": "administrative_error"
+    }
+  ],
+  "run_metadata": {
+    "llm_calls": 21,
+    "mxn_cost": 9.8,
+    "wall_clock_seconds": 8.6,
+    "cost_by_role": {},
+    "deterministic": true
+  },
+  "method_and_limits": {
+    "architecture_summary": "Deterministic detectors scan the estate for known risk signals. An investigator agent examines each lead with read-only database tools, a challenger agent argues the defense, and a deterministic validator rejects any finding whose cited records do not exist or whose amount does not reconcile within 2%.",
+    "out_of_scope": [
+      "Payroll records beyond the employees table.",
+      "CFDI XML signatures; only invoice table fields were examined.",
+      "Transactions outside the audit period 2026-07-01 to 2026-12-31."
+    ],
+    "undetectable_fraud_types": [
+      "Cash bribes paid outside the banking system.",
+      "Collusion documented only in email, messaging, or verbal agreements.",
+      "Kickbacks routed through accounts not registered in vendors or employees."
+    ],
+    "reproducibility_steps": [
+      "Generate the estate with seed 21 using the project seeder.",
+      "Run the auditor against the estate path with network access disabled.",
+      "Validate the output: python validate_format.py --submission submission.json --estate estate.db",
+      "Open the exported case file; the same seed yields an identical file."
+    ]
+  }
+}
