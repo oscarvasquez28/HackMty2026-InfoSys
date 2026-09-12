@@ -310,6 +310,18 @@ External n8n ReAct agents query case data through dedicated tools and composable
   }
   ```
 
+### 4.6 Case File JSON Contract (Frontend-Ready, Backend Pending)
+
+The judged deliverable is not the `VerdictEvent` SSE payload above — it is a **case file JSON** conforming to [`student-materials/forensic-auditor/submission_schema.json`](../../student-materials/forensic-auditor/submission_schema.json), rendered by the frontend's [Case File Viewer](../frontend/README.md#10-case-file-viewer-and-export-engine) at `/investigate`. The backend does not produce this payload yet (see the Requirements table in the frontend plan); the frontend accepts a **superset** of the official schema so it can render today from a bundled sample, a local file, or the Data Estate page, and start rendering the real thing the moment the backend emits it, with zero frontend changes.
+
+- **Official fields/enums are load-bearing** — `types/caseFile.ts` mirrors `submission_schema.json`'s `scheme_type` (5 values), `source_table` (8 tables), `confidence`, `closed_by`, and entity-id prefixing exactly, because `validate_format.py` checks them.
+- **Extension fields are additive and optional** — the official schema has no opinion on them, and the renderer degrades gracefully when they're absent (see the table in `doc/frontend/README.md` §10.1): `header`, `executive_summary`, `findings[].rule_detail`, `findings[].mermaid_source`, `findings[].reconciliation.{matched_table,per_table_breakdown}`, `findings[].adversarial_review`, `leads_not_pursued[].closure_category`, `method_and_limits`, `run_metadata.cost_by_role`.
+- **Two backend endpoints are proposed, not implemented**, and are inert (hidden) by default behind frontend env flags so no UI claims a capability the backend doesn't have:
+  - `GET /api/v1/investigations/{case_id}/case-file` — would return the case file JSON above for a completed investigation. Surfaced in `CaseFileSourcePanel` only when `NEXT_PUBLIC_CASE_FILE_API=enabled`.
+  - `POST /api/v1/estates/upload` — would accept the SQLite `.db` the Data Estate page (`/investigate/data`) can already assemble and export client-side (per `estate_schema.sql`). Surfaced in `EstateExportBar` only when `NEXT_PUBLIC_ESTATE_UPLOAD_API=enabled`.
+
+  Neither endpoint exists in `backend/api/routes/` today. Implementing either is a backend task; coordinate per `AGENTS.md` §7 before adding routes, and update this section plus `doc/frontend/README.md` §10–11 once they land instead of leaving the "proposed" framing stale.
+
 ---
 
 ## 5. Key Infrastructure & Code Files Breakdown

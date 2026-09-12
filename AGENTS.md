@@ -181,10 +181,22 @@ Health probe: `GET /health`. Sample dataset for manual runs: `data/sample_amlsim
 
 ## 6. Known Gotchas
 
-- **`.gitignore` swallows `frontend/lib/`**: the Python-oriented `lib/` pattern (line 14) matches
-  `frontend/lib/` at any depth, so `frontend/lib/utils.ts` (`cn`, `formatCurrencyMXN`) is untracked
-  and a fresh clone fails to build. Fix by anchoring the rule (`/lib/`) or force-adding the file;
-  see section 6 of `doc/frontend/README.md`.
+- **A bare `.gitignore` pattern at any depth swallows a same-named frontend path**: this has bitten
+  the project twice now — a bare `lib/` pattern matched `frontend/lib/utils.ts` (`cn`,
+  `formatCurrencyMXN`), and later a bare `data` pattern matched `frontend/app/investigate/data/` (the
+  Data Estate route). Both are fixed by anchoring to the repo root (`/lib/`, `/data`) so only the
+  top-level folder is ignored. If a build fails to find a frontend file that is clearly present on
+  disk, check `git check-ignore -v <path>` before assuming the file is missing.
+- **`mermaid` is pinned to `11.17.2` (exact)**: `mermaid@12` requires Node ≥ 22.12; this repo targets
+  Node 20 everywhere (Dockerfile and local dev). Don't bump the major version without also bumping
+  the Node target. `sql.js`/`papaparse` are pinned exact for the same "deliberate upgrade only" reason.
+- **`sql.js`'s WASM binary is generated, not committed**: `npm run dev`/`npm run build` run a
+  `predev`/`prebuild` step that copies it to `frontend/public/sql-wasm.wasm` (gitignored). If the Data
+  Estate page (`/investigate/data`) throws a WASM-load error after a fresh clone, run
+  `npm run copy:sqlwasm` from `frontend/` manually.
+- **`validate_format.py` needs `-X utf8` on Windows**: without it, `Path.read_text()` uses the system
+  codepage (cp1252) and raises on the accented characters in Spanish sample data. Always run it as
+  `python -X utf8 student-materials/forensic-auditor/validate_format.py --submission <file>.json`.
 - **Case storage is in-memory**: `INVESTIGATION_CASES` is a module-level dict, so cases vanish on
   reload and are not shared across Uvicorn workers. Persistence to TigerData PostgreSQL +
   `pgvector` is designed but not implemented — blueprint in `doc/backend/README.md`.
@@ -195,12 +207,25 @@ Health probe: `GET /health`. Sample dataset for manual runs: `data/sample_amlsim
   `your_...`, the system silently serves the local fallback stream and a silent MP3. Confirm which
   path ran (`X-Audio-Source` header, thought wording) before debugging "wrong" output.
 
-## 7. Current Frontend Ownership and Entry Point
+## 7. Current Frontend Ownership and Entry Points
 
 - Backend development is owned by another contributor. Keep UI work frontend-only; coordinate explicitly before touching backend code, tests, services or configuration.
 - The Polar landing page is `/`; **Explore the platform** and **Explore Polar** open `/investigate`.
-- Per the user's preference, the current workspace interface is **English**, overriding the earlier Spanish UI convention. Backend narrative text retains its supplied language.
-- `/investigate` currently runs a clearly labeled frontend-only simulation. It accepts 1-5 CSV files and uses local sample values for visual context; agent findings and the final risk level are illustrative. It does not call the backend or claim real fraud analysis.
+- Per the user's preference, the current workspace interface is **English**, overriding the earlier Spanish UI convention. Backend narrative text and the case file's own data (narratives, legal names) retain their supplied language.
+- **`/investigate` is the Case File Viewer**: loads a case file JSON — conforming to
+  [`student-materials/forensic-auditor/submission_schema.json`](../student-materials/forensic-auditor/submission_schema.json)
+  — from a bundled sample, a local file, the Data Estate page, or the backend's proposed (not yet
+  implemented) `/case-file` endpoint, and renders the full judged case-file document with a
+  Print/HTML/Markdown/JSON export toolbar. See `doc/frontend/README.md` §10 for the pipeline and
+  `doc/architecture/README.md` §4.6 for the JSON contract.
+- **`/investigate/data` is the Data Estate page**: loads SQLite `.db`, CSV, CFDI 4.0 XML, or JSON
+  entirely in the browser (`sql.js` WASM), validates it against `estate_schema.sql`, and lets the Case
+  File Viewer check exhibits against it. See `doc/frontend/README.md` §11. The loaded case file and
+  estate are shared for the tab's lifetime (`InvestigateSessionProvider`) but never persist across a reload.
+- **`/investigate/simulation` is the legacy frontend-only simulation** (deprecated, kept for reference
+  behind a banner). It accepts 1-5 CSV files and uses local sample values for visual context; agent
+  findings and the final risk level are illustrative. It does not call the backend or claim real fraud
+  analysis, and plays no part in the two entry points above.
 - Do not fabricate live backend activity if the application is later reconnected to SSE. Keep simulation and live-analysis modes explicitly distinct.
-- From `frontend`, `npx --no-install tsc --noEmit --incremental false` provides a typecheck without writing to `.next`. The production build is still required; ask for assistance if Windows locks `.next/trace` rather than deleting build files or stopping another contributor's processes.
+- From `frontend`, `npx --no-install tsc --noEmit --incremental false` provides a typecheck without writing to `.next`. The production build is still required; ask for assistance if Windows locks `.next/trace` rather than deleting build files or stopping another contributor's processes — stopping a dev server *you* started in the same session first is fine and often resolves it.
 
