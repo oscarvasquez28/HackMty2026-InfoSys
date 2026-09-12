@@ -3,7 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "copy:sqlwasm": "node -e \"require('fs').mkdirSync('public',{recursive:true});require('fs').copyFileSync('node_modules/sql.js/dist/sql-wasm-browser.wasm','public/sql-wasm.wasm')\"",
+    "predev": "npm run copy:sqlwasm",
     "dev": "next dev",
+    "prebuild": "npm run copy:sqlwasm",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -11,15 +14,20 @@
   "dependencies": {
     "clsx": "^2.1.1",
     "lucide-react": "^0.363.0",
+    "mermaid": "11.17.2",
     "next": "^14.2.3",
+    "papaparse": "5.7.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "sql.js": "1.14.2",
     "tailwind-merge": "^2.2.2"
   },
   "devDependencies": {
     "@types/node": "^20.12.7",
+    "@types/papaparse": "5.5.2",
     "@types/react": "^18.2.79",
     "@types/react-dom": "^18.2.25",
+    "@types/sql.js": "1.4.11",
     "autoprefixer": "^10.4.19",
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.3",
