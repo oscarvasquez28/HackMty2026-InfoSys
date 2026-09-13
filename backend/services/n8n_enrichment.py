@@ -185,9 +185,9 @@ class N8nEnrichmentService:
         adv_review: str = ""
         judge_verdict: str = ""
         reason: str = ""
-        closed_by: str = "Juez Instructor / Defensa Técnica"
-
+        valid_closed_by = ("challenger", "investigator", "validator")
         l_copy = dict(lead)
+        closed_by: str = l_copy.get("closed_by") if l_copy.get("closed_by") in valid_closed_by else "challenger"
         entity = l_copy.get("entity") or l_copy.get("entities") or "Entidad Auditada"
         signal = l_copy.get("signal") or l_copy.get("scheme_type") or "Señal de alerta"
 
@@ -227,7 +227,8 @@ class N8nEnrichmentService:
                                 or res_data.get("reason_to_close")
                                 or ""
                             )
-                            closed_by = res_data.get("closed_by") or closed_by
+                            if res_data.get("closed_by") in valid_closed_by:
+                                closed_by = res_data["closed_by"]
             except Exception as exc:
                 logger.warning(
                     f"n8n call for lead {index}/{total} failed or timed out: {exc}. Using deterministic review."
