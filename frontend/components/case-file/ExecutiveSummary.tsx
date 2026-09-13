@@ -6,6 +6,7 @@
 import React from "react";
 import type { SummaryView } from "@/lib/caseFile/derive";
 import { ConfidenceBadge } from "@/components/case-file/ConfidenceBadge";
+import { AudioPlayer } from "@/components/AudioPlayer";
 import { formatPesos } from "@/lib/utils";
 
 interface ExecutiveSummaryProps {
@@ -22,6 +23,9 @@ export const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) =
       {summary.narrativeOrigin === "derived" && (
         <p className="mt-2 text-xs text-paper-muted">Summary generated from the findings data (the run supplied no narrative).</p>
       )}
+      <div className="mt-4 print:hidden">
+        <AudioPlayer textToSynthesize={summary.narrative} label="Listen to executive summary" />
+      </div>
 
       <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 print:grid-cols-4">
         <div className="case-avoid-break rounded-sm border border-paper-border bg-paper-raised p-4">

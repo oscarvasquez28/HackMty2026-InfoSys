@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { ShieldCheck, ShieldAlert, ArrowUpRight, ChevronDown, FileCheck2, Scale } from "lucide-react";
 import { VerdictEvent, EvidenceRef } from "@/types/investigation";
-import { formatCurrencyMXN } from "@/lib/utils";
+import { formatCurrencyMXN, buildVerdictNarration } from "@/lib/utils";
 import { AudioPlayer } from "@/components/AudioPlayer";
 
 interface VerdictCardProps {
@@ -56,7 +56,7 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({ verdict, onEvidence })
         {showEntities && <div className="mt-2 max-h-40 overflow-y-auto rounded-lg bg-surface-deep p-3"><p className="break-all font-mono text-xs leading-7 text-muted">{verdict.entities_involved.length ? verdict.entities_involved.join(", ") : "No account identifiers were flagged."}</p></div>}
       </div>
       {/* Audio Dictation Player */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-surface-border pt-5">{!simulated && <AudioPlayer textToSynthesize={verdict.audit_summary_text} label="Listen to summary" />}<time dateTime={verdict.completed_at} className="text-xs text-muted">Completed {new Date(verdict.completed_at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}</time></div>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-surface-border pt-5">{!simulated && <AudioPlayer textToSynthesize={buildVerdictNarration(verdict)} label="Listen to summary" />}<time dateTime={verdict.completed_at} className="text-xs text-muted">Completed {new Date(verdict.completed_at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}</time></div>
     </div>
   </section>;
 };

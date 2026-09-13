@@ -7,6 +7,7 @@ import type { SummaryView } from "@/lib/caseFile/derive";
 import { formatInteger, formatPesos } from "@/lib/utils";
 import { useCountUp } from "@/hooks/useCountUp";
 import { ConfidenceBadge } from "@/components/case-file/ConfidenceBadge";
+import { AudioPlayer } from "@/components/AudioPlayer";
 import { TourChapterFrame, riseStyle } from "@/components/case-file/tour/TourChapterFrame";
 
 interface TourSummaryProps {
@@ -32,9 +33,12 @@ export const TourSummary: React.FC<TourSummaryProps> = ({ summary, number, total
           Summary generated from the findings data (the run supplied no narrative).
         </p>
       )}
+      <div className="tour-rise mt-4" style={riseStyle(3)}>
+        <AudioPlayer textToSynthesize={summary.narrative} label="Listen to executive summary" />
+      </div>
 
       <div className="mt-10 grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <div className="tour-rise rounded-lg border border-surface-border bg-surface p-6 sm:col-span-2" style={riseStyle(3)}>
+        <div className="tour-rise rounded-lg border border-surface-border bg-surface p-6 sm:col-span-2" style={riseStyle(4)}>
           <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">Total exposure</p>
           <p className="mt-3 font-mono text-[clamp(1.75rem,4vw,2.75rem)] font-semibold leading-none tabular-nums text-foreground">
             {formatPesos(exposure)}
@@ -42,13 +46,13 @@ export const TourSummary: React.FC<TourSummaryProps> = ({ summary, number, total
           <p className="mt-3 text-xs text-muted">Sum of the amounts at issue across every finding.</p>
         </div>
 
-        <div className="tour-rise rounded-lg border border-surface-border bg-surface p-6" style={riseStyle(4)}>
+        <div className="tour-rise rounded-lg border border-surface-border bg-surface p-6" style={riseStyle(5)}>
           <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">Findings</p>
           <p className="mt-3 font-mono text-5xl font-semibold leading-none tabular-nums">{formatInteger(findings)}</p>
           <p className="mt-3 text-xs text-muted">validated accusations</p>
         </div>
 
-        <div className="tour-rise rounded-lg border border-surface-border bg-surface p-6 sm:col-span-2" style={riseStyle(5)}>
+        <div className="tour-rise rounded-lg border border-surface-border bg-surface p-6 sm:col-span-2" style={riseStyle(6)}>
           <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">Overall confidence</p>
           <div className="tour-stamp mt-3 inline-block" style={{ "--stamp-delay": "800ms" } as React.CSSProperties}>
             <ConfidenceBadge value={summary.globalConfidence} size="lg" />
@@ -68,7 +72,7 @@ export const TourSummary: React.FC<TourSummaryProps> = ({ summary, number, total
           )}
         </div>
 
-        <div className="tour-rise rounded-lg border border-surface-border bg-surface p-6" style={riseStyle(6)}>
+        <div className="tour-rise rounded-lg border border-surface-border bg-surface p-6" style={riseStyle(7)}>
           <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">Leads closed</p>
           <p className="mt-3 font-mono text-5xl font-semibold leading-none tabular-nums">{formatInteger(leads)}</p>
           <p className="mt-3 text-xs text-muted">investigated without an accusation</p>
