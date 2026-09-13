@@ -238,12 +238,24 @@ class CaseFileGenerator:
                     note = ex.get("note", "").replace("|", "-")
                     md_lines.append(f"| **{eid}** | `{src}` | `{rid}` | {note} |")
 
+                finding_judge_verdict = f.get("judge_verdict")
+
                 md_lines.extend([
                     "",
                     "#### Conciliación Aritmética Pericial",
                     f"- **Cálculo de Conciliación:** {recon_formula}",
                     f"- **Tolerancia:** Varianza $\\le 2.0\\%$ satisfecha contra registros fuente.",
                     "",
+                ])
+
+                if finding_judge_verdict:
+                    md_lines.extend([
+                        "#### Veredicto Judicial del Hallazgo",
+                        f"> **{finding_judge_verdict}**",
+                        "",
+                    ])
+
+                md_lines.extend([
                     "#### Revisión Adversarial / Control de Calidad",
                     f"{finding_adv_review}",
                     "",
