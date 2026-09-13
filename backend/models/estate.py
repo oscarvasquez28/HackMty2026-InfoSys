@@ -163,7 +163,11 @@ class VendorHistoryRecord(Base):
     """Historical archive of vendors per pipeline run."""
     __tablename__ = "vendors_history"
 
-    history_id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    history_id: Mapped[int] = mapped_column(
+        BigInteger().with_variant(Integer, "sqlite"),
+        primary_key=True,
+        autoincrement=True,
+    )
     run_id: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
     archived_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
@@ -180,7 +184,11 @@ class InvoiceHistoryRecord(Base):
     """Historical archive of invoices per pipeline run."""
     __tablename__ = "invoices_history"
 
-    history_id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    history_id: Mapped[int] = mapped_column(
+        BigInteger().with_variant(Integer, "sqlite"),
+        primary_key=True,
+        autoincrement=True,
+    )
     run_id: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
     archived_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
@@ -202,7 +210,11 @@ class LedgerHistoryRecord(Base):
     """Historical archive of general ledger entries per pipeline run."""
     __tablename__ = "ledger_history"
 
-    history_id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    history_id: Mapped[int] = mapped_column(
+        BigInteger().with_variant(Integer, "sqlite"),
+        primary_key=True,
+        autoincrement=True,
+    )
     run_id: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
     archived_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
@@ -222,7 +234,11 @@ class BankTxnHistoryRecord(Base):
     """Historical archive of bank transactions per pipeline run."""
     __tablename__ = "bank_txns_history"
 
-    history_id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    history_id: Mapped[int] = mapped_column(
+        BigInteger().with_variant(Integer, "sqlite"),
+        primary_key=True,
+        autoincrement=True,
+    )
     run_id: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
     archived_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
@@ -239,7 +255,11 @@ class PurchaseOrderHistoryRecord(Base):
     """Historical archive of purchase orders per pipeline run."""
     __tablename__ = "purchase_orders_history"
 
-    history_id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    history_id: Mapped[int] = mapped_column(
+        BigInteger().with_variant(Integer, "sqlite"),
+        primary_key=True,
+        autoincrement=True,
+    )
     run_id: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
     archived_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
@@ -256,7 +276,11 @@ class ContractHistoryRecord(Base):
     """Historical archive of contracts per pipeline run."""
     __tablename__ = "contracts_history"
 
-    history_id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    history_id: Mapped[int] = mapped_column(
+        BigInteger().with_variant(Integer, "sqlite"),
+        primary_key=True,
+        autoincrement=True,
+    )
     run_id: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
     archived_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
@@ -271,7 +295,11 @@ class EmployeeHistoryRecord(Base):
     """Historical archive of employees per pipeline run."""
     __tablename__ = "employees_history"
 
-    history_id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    history_id: Mapped[int] = mapped_column(
+        BigInteger().with_variant(Integer, "sqlite"),
+        primary_key=True,
+        autoincrement=True,
+    )
     run_id: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
     archived_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
@@ -286,7 +314,11 @@ class EfosHistoryRecord(Base):
     """Historical archive of SAT EFOS blacklists per pipeline run."""
     __tablename__ = "efos_list_history"
 
-    history_id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    history_id: Mapped[int] = mapped_column(
+        BigInteger().with_variant(Integer, "sqlite"),
+        primary_key=True,
+        autoincrement=True,
+    )
     run_id: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
     archived_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
@@ -300,7 +332,11 @@ class ExhibitHistoryRecord(Base):
     """Historical archive of evidentiary exhibits per pipeline run."""
     __tablename__ = "exhibits_history"
 
-    history_id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    history_id: Mapped[int] = mapped_column(
+        BigInteger().with_variant(Integer, "sqlite"),
+        primary_key=True,
+        autoincrement=True,
+    )
     run_id: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
     archived_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
