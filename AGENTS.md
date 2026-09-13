@@ -190,6 +190,12 @@ Health probe: `GET /health`. Sample dataset for manual runs: `data/sample_amlsim
 - **`mermaid` is pinned to `11.17.2` (exact)**: `mermaid@12` requires Node ≥ 22.12; this repo targets
   Node 20 everywhere (Dockerfile and local dev). Don't bump the major version without also bumping
   the Node target. `sql.js`/`papaparse` are pinned exact for the same "deliberate upgrade only" reason.
+- **Mermaid must render through its sandbox**: `globals.css`'s reduced-motion block sets
+  `* { transition-duration: 0.01ms !important }`, which puts transitions on SVG geometry; Mermaid then
+  measures mid-transition values and emits a tiny, off-center diagram with a huge viewBox (only on
+  machines with reduced motion enabled). `lib/caseFile/mermaid.ts::renderMermaidSvg` renders inside
+  the off-screen `.mermaid-sandbox`, which opts out of transitions — never call `mermaid.render`
+  without it. `frontend/fixtures/case-file.dense-trail.json` is the visual regression fixture.
 - **`sql.js`'s WASM binary is generated, not committed**: `npm run dev`/`npm run build` run a
   `predev`/`prebuild` step that copies it to `frontend/public/sql-wasm.wasm` (gitignored). If the Data
   Estate page (`/investigate/data`) throws a WASM-load error after a fresh clone, run

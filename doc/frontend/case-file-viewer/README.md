@@ -139,7 +139,7 @@ sequenceDiagram
 | :--- | :--- | :--- |
 | `CaseFileWorkspace.tsx` | 91 | Primary orchestrator at `/investigate`. Subscribes to `InvestigateSessionProvider`, runs derivation, controls validation drawer, and updates document title to `case-file-seed-<seed>`. |
 | `CaseFileDocument.tsx` | 101 | Root print/export paper container (`#case-file-document`, `.case-paper`). Assembles sections 1–5 in required sequence with contents navigation. |
-| `CaseFileSourcePanel.tsx` | 317 | Ingestion hub for blank workspace. Supports fixture selection (`sample`, `no-findings`, `edge-cases`), drag-drop JSON/DB/CSV, live SSE audit modal trigger, and API loading. |
+| `CaseFileSourcePanel.tsx` | 317 | Ingestion hub for blank workspace. Supports fixture selection (`sample`, `no-findings`, `edge-cases`, `dense-trail`), drag-drop JSON/DB/CSV, live SSE audit modal trigger, and API loading. |
 | `CaseFileUiContext.tsx` | 85 | Scoped React Context tracking section expand/collapse states and diagram rendering statuses (`diagramsSettled` gating for exports). |
 | `CaseHeader.tsx` | 90 | Task 1 header: company name, RFC, audit period dates, metric cards (seed, LLM calls, MXN cost, wall-clock seconds, determinism badge), and cost-by-role chips. |
 | `ExecutiveSummary.tsx` | 64 | Task 2 summary: plain-language synopsis narrative accompanied by 4 synoptic metric cards (Findings, Confidence, Exposure, Closed Leads). |
@@ -147,9 +147,10 @@ sequenceDiagram
 | `RuleBrokenCallout.tsx` | 38 | Task 4 legal alert callout with distinct left border. Emphasizes cited article, authority, code, and exact statutory quotation. |
 | `AmountConfidence.tsx` | 30 | Task 5 financial callout: displays high-visibility peso sum in courtroom typography alongside confidence badge. |
 | `FindingNarrative.tsx` | 27 | Task 6 narrative presentation: displays plain-language finding narrative with dev-only 150-word count monitor. |
-| `MoneyTrail.tsx` | 88 | Task 7 container: embeds the compiled Mermaid diagram, zoom toggles (Fit / 100%), source inspector drawer, and step timeline. |
-| `MermaidDiagram.tsx` | 87 | Compiles Mermaid diagram strings to inline SVGs. Tries primary run-supplied source first, falls back to generated source on failure, and reports settlement to UI context. |
-| `MoneyTrailTimeline.tsx` | 67 | Step-by-step numbered breakdown beneath diagram linking source/target accounts, amounts, dates, and clickable exhibit references. Flags breaks in fund flow. |
+| `MoneyTrail.tsx` | 104 | Task 7 container: in the document, the compiled Mermaid diagram with zoom toggles (Fit / true 100%), source inspector drawer, and step timeline; in the tour, delegates to `tour/MoneyTrailPlayer.tsx`. |
+| `MermaidDiagram.tsx` | 145 | Compiles Mermaid diagram strings to inline SVGs (flagged `classDef` re-themed per variant). Tries primary run-supplied source first, falls back to generated source on failure, reports settlement to UI context (document only), sizes the SVG for `zoom`, and hands the mounted SVG to `onReady`. |
+| `MoneyTrailTimeline.tsx` | 99 | Step-by-step numbered breakdown beneath diagram linking source/target accounts, amounts, dates, and clickable exhibit references. Flags breaks in fund flow. Optional `activeStep` / `onStepPreview` / `onStepSelect` sync it with the tour's money trail player. |
+| `tour/MoneyTrailPlayer.tsx` | 293 | Tour-only money trail player: playback controls, step pills with progress, Animate override for reduced motion, keyboard-operable canvas, and a synced timeline. See `doc/frontend/README.md` §10.6. |
 | `ExhibitsTable.tsx` | 131 | Task 8 exhibit schedule workpaper table. Features record IDs, source tables, evidentiary notes, duplicate flags, and live estate verification badges. |
 | `ReconciliationBlock.tsx` | 88 | Task 9 arithmetic table: verifies claimed amount equals cited exhibit sum within 2% tolerance. Displays delta, percentage variance, and per-table breakdown. |
 | `AdversarialReview.tsx` | 39 | Task 10 two-panel "careo": side-by-side juxtaposition of challenger defense argument against evidence justifying why the finding held. |
@@ -172,7 +173,8 @@ sequenceDiagram
 | `normalize.ts` | 222 | Lenient ingestion parser. Guarantees a fully typed `CaseFileDocument` by substituting nulls/empty arrays for missing properties without throwing. | `normalizeCaseFile(raw)`, `NormalizeResult` |
 | `validate.ts` | 391 | 1:1 TypeScript port of `validate_format.py::validate_structure` plus renderer quality checks (`collectWarnings`). | `validateStructure(raw)`, `collectWarnings(view)`, `countWords(text)`, `pyRepr(val)` |
 | `derive.ts` | 415 | Pure deterministic view model transformer. Resolves entities, builds trail views, and mirrors Python per-table reconciliation arithmetic. | `buildCaseFileView(doc, estate)`, `computePerTableSubtotals()`, `pickBestMatch()` |
-| `mermaid.ts` | 119 | Serialized Mermaid SVG renderer with singleton configuration and deterministic ID generation (`polar-case-file`). Generates fallback flowcharts from trail steps. | `loadMermaid()`, `renderMermaidSvg()`, `buildMermaidFromTrail()` |
+| `mermaid.ts` | 201 | Serialized Mermaid SVG renderer with singleton configuration (root-level `htmlLabels: false`) and deterministic ID generation (`polar-case-file`). Renders inside an off-screen `.mermaid-sandbox` so global CSS transitions cannot corrupt layout measurement. Generates fallback flowcharts from trail steps. | `loadMermaid()`, `renderMermaidSvg()`, `buildMermaidFromTrail()`, `themeDiagramSource()`, `readViewBoxSize()` |
+| `trailScene.ts` | 151 | Indexes a mounted money-trail SVG for the tour player: nodes, edges, labels, edge→step mapping, and an overlay group. | `buildTrailScene(svg, trail)`, `TrailScene`, `createSvgElement()` |
 | `toHtml.ts` | 54 | Generates fully self-contained HTML export: inlines stylesheets, expands collapsibles, strips interactive chrome, and embeds original raw JSON. | `buildStandaloneHtml(params)`, `BuildStandaloneHtmlParams` |
 | `toMarkdown.ts` | 292 | Generates GitHub-flavored Markdown dossier with embedded ````mermaid` syntax, formatted tables, and reconciliation summaries. | `buildCaseFileMarkdown(view, options)`, `BuildMarkdownOptions` |
 | `download.ts` | 14 | Client-side in-memory text/blob download trigger using ephemeral object URLs. | `downloadTextFile(filename, content, mime)` |
