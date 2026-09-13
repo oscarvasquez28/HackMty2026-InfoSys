@@ -396,9 +396,9 @@ async def generate_investigation_stream(
     case_data: Dict[str, Any],
 ) -> AsyncGenerator[str, None]:
     """
-    Connects to n8n webhook if configured; otherwise generates a high-fidelity
-    forensic auditor reasoning stream with SSE event format, and persists the
-    final verdict into PostgreSQL and memory.
+    Generates a deterministic high-fidelity forensic auditor reasoning stream
+    with SSE event format, concluding with the forensic verdict persisted
+    into PostgreSQL and memory.
     """
     filter_res = case_data.get("filter_results") or {}
     metrics = case_data.get("metrics") or filter_res.get("metrics") or {}
@@ -413,68 +413,6 @@ async def generate_investigation_stream(
     pruned_count = metrics.get("pruned_edges_count", 0)
     pruning_pct = metrics.get("pruning_efficiency_pct", 0.0)
     volume_mxn = metrics.get("suspicious_volume_mxn", 0.0)
-
-    # Attempt external n8n webhook proxy if configured
-    if settings.N8N_WEBHOOK_URL:
-        try:
-            verdict_received_from_n8n: Optional[Dict[str, Any]] = None
-            async with httpx.AsyncClient(timeout=httpx.Timeout(connect=5.0, read=15.0, write=5.0, pool=5.0)) as client:
-                async with client.stream(
-                    "POST",
-                    settings.N8N_WEBHOOK_URL,
-                    json={"case_id": str(case_id), "metrics": metrics, "patterns": patterns, "subgraph": subgraph},
-                ) as response:
-                    content_type = response.headers.get("content-type", "")
-                    if response.status_code == 200:
-                        if "text/event-stream" in content_type:
-                            current_event: Optional[str] = None
-                            async for line in response.aiter_lines():
-                                line_str = line.strip()
-                                if not line_str:
-                                    continue
-                                if line_str.startswith("event:"):
-                                    current_event = line_str.split(":", 1)[1].strip()
-                                    yield f"{line_str}\n"
-                                elif line_str.startswith("data:"):
-                                    yield f"{line_str}\n\n"
-                                    if current_event == "verdict":
-                                        try:
-                                            verdict_received_from_n8n = json.loads(line_str.split(":", 1)[1].strip())
-                                        except Exception:
-                                            pass
-                                    current_event = None
-
-                            if verdict_received_from_n8n:
-                                await persist_case_verdict(case_id, verdict_received_from_n8n)
-                                return
-                        else:
-                            # Standard JSON response handling
-                            raw_body = await response.aread()
-                            if raw_body:
-                                try:
-                                    n8n_json = json.loads(raw_body.decode("utf-8"))
-                                    # If n8n returned thought steps or a verdict payload directly
-                                    if isinstance(n8n_json, dict):
-                                        # Yield thoughts if n8n returned thought steps list
-                                        for thought in n8n_json.get("thoughts", []):
-                                            yield f"event: thought\ndata: {json.dumps(thought)}\n\n"
-                                            await asyncio.sleep(0.1)
-
-                                        # Extract verdict payload if nested or use root dict if it contains verdict keys
-                                        verdict_data = n8n_json.get("verdict")
-                                        if not verdict_data and any(k in n8n_json for k in ("risk_level", "fraud_type", "legal_recommendation", "verdict")):
-                                            verdict_data = n8n_json
-
-                                        if verdict_data and isinstance(verdict_data, dict):
-                                            if "case_id" not in verdict_data:
-                                                verdict_data["case_id"] = str(case_id)
-                                            await persist_case_verdict(case_id, verdict_data)
-                                            yield f"event: verdict\ndata: {json.dumps(verdict_data)}\n\n"
-                                            return
-                                except Exception as json_exc:
-                                    logger.warning(f"Could not parse n8n JSON response: {json_exc}")
-        except Exception as exc:
-            logger.warning(f"n8n webhook unavailable ({exc}), falling back to internal reasoning simulation.")
 
     # High-Fidelity Forensic Auditor Chain of Thought Steps
     thought_steps = [
