@@ -210,7 +210,7 @@ Prefix: `/api/v1/investigations` | Tag: `investigations`
 | `GET` | `/{case_id}/stream` | Path: `case_id: uuid.UUID` | `text/event-stream` (`thought`, `verdict`) | `200 OK`<br/>`404 Not Found` | Real-time SSE reasoning stream; persists completed verdict to DB. |
 | `POST` | `/audit-estate` | JSON `EstateAuditRequest` | `EstateAuditResponse` | `200 OK`<br/>`404 Not Found` | Executes zero-network deterministic audit against SQLite estate file or PostgreSQL. |
 | `POST` | `/audit-estate/stream` | JSON `EstateAuditRequest` | `text/event-stream` (`thought`, `finding_reviewed`, `lead_reviewed`, `verdict`, `audit_completed`) | `200 OK` | SSE stream of estate audit with one-by-one finding/lead review. |
-| `GET` | `/audit-estate/stream` | Query: `estate_path`, `seed`, `company_rfc`, `company_name`, `n8n_url` | `text/event-stream` | `200 OK` | Browser EventSource-compatible GET SSE stream for estate audit. |
+| `GET` | `/audit-estate/stream` | Query: `estate_path`, `seed`, `company_rfc`, `company_name`, `n8n_url` (pass `"offline"` to skip all n8n calls and force the deterministic engine) | `text/event-stream` | `200 OK` | Browser EventSource-compatible GET SSE stream for estate audit. |
 
 ---
 
@@ -221,7 +221,8 @@ Prefix: `/api/v1/estates` | Tag: `estates`
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | `POST` | `/upload` | Multipart `file: UploadFile` (`.db`, `.csv`), Form: `seed`, `company_name`, `company_rfc`, `audit: bool` | `EstateAuditResponse` (if `audit=True`) or `dict` (`READY`, `estate_id`, `estate_path`, `size_bytes`) | `200 OK`<br/>`400 Bad Request`<br/>`500 Internal Error` | Uploads SQLite `.db` or estate archive. If `audit=True`, immediately audits estate. |
 | `POST` | `/upload-stream` | Multipart `file: UploadFile`, Form: `seed`, `company_name`, `company_rfc` | `text/event-stream` | `200 OK`<br/>`400 Bad Request` | Saves uploaded estate and immediately streams SSE reasoning progress. |
-| `GET` | `/stream` | Query: `estate_path`, `seed`, `company_rfc`, `company_name`, `n8n_url` | `text/event-stream` | `200 OK` | EventSource GET endpoint streaming estate audit events. |
+| `GET` | `/stream` | Query: `estate_path`, `seed`, `company_rfc`, `company_name`, `n8n_url` (pass `"offline"` to skip all n8n calls and force the deterministic engine) | `text/event-stream` | `200 OK` | EventSource GET endpoint streaming estate audit events. |
+| `POST` | `/generate-dataset` | Query: `seed` (opt, random when omitted) | `application/zip` binary (`estate.db` + `ground_truth.json` + `README.txt`); headers `Content-Disposition`, `X-Dataset-Seed` | `200 OK`<br/>`422 Unprocessable`<br/>`500 Internal Error` | Runs `scripts/seed_estate.py` (`EstateSeeder`) in a temp dir and returns the seeded dataset as a downloadable ZIP. |
 
 ---
 

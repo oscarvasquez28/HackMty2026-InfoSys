@@ -139,7 +139,7 @@ sequenceDiagram
 | :--- | :--- | :--- |
 | `CaseFileWorkspace.tsx` | 91 | Primary orchestrator at `/investigate`. Subscribes to `InvestigateSessionProvider`, runs derivation, controls validation drawer, and updates document title to `case-file-seed-<seed>`. |
 | `CaseFileDocument.tsx` | 101 | Root print/export paper container (`#case-file-document`, `.case-paper`). Assembles sections 1–5 in required sequence with contents navigation. |
-| `CaseFileSourcePanel.tsx` | 317 | Ingestion hub for blank workspace. Supports fixture selection (`sample`, `no-findings`, `edge-cases`, `dense-trail`), drag-drop JSON/DB/CSV, live SSE audit modal trigger, and API loading. |
+| `CaseFileSourcePanel.tsx` | 317 | Ingestion hub for blank workspace. Supports fixture selection (`sample`, `no-findings`, `edge-cases`, `dense-trail`), drag-drop JSON/DB/CSV, live SSE audit modal trigger, and API loading. Hosts the `AnalysisModeSwitch` (Offline = deterministic only, Online = n8n enrichment); the chosen mode is held in `InvestigateSessionProvider.auditMode` and forwarded as `n8n_url=offline` on the SSE stream URL when Offline is selected. |
 | `CaseFileUiContext.tsx` | 85 | Scoped React Context tracking section expand/collapse states and diagram rendering statuses (`diagramsSettled` gating for exports). |
 | `CaseHeader.tsx` | 90 | Task 1 header: company name, RFC, audit period dates, metric cards (seed, LLM calls, MXN cost, wall-clock seconds, determinism badge), and cost-by-role chips. |
 | `ExecutiveSummary.tsx` | 64 | Task 2 summary: plain-language synopsis narrative accompanied by 4 synoptic metric cards (Findings, Confidence, Exposure, Closed Leads). |

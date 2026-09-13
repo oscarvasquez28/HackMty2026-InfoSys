@@ -16,6 +16,7 @@ import { EstateIssuesPanel } from "@/components/estate/EstateIssuesPanel";
 import { EstateExportBar } from "@/components/estate/EstateExportBar";
 import { ESTATE_TABLE_ORDER } from "@/lib/estate/schema";
 import { parseSqliteFile } from "@/lib/estate/sqlite";
+import { downloadTextFile } from "@/lib/caseFile/download";
 import type { SourceTable } from "@/types/caseFile";
 
 const SAMPLE_FILES = ["vendors.csv", "estate.partial.json", "cfdi-INV-00101.xml", "cfdi-INV-00102.xml"];
@@ -35,6 +36,8 @@ export const DataEstateWorkspace: React.FC = () => {
   const { caseFile, estate } = useInvestigateSession();
   const [selectedTable, setSelectedTable] = useState<SourceTable>("vendors");
   const [loadedCaseFileNotice, setLoadedCaseFileNotice] = useState<string | null>(null);
+  const [isGeneratingDataset, setIsGeneratingDataset] = useState(false);
+  const [generateDatasetError, setGenerateDatasetError] = useState<string | null>(null);
 
   const handleLoadSample = async () => {
     const files = await Promise.all(
@@ -48,6 +51,26 @@ export const DataEstateWorkspace: React.FC = () => {
     if (caseFiles.length > 0) {
       caseFile.loadRaw(caseFiles[0].raw, { kind: "estate-page", label: `From Data estate page: ${caseFiles[0].fileName}` });
       setLoadedCaseFileNotice(caseFiles[0].fileName);
+    }
+  };
+
+  const handleGenerateDataset = async () => {
+    setIsGeneratingDataset(true);
+    setGenerateDatasetError(null);
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+      const response = await fetch(`${apiUrl}/api/v1/estates/generate-dataset`, { method: "POST" });
+      if (!response.ok) {
+        throw new Error(`Backend responded ${response.status}`);
+      }
+      const bytes = new Uint8Array(await response.arrayBuffer());
+      const disposition = response.headers.get("Content-Disposition") ?? "";
+      const filename = disposition.match(/filename="?([^";]+)"?/)?.[1] ?? "estate_dataset.zip";
+      downloadTextFile(filename, bytes, "application/zip");
+    } catch (error) {
+      setGenerateDatasetError(error instanceof Error ? error.message : "Dataset generation failed.");
+    } finally {
+      setIsGeneratingDataset(false);
     }
   };
 
@@ -134,9 +157,16 @@ export const DataEstateWorkspace: React.FC = () => {
             isProcessing={estate.status === "processing"}
             onFiles={handleFiles}
             onLoadSample={handleLoadSample}
+            onGenerateDataset={handleGenerateDataset}
+            isGeneratingDataset={isGeneratingDataset}
             onClear={estate.clear}
             hasFiles={estate.files.length > 0}
           />
+          {generateDatasetError && (
+            <p className="mt-3 rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">
+              Could not generate the dataset: {generateDatasetError} Make sure the backend is running.
+            </p>
+          )}
         </section>
 
         <section className="mt-8">

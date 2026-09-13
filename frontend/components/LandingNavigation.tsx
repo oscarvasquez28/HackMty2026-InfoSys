@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { ArrowUpRight, Menu, X } from "lucide-react";
-import { PolarMark } from "@/components/PolarMark";
+import { PolarLogo } from "@/components/PolarLogo";
 
 const navigationItems = [
   { label: "Platform", href: "#platform" },
@@ -30,11 +30,10 @@ export const LandingNavigation: React.FC = () => {
       >
         <a
           href="#top"
-          className="flex min-h-11 items-center gap-2.5 rounded-md text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-4 focus-visible:ring-offset-background"
+          className="flex min-h-11 items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-4 focus-visible:ring-offset-background"
           aria-label="Polar home"
         >
-          <PolarMark className="h-6 w-6 text-brand-500" />
-          <span className="text-base font-semibold tracking-[-0.02em]">polar</span>
+          <PolarLogo className="h-7 w-auto" />
         </a>
 
         <div className="hidden items-center gap-8 md:flex">

@@ -4,7 +4,7 @@
 // actions. Exports stay disabled until every diagram in the printable document has rendered.
 
 import React from "react";
-import { FileCode2, FileJson, FileText, Plus, Printer, Undo2 } from "lucide-react";
+import { FileArchive, FileCode2, FileJson, FileText, Plus, Printer, Undo2 } from "lucide-react";
 import type { CaseFileView } from "@/lib/caseFile/derive";
 import type { UseCaseFileExportsReturn } from "@/hooks/useCaseFileExports";
 import { formatPesos } from "@/lib/utils";
@@ -21,6 +21,7 @@ export const TourConcluded: React.FC<TourConcludedProps> = ({ view, exports, onR
   const { summary } = view;
   const company = view.document.header?.company || "this company";
   const actions: Array<{ label: string; detail: string; icon: typeof Printer; onClick: () => void }> = [
+    { label: "All (.zip)", detail: "JSON + HTML + Markdown in one archive", icon: FileArchive, onClick: exports.downloadZip },
     { label: "Print / PDF", detail: "Full document, print layout", icon: Printer, onClick: exports.printDocument },
     { label: "HTML", detail: "Self-contained file with source JSON", icon: FileCode2, onClick: exports.downloadHtml },
     { label: "Markdown", detail: "Money trails as mermaid fences", icon: FileText, onClick: exports.downloadMarkdown },

@@ -21,7 +21,7 @@ export const EstateExportBar: React.FC<EstateExportBarProps> = ({
   hasEstate,
 }) => {
   const router = useRouter();
-  const { caseFile } = useInvestigateSession();
+  const { caseFile, auditMode } = useInvestigateSession();
   const stream = useEstateAuditStream();
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -37,7 +37,7 @@ export const EstateExportBar: React.FC<EstateExportBarProps> = ({
     try {
       const bytes = await exportSqlite();
       const blob = new Blob([bytes as BlobPart], { type: "application/vnd.sqlite3" });
-      await stream.startAuditWithBlob(blob);
+      await stream.startAuditWithBlob(blob, undefined, undefined, auditMode);
     } catch (e) {
       console.error("Error launching audit stream:", e);
     }

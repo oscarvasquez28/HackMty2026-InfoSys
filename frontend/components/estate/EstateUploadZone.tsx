@@ -4,18 +4,28 @@
 // Everything is processed locally in this browser tab -- see DataEstateWorkspace's reload notice.
 
 import React, { useCallback, useRef, useState } from "react";
-import { FileText, Upload } from "lucide-react";
+import { DatabaseZap, FileText, Loader2, Upload } from "lucide-react";
 import { MAX_FILES_PER_BATCH, MAX_ESTATE_FILE_BYTES } from "@/lib/estate/schema";
 
 interface EstateUploadZoneProps {
   isProcessing: boolean;
   onFiles: (files: File[]) => void;
   onLoadSample: () => void;
+  onGenerateDataset: () => void;
+  isGeneratingDataset: boolean;
   onClear: () => void;
   hasFiles: boolean;
 }
 
-export const EstateUploadZone: React.FC<EstateUploadZoneProps> = ({ isProcessing, onFiles, onLoadSample, onClear, hasFiles }) => {
+export const EstateUploadZone: React.FC<EstateUploadZoneProps> = ({
+  isProcessing,
+  onFiles,
+  onLoadSample,
+  onGenerateDataset,
+  isGeneratingDataset,
+  onClear,
+  hasFiles,
+}) => {
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const openPicker = useCallback(() => inputRef.current?.click(), []);
@@ -72,6 +82,19 @@ export const EstateUploadZone: React.FC<EstateUploadZoneProps> = ({ isProcessing
         <button type="button" onClick={onLoadSample} disabled={isProcessing} className="app-button flex items-center gap-1.5 text-xs">
           <FileText className="h-3.5 w-3.5" aria-hidden="true" />
           Load sample estate (illustrative)
+        </button>
+        <button
+          type="button"
+          onClick={onGenerateDataset}
+          disabled={isProcessing || isGeneratingDataset}
+          className="app-button flex items-center gap-1.5 text-xs"
+        >
+          {isGeneratingDataset ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+          ) : (
+            <DatabaseZap className="h-3.5 w-3.5" aria-hidden="true" />
+          )}
+          {isGeneratingDataset ? "Generating dataset…" : "Generate dataset (seeder)"}
         </button>
         {hasFiles && (
           <button type="button" onClick={onClear} className="app-button text-xs">

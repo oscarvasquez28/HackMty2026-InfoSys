@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import type { ThoughtEvent, VerdictEvent, AgentStatuses, AgentId } from "@/types/investigation";
+import type { ThoughtEvent, VerdictEvent, AgentStatuses, AgentId, AuditMode } from "@/types/investigation";
 
 export interface EstateAuditStreamState {
   isStreaming: boolean;
@@ -13,8 +13,8 @@ export interface EstateAuditStreamState {
   error: string | null;
   currentPhase: string;
   agentStatuses: AgentStatuses;
-  startAuditWithBlob: (blob: Blob, seed?: number, companyName?: string) => Promise<void>;
-  startAuditWithPath: (estatePath: string, seed?: number, companyName?: string) => void;
+  startAuditWithBlob: (blob: Blob, seed?: number, companyName?: string, mode?: AuditMode) => Promise<void>;
+  startAuditWithPath: (estatePath: string, seed?: number, companyName?: string, mode?: AuditMode) => void;
   resetAudit: () => void;
 }
 
@@ -56,14 +56,17 @@ export function useEstateAuditStream(): EstateAuditStreamState {
   }, []);
 
   const startAuditWithPath = useCallback(
-    (estatePath: string, seed: number = 1, companyName: string = "Audited Company S.A. de C.V.") => {
+    (estatePath: string, seed: number = 1, companyName: string = "Audited Company S.A. de C.V.", mode: AuditMode = "online") => {
       resetAudit();
       setIsStreaming(true);
-      setCurrentPhase("Connecting to deterministic engine...");
+      setCurrentPhase(mode === "offline" ? "Connecting to deterministic engine (offline mode)..." : "Connecting to audit engine...");
 
-      const url = `${API_BASE}/api/v1/estates/stream?estate_path=${encodeURIComponent(
+      let url = `${API_BASE}/api/v1/estates/stream?estate_path=${encodeURIComponent(
         estatePath
       )}&seed=${seed}&company_name=${encodeURIComponent(companyName)}`;
+      if (mode === "offline") {
+        url += "&n8n_url=offline";
+      }
 
       const es = new EventSource(url);
       eventSourceRef.current = es;
@@ -150,7 +153,7 @@ export function useEstateAuditStream(): EstateAuditStreamState {
   );
 
   const startAuditWithBlob = useCallback(
-    async (blob: Blob, seed: number = 1, companyName: string = "Audited Company S.A. de C.V.") => {
+    async (blob: Blob, seed: number = 1, companyName: string = "Audited Company S.A. de C.V.", mode: AuditMode = "online") => {
       resetAudit();
       setIsStreaming(true);
       setCurrentPhase("Preparing and uploading database...");
@@ -177,7 +180,7 @@ export function useEstateAuditStream(): EstateAuditStreamState {
           throw new Error("The backend did not return the database path.");
         }
 
-        startAuditWithPath(path, seed, companyName);
+        startAuditWithPath(path, seed, companyName, mode);
       } catch (err: any) {
         setIsStreaming(false);
         setError(err?.message || "Could not connect to the server.");

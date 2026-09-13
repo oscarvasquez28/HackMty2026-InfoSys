@@ -4,6 +4,7 @@ import React, { useCallback, useRef, useState } from "react";
 import Link from "next/link";
 import { Database, FileText, Play, Sparkles, Upload } from "lucide-react";
 import { useInvestigateSession } from "@/components/investigate/InvestigateSessionProvider";
+import { AnalysisModeSwitch } from "@/components/AnalysisModeSwitch";
 import { useEstateAuditStream } from "@/hooks/useEstateAuditStream";
 import { EstateAuditStreamModal } from "@/components/estate/EstateAuditStreamModal";
 import type { FixtureId } from "@/hooks/useCaseFileSource";
@@ -34,7 +35,7 @@ export const CaseFileSourcePanel: React.FC<CaseFileSourcePanelProps> = ({
   apiEnabled,
   estateNote,
 }) => {
-  const { caseFile, estate } = useInvestigateSession();
+  const { caseFile, estate, auditMode, setAuditMode } = useInvestigateSession();
   const stream = useEstateAuditStream();
 
   const [isDragging, setIsDragging] = useState(false);
@@ -47,9 +48,9 @@ export const CaseFileSourcePanel: React.FC<CaseFileSourcePanelProps> = ({
   const handleAuditBlob = useCallback(
     async (blob: Blob, seed: number = 1, companyName: string = "Audited Company S.A. de C.V.") => {
       setModalOpen(true);
-      await stream.startAuditWithBlob(blob, seed, companyName);
+      await stream.startAuditWithBlob(blob, seed, companyName, auditMode);
     },
-    [stream]
+    [stream, auditMode]
   );
 
   const handleLiveAuditFromEstate = useCallback(async () => {
@@ -70,14 +71,14 @@ export const CaseFileSourcePanel: React.FC<CaseFileSourcePanelProps> = ({
         throw new Error("Could not find /samples/estate/estate.db");
       }
       const blob = await res.blob();
-      await stream.startAuditWithBlob(blob, 1, "Audited Company S.A. de C.V.");
+      await stream.startAuditWithBlob(blob, 1, "Audited Company S.A. de C.V.", auditMode);
     } catch (e) {
       console.error("Error loading sample estate for audit:", e);
       // Fallback to sample fixture
       onLoadFixture("sample");
       setModalOpen(false);
     }
-  }, [stream, onLoadFixture]);
+  }, [stream, onLoadFixture, auditMode]);
 
   const handleFiles = useCallback(
     async (files: FileList | null) => {
@@ -138,6 +139,15 @@ export const CaseFileSourcePanel: React.FC<CaseFileSourcePanelProps> = ({
           Run the deterministic forensic audit in real time connected to the backend via SSE, or load
           a previous verdict file (<code className="font-mono text-xs">submission.json</code>).
         </p>
+
+        {/* Analysis mode: online (n8n enrichment) vs offline (deterministic only) */}
+        <div className="mt-6">
+          <AnalysisModeSwitch
+            mode={auditMode}
+            onChange={setAuditMode}
+            disabled={stream.isStreaming}
+          />
+        </div>
 
         {/* Action Buttons */}
         <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -234,6 +244,10 @@ export const CaseFileSourcePanel: React.FC<CaseFileSourcePanelProps> = ({
           Want to inspect or assemble tables individually?{" "}
           <Link href="/investigate/data" className="text-brand-300 hover:text-brand-100 underline">
             Open Data Estate page
+          </Link>{" "}
+          · Revisit a past verdict in{" "}
+          <Link href="/investigate/history" className="text-brand-300 hover:text-brand-100 underline">
+            Audit history
           </Link>
         </p>
 

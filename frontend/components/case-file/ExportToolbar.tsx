@@ -7,7 +7,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { FileCode2, FileJson, FileText, Printer } from "lucide-react";
+import { FileArchive, FileCode2, FileJson, FileText, Printer } from "lucide-react";
 import { useCaseFileExports } from "@/hooks/useCaseFileExports";
 import type { CaseFileView } from "@/lib/caseFile/derive";
 import type { LoadedCaseFile } from "@/hooks/useCaseFileSource";
@@ -33,7 +33,7 @@ interface ExportToolbarProps {
 }
 
 export const ExportToolbar: React.FC<ExportToolbarProps> = ({ loaded, view, issues, estateChecked, showValidation, onToggleValidation }) => {
-  const { ready, buildMarkdown, buildHtml, printDocument, downloadHtml, downloadMarkdown, downloadJson } = useCaseFileExports(
+  const { ready, buildMarkdown, buildHtml, printDocument, downloadHtml, downloadMarkdown, downloadJson, downloadZip } = useCaseFileExports(
     loaded,
     view,
     estateChecked
@@ -51,6 +51,21 @@ export const ExportToolbar: React.FC<ExportToolbarProps> = ({ loaded, view, issu
     };
   }, [buildMarkdown, buildHtml, issues]);
 
+  // Auto-download the full export bundle once per loaded case file, as soon as every diagram has
+  // settled. The ref guard also absorbs React StrictMode's double-effect run in dev.
+  const autoDownloadedRef = React.useRef<number | null>(null);
+  React.useEffect(() => {
+    if (!ready || autoDownloadedRef.current === loaded.loadId) return;
+    autoDownloadedRef.current = loaded.loadId;
+    try {
+      downloadZip();
+    } catch (error) {
+      autoDownloadedRef.current = null;
+      // eslint-disable-next-line no-console
+      console.warn("[case-file] automatic bundle download failed:", error);
+    }
+  }, [ready, loaded.loadId, downloadZip]);
+
   const formatChipClass =
     errorCount > 0
       ? "border-status-danger/40 bg-status-danger/10 text-status-danger"
@@ -63,6 +78,7 @@ export const ExportToolbar: React.FC<ExportToolbarProps> = ({ loaded, view, issu
       : "Format check: PASS";
 
   const exportButtons: Array<{ label: string; icon: typeof Printer; onClick: () => void }> = [
+    { label: "All (.zip)", icon: FileArchive, onClick: downloadZip },
     { label: "Print / PDF", icon: Printer, onClick: printDocument },
     { label: "HTML", icon: FileCode2, onClick: downloadHtml },
     { label: "Markdown", icon: FileText, onClick: downloadMarkdown },

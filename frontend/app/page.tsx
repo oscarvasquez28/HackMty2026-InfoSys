@@ -11,6 +11,7 @@ import {
 import { IcebergVisual } from "@/components/IcebergVisual";
 import { InvestigationPreview } from "@/components/InvestigationPreview";
 import { LandingNavigation } from "@/components/LandingNavigation";
+import { PolarLogo } from "@/components/PolarLogo";
 import { PolarMark } from "@/components/PolarMark";
 
 const capabilities = [
@@ -191,7 +192,7 @@ function LandingPageContent() {
             <div className="relative overflow-hidden rounded-xl border border-surface-border bg-surface px-6 py-16 sm:px-12 sm:py-20 lg:px-20">
               <div className="absolute -right-20 -top-36 h-80 w-80 rounded-full border border-brand-500/10" />
               <div className="absolute -right-5 -top-20 h-56 w-56 rounded-full border border-brand-500/15" />
-              <PolarMark className="h-10 w-10 text-brand-500" />
+              <PolarMark className="h-10 w-auto" />
               <h2 className="mt-8 max-w-3xl text-balance text-3xl font-semibold tracking-[-0.05em] text-foreground sm:text-5xl">
                 The risk is rarely on the surface. Your investigation should go deeper.
               </h2>
@@ -209,9 +210,8 @@ function LandingPageContent() {
 
       <footer className="border-t border-surface-border/70">
         <div className="mx-auto flex max-w-7xl flex-col gap-5 px-5 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-          <a href="#top" className="flex min-h-11 w-fit items-center gap-2.5 text-sm font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
-            <PolarMark className="h-5 w-5 text-brand-500" />
-            polar
+          <a href="#top" aria-label="Polar home" className="flex min-h-11 w-fit items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
+            <PolarLogo className="h-6 w-auto" />
           </a>
           <p className="text-xs leading-5 text-muted">Financial pattern intelligence for focused investigations.</p>
           <a href="#top" className="flex min-h-11 w-fit items-center text-xs text-muted transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">Back to top</a>

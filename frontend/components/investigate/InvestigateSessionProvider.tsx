@@ -4,13 +4,16 @@
 // lands, the loaded data estate) survive navigation between /investigate and /investigate/data
 // within the same browser tab, but not a reload -- there is no server-side persistence by design.
 
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext, useState } from "react";
 import { useCaseFileSource, type UseCaseFileSourceReturn } from "@/hooks/useCaseFileSource";
 import { useEstate, type UseEstateReturn } from "@/hooks/useEstate";
+import type { AuditMode } from "@/types/investigation";
 
 interface InvestigateSessionValue {
   caseFile: UseCaseFileSourceReturn;
   estate: UseEstateReturn;
+  auditMode: AuditMode;
+  setAuditMode: (mode: AuditMode) => void;
 }
 
 const InvestigateSessionContext = createContext<InvestigateSessionValue | null>(null);
@@ -18,7 +21,12 @@ const InvestigateSessionContext = createContext<InvestigateSessionValue | null>(
 export const InvestigateSessionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const caseFile = useCaseFileSource();
   const estate = useEstate();
-  return <InvestigateSessionContext.Provider value={{ caseFile, estate }}>{children}</InvestigateSessionContext.Provider>;
+  const [auditMode, setAuditMode] = useState<AuditMode>("online");
+  return (
+    <InvestigateSessionContext.Provider value={{ caseFile, estate, auditMode, setAuditMode }}>
+      {children}
+    </InvestigateSessionContext.Provider>
+  );
 };
 
 export function useInvestigateSession(): InvestigateSessionValue {

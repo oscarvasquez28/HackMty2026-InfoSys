@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "clsx": "^2.1.1",
+    "fflate": "0.8.2",
     "lucide-react": "^0.363.0",
     "mermaid": "11.17.2",
     "next": "^14.2.3",

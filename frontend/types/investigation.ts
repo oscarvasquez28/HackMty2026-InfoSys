@@ -112,6 +112,11 @@ export interface UploadResponse {
 export const AGENT_IDS = ["ORCHESTRATOR", "DATA_VALIDATION", "CIRCULAR_FLOWS", "PASSTHROUGH", "RISK_REVIEW"] as const;
 export type AgentId = typeof AGENT_IDS[number];
 export type ReviewSource = "DETERMINISTIC" | "EXTERNAL" | "SIMULATION";
+
+// Audit execution mode selected on the start screen: "online" lets the backend call the
+// n8n enrichment webhook; "offline" sends the "offline" sentinel so every n8n call is
+// skipped and only the deterministic local engine runs.
+export type AuditMode = "online" | "offline";
 export type ReviewAction = "started" | "delegated" | "tool" | "finding" | "returned" | "synthesizing" | "fallback";
 export type AgentStatus = "waiting" | "available" | "reviewing" | "returned" | "interrupted" | "complete";
 export type AgentStatuses = Record<AgentId, AgentStatus>;

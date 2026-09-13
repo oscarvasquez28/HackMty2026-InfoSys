@@ -25,7 +25,7 @@ The **Data Estate Workspace** (`frontend/app/investigate/data/page.tsx` renderin
    - Acts as the browser-side counterpart to the offline Python validator (`validate_format.py::validate_against_estate`).
    - Cross-checks finding exhibits cited in loaded case files against the loaded estate, validating record existence and reconciling peso totals within a 2% tolerance threshold (`PESO_TOLERANCE = 0.02`).
 5. **Real-Time Forensic Audit Streaming**:
-   - Exports the normalized in-memory estate into an in-memory SQLite binary (`Uint8Array`), uploads the binary to the backend ingestion endpoint (`POST /api/v1/estates/upload`), and opens a Server-Sent Events (SSE) stream (`GET /api/v1/estates/stream`) inside a dedicated live modal (`EstateAuditStreamModal.tsx`), orchestrating live multi-agent deliberation.
+   - Exports the normalized in-memory estate into an in-memory SQLite binary (`Uint8Array`), uploads the binary to the backend ingestion endpoint (`POST /api/v1/estates/upload`), and opens a Server-Sent Events (SSE) stream (`GET /api/v1/estates/stream`) inside a dedicated live modal (`EstateAuditStreamModal.tsx`), orchestrating live multi-agent deliberation. Honors `InvestigateSessionProvider.auditMode`: when set to `offline` the stream URL carries `n8n_url=offline`, which makes the backend skip every n8n call and run the deterministic engine only.
 
 ---
 
@@ -163,7 +163,7 @@ The estate UI is organized into 8 modular client components styled with Polar's 
 | Component | Path | Core Responsibility |
 | :--- | :--- | :--- |
 | `DataEstateWorkspace` | `frontend/components/estate/DataEstateWorkspace.tsx` | Top-level workspace container. Connects to `InvestigateSessionProvider`, coordinates sample loading, handles file drops, exposes window debug tools in development, and renders the 5 estate sections. |
-| `EstateUploadZone` | `frontend/components/estate/EstateUploadZone.tsx` | Accessible drag-and-drop zone and file picker. Enforces 50-file batch limits and 50 MB file thresholds. Provides buttons to load bundled illustrative samples or clear the estate. |
+| `EstateUploadZone` | `frontend/components/estate/EstateUploadZone.tsx` | Accessible drag-and-drop zone and file picker. Enforces 50-file batch limits and 50 MB file thresholds. Provides buttons to load bundled illustrative samples, generate a fresh seeded dataset via `POST /api/v1/estates/generate-dataset` (downloads a ZIP with `estate.db` + `ground_truth.json`), or clear the estate. |
 | `EstateFileList` | `frontend/components/estate/EstateFileList.tsx` | Comprehensive table of uploaded files displaying filename, detected format, row contribution counts, error/warning tallies, status badges, manual table assignment selectors (`AssignTableControl`), and deletion triggers. |
 | `EstateTableSummary` | `frontend/components/estate/EstateTableSummary.tsx` | 8-card responsive metric grid (one per table). Summarizes row volume, error/warning counts, and calculated sums for amount-bearing columns ($\Sigma\text{ total}$, $\Sigma\text{ debit}$, $\Sigma\text{ amount}$, etc.). Clicking a card selects it for detailed preview. |
 | `EstateTablePreview` | `frontend/components/estate/EstateTablePreview.tsx` | Paginated (50 rows/page) interactive table viewer. Supports global full-text search across all row columns, an "Only rows with issues" filter toggle, and inline cell warning/error highlighting. |

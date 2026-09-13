@@ -21,7 +21,7 @@ import { TeamDecisionRoster } from "@/components/TeamDecisionRoster";
 import { VerdictCard } from "@/components/VerdictCard";
 import { REVIEW_TEAM, getAgentName } from "@/components/AgentTeam";
 import { DatasetContext } from "@/components/DatasetContext";
-import { PolarMark } from "@/components/PolarMark";
+import { PolarLogo } from "@/components/PolarLogo";
 
 type WorkspaceView = "activity" | "dataset" | "evidence";
 
@@ -105,11 +105,10 @@ export const InvestigationDashboard: React.FC = () => {
           <div className="flex min-w-0 items-center gap-4 sm:gap-6">
             <Link
               href="/"
-              className="flex min-h-11 shrink-0 items-center gap-2.5 text-base font-semibold tracking-tight"
+              className="flex min-h-11 shrink-0 items-center"
               aria-label="Polar home"
             >
-              <PolarMark className="h-6 w-6 text-brand-500" />
-              polar
+              <PolarLogo className="h-7 w-auto" />
             </Link>
             <span className="h-5 w-px bg-surface-border" aria-hidden="true" />
             <span className="truncate text-xs text-muted sm:text-sm">Investigation workspace</span>
