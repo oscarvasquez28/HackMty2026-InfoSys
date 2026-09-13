@@ -48,8 +48,15 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 
+# Database artifacts
+*.db
+*.sqlite
+*.sqlite3
+eval/generated_estates/
+
 .agents
 /data
+tmp
 
 /student-materials
 

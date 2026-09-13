@@ -17,8 +17,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api.routes.investigations import INVESTIGATION_CASES
 from backend.models.forensic import (
+    AccountMappingRecord,
+    AccountRecord,
+    CashTransactionRecord,
+    IN_MEMORY_BANKING_DATA,
     InvestigationCase,
     LegalArticleVector,
+    PartyRecord,
     SEED_LEGAL_PRECEDENTS,
     TransactionRecord,
 )
@@ -981,3 +986,328 @@ async def handle_legal_precedents_query(
         records=records,
         execution_time_ms=duration_ms,
     )
+
+
+# -----------------------------------------------------------------------------
+# Core Banking Dynamic Handlers (accounts, parties, cash_transactions, account_mappings)
+# -----------------------------------------------------------------------------
+
+@tool_registry.register(
+    TargetEntity.ACCOUNTS.value,
+    model=AccountRecord,
+    allowed_columns=set(TARGET_FIELD_WHITELISTS[TargetEntity.ACCOUNTS.value].keys()),
+    requires_case_id=False,
+    default_sort_field="acct_id",
+    default_sort_order="asc",
+    description="Core bank accounts with KYC and customer attributes.",
+    aliases=["account"],
+)
+async def query_accounts_handler(
+    request: DynamicQueryRequest,
+    meta: TargetMetadata,
+    db: Optional[AsyncSession] = None,
+) -> DynamicQueryResponse:
+    start_t = time.perf_counter()
+    if db is not None:
+        where_clauses = []
+        for f in request.filters:
+            col = getattr(AccountRecord, f.field)
+            where_clauses.append(apply_sa_operator(col, f.operator, f.value))
+
+        count_stmt = select(func.count(AccountRecord.acct_id)).where(*where_clauses)
+        total = (await db.execute(count_stmt)).scalar() or 0
+
+        stmt = select(AccountRecord).where(*where_clauses)
+        sort_col_name = request.sort_by or meta.default_sort_field
+        sort_col = getattr(AccountRecord, sort_col_name)
+        sort_order = request.sort_order.value if isinstance(request.sort_order, SortOrder) else str(request.sort_order)
+        stmt = stmt.order_by(sort_col.desc() if sort_order.lower() == "desc" else sort_col.asc())
+        stmt = stmt.limit(request.limit).offset(request.offset)
+
+        rows = (await db.execute(stmt)).scalars().all()
+        records = [
+            {
+                "acct_id": r.acct_id,
+                "dsply_nm": r.dsply_nm,
+                "type": r.type,
+                "acct_stat": r.acct_stat,
+                "acct_rptng_crncy": r.acct_rptng_crncy,
+                "prior_sar_count": r.prior_sar_count,
+                "branch_id": r.branch_id,
+                "open_dt": r.open_dt,
+                "close_dt": r.close_dt,
+                "initial_deposit": float(r.initial_deposit) if r.initial_deposit is not None else None,
+                "bank_id": r.bank_id,
+                "first_name": r.first_name,
+                "last_name": r.last_name,
+                "street_addr": r.street_addr,
+                "city": r.city,
+                "state": r.state,
+                "country": r.country,
+                "zip": r.zip,
+                "gender": r.gender,
+                "birth_date": r.birth_date,
+                "ssn": r.ssn,
+            }
+            for r in rows
+        ]
+    else:
+        raw_items = list(IN_MEMORY_BANKING_DATA["accounts"].values())
+        filtered = [
+            item for item in raw_items
+            if all(evaluate_in_memory_predicate(item, f) for f in request.filters)
+        ]
+        total = len(filtered)
+        sort_col = request.sort_by or meta.default_sort_field
+        sort_order = request.sort_order.value if isinstance(request.sort_order, SortOrder) else str(request.sort_order)
+        is_desc = sort_order.lower() == "desc"
+        filtered.sort(key=lambda x: str(x.get(sort_col) or ""), reverse=is_desc)
+        records = filtered[request.offset : request.offset + request.limit]
+
+    duration_ms = round((time.perf_counter() - start_t) * 1000, 2)
+    return DynamicQueryResponse(
+        target=meta.target,
+        case_id=None,
+        total=total,
+        count=len(records),
+        limit=request.limit,
+        offset=request.offset,
+        applied_filters=request.filters,
+        records=records,
+        execution_time_ms=duration_ms,
+    )
+
+
+@tool_registry.register(
+    TargetEntity.PARTIES.value,
+    model=PartyRecord,
+    allowed_columns=set(TARGET_FIELD_WHITELISTS[TargetEntity.PARTIES.value].keys()),
+    requires_case_id=False,
+    default_sort_field="party_id",
+    default_sort_order="asc",
+    description="Customer entities: individuals and corporate organizations.",
+    aliases=["party", "customers"],
+)
+async def query_parties_handler(
+    request: DynamicQueryRequest,
+    meta: TargetMetadata,
+    db: Optional[AsyncSession] = None,
+) -> DynamicQueryResponse:
+    start_t = time.perf_counter()
+    if db is not None:
+        where_clauses = []
+        for f in request.filters:
+            col = getattr(PartyRecord, f.field)
+            where_clauses.append(apply_sa_operator(col, f.operator, f.value))
+
+        count_stmt = select(func.count(PartyRecord.party_id)).where(*where_clauses)
+        total = (await db.execute(count_stmt)).scalar() or 0
+
+        stmt = select(PartyRecord).where(*where_clauses)
+        sort_col_name = request.sort_by or meta.default_sort_field
+        sort_col = getattr(PartyRecord, sort_col_name)
+        sort_order = request.sort_order.value if isinstance(request.sort_order, SortOrder) else str(request.sort_order)
+        stmt = stmt.order_by(sort_col.desc() if sort_order.lower() == "desc" else sort_col.asc())
+        stmt = stmt.limit(request.limit).offset(request.offset)
+
+        rows = (await db.execute(stmt)).scalars().all()
+        records = [
+            {
+                "party_id": r.party_id,
+                "party_type": r.party_type,
+                "is_individual": r.is_individual,
+                "first_name": r.first_name,
+                "last_name": r.last_name,
+                "legal_name": r.legal_name,
+                "name": r.name,
+                "name_alias": r.name_alias,
+                "birth_place_country": r.birth_place_country,
+                "country_of_residency": r.country_of_residency,
+                "country_of_incorporation": r.country_of_incorporation,
+                "nationality": r.nationality,
+                "occupation": r.occupation,
+                "organization_symbol": r.organization_symbol,
+                "source_of_income": r.source_of_income,
+                "title": r.title,
+                "website": r.website,
+                "gender": r.gender,
+                "marital_status": r.marital_status,
+                "is_active": r.is_active,
+                "listed_company": r.listed_company,
+                "primary_phone": r.primary_phone,
+                "personal_email": r.personal_email,
+                "company_email": r.company_email,
+            }
+            for r in rows
+        ]
+    else:
+        raw_items = list(IN_MEMORY_BANKING_DATA["parties"].values())
+        filtered = [
+            item for item in raw_items
+            if all(evaluate_in_memory_predicate(item, f) for f in request.filters)
+        ]
+        total = len(filtered)
+        sort_col = request.sort_by or meta.default_sort_field
+        sort_order = request.sort_order.value if isinstance(request.sort_order, SortOrder) else str(request.sort_order)
+        is_desc = sort_order.lower() == "desc"
+        filtered.sort(key=lambda x: str(x.get(sort_col) or ""), reverse=is_desc)
+        records = filtered[request.offset : request.offset + request.limit]
+
+    duration_ms = round((time.perf_counter() - start_t) * 1000, 2)
+    return DynamicQueryResponse(
+        target=meta.target,
+        case_id=None,
+        total=total,
+        count=len(records),
+        limit=request.limit,
+        offset=request.offset,
+        applied_filters=request.filters,
+        records=records,
+        execution_time_ms=duration_ms,
+    )
+
+
+@tool_registry.register(
+    TargetEntity.CASH_TRANSACTIONS.value,
+    model=CashTransactionRecord,
+    allowed_columns=set(TARGET_FIELD_WHITELISTS[TargetEntity.CASH_TRANSACTIONS.value].keys()),
+    requires_case_id=False,
+    default_sort_field="tran_id",
+    default_sort_order="desc",
+    description="Cash withdrawals and deposits (ATM cashouts).",
+    aliases=["cash_tx", "cashout"],
+)
+async def query_cash_transactions_handler(
+    request: DynamicQueryRequest,
+    meta: TargetMetadata,
+    db: Optional[AsyncSession] = None,
+) -> DynamicQueryResponse:
+    start_t = time.perf_counter()
+    if db is not None:
+        where_clauses = []
+        for f in request.filters:
+            col = getattr(CashTransactionRecord, f.field)
+            where_clauses.append(apply_sa_operator(col, f.operator, f.value))
+
+        count_stmt = select(func.count(CashTransactionRecord.tran_id)).where(*where_clauses)
+        total = (await db.execute(count_stmt)).scalar() or 0
+
+        stmt = select(CashTransactionRecord).where(*where_clauses)
+        sort_col_name = request.sort_by or meta.default_sort_field
+        sort_col = getattr(CashTransactionRecord, sort_col_name)
+        sort_order = request.sort_order.value if isinstance(request.sort_order, SortOrder) else str(request.sort_order)
+        stmt = stmt.order_by(sort_col.desc() if sort_order.lower() == "desc" else sort_col.asc())
+        stmt = stmt.limit(request.limit).offset(request.offset)
+
+        rows = (await db.execute(stmt)).scalars().all()
+        records = [
+            {
+                "tran_id": r.tran_id,
+                "account_id": r.account_id,
+                "bene_acct": r.bene_acct,
+                "tx_type": r.tx_type,
+                "amount": float(r.amount),
+                "timestamp": r.timestamp,
+                "branch_id": r.branch_id,
+                "is_sar": r.is_sar,
+                "alert_id": r.alert_id,
+            }
+            for r in rows
+        ]
+    else:
+        raw_items = IN_MEMORY_BANKING_DATA["cash_transactions"]
+        filtered = [
+            item for item in raw_items
+            if all(evaluate_in_memory_predicate(item, f) for f in request.filters)
+        ]
+        total = len(filtered)
+        sort_col = request.sort_by or meta.default_sort_field
+        sort_order = request.sort_order.value if isinstance(request.sort_order, SortOrder) else str(request.sort_order)
+        is_desc = sort_order.lower() == "desc"
+        filtered.sort(key=lambda x: x.get(sort_col) or "", reverse=is_desc)
+        records = filtered[request.offset : request.offset + request.limit]
+
+    duration_ms = round((time.perf_counter() - start_t) * 1000, 2)
+    return DynamicQueryResponse(
+        target=meta.target,
+        case_id=None,
+        total=total,
+        count=len(records),
+        limit=request.limit,
+        offset=request.offset,
+        applied_filters=request.filters,
+        records=records,
+        execution_time_ms=duration_ms,
+    )
+
+
+@tool_registry.register(
+    TargetEntity.ACCOUNT_MAPPINGS.value,
+    model=AccountMappingRecord,
+    allowed_columns=set(TARGET_FIELD_WHITELISTS[TargetEntity.ACCOUNT_MAPPINGS.value].keys()),
+    requires_case_id=False,
+    default_sort_field="cust_acct_mapping_id",
+    default_sort_order="asc",
+    description="Mapping relationships linking accounts to customer/party IDs.",
+    aliases=["account_mapping"],
+)
+async def query_account_mappings_handler(
+    request: DynamicQueryRequest,
+    meta: TargetMetadata,
+    db: Optional[AsyncSession] = None,
+) -> DynamicQueryResponse:
+    start_t = time.perf_counter()
+    if db is not None:
+        where_clauses = []
+        for f in request.filters:
+            col = getattr(AccountMappingRecord, f.field)
+            where_clauses.append(apply_sa_operator(col, f.operator, f.value))
+
+        count_stmt = select(func.count(AccountMappingRecord.cust_acct_mapping_id)).where(*where_clauses)
+        total = (await db.execute(count_stmt)).scalar() or 0
+
+        stmt = select(AccountMappingRecord).where(*where_clauses)
+        sort_col_name = request.sort_by or meta.default_sort_field
+        sort_col = getattr(AccountMappingRecord, sort_col_name)
+        sort_order = request.sort_order.value if isinstance(request.sort_order, SortOrder) else str(request.sort_order)
+        stmt = stmt.order_by(sort_col.desc() if sort_order.lower() == "desc" else sort_col.asc())
+        stmt = stmt.limit(request.limit).offset(request.offset)
+
+        rows = (await db.execute(stmt)).scalars().all()
+        records = [
+            {
+                "cust_acct_mapping_id": r.cust_acct_mapping_id,
+                "acct_id": r.acct_id,
+                "cust_id": r.cust_id,
+                "cust_acct_role": r.cust_acct_role,
+                "src_sys": r.src_sys,
+                "data_dump_dt": r.data_dump_dt,
+            }
+            for r in rows
+        ]
+    else:
+        raw_items = IN_MEMORY_BANKING_DATA["account_mappings"]
+        filtered = [
+            item for item in raw_items
+            if all(evaluate_in_memory_predicate(item, f) for f in request.filters)
+        ]
+        total = len(filtered)
+        sort_col = request.sort_by or meta.default_sort_field
+        sort_order = request.sort_order.value if isinstance(request.sort_order, SortOrder) else str(request.sort_order)
+        is_desc = sort_order.lower() == "desc"
+        filtered.sort(key=lambda x: str(x.get(sort_col) or ""), reverse=is_desc)
+        records = filtered[request.offset : request.offset + request.limit]
+
+    duration_ms = round((time.perf_counter() - start_t) * 1000, 2)
+    return DynamicQueryResponse(
+        target=meta.target,
+        case_id=None,
+        total=total,
+        count=len(records),
+        limit=request.limit,
+        offset=request.offset,
+        applied_filters=request.filters,
+        records=records,
+        execution_time_ms=duration_ms,
+    )
+
