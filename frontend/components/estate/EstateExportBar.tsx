@@ -1,11 +1,13 @@
 "use client";
 
-// Export actions for the assembled estate: a real SQLite file (importable back into this page, or
-// judged offline with validate_format.py --estate) and a plain JSON dump.
-
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Play, Download, ExternalLink } from "lucide-react";
 import { downloadTextFile } from "@/lib/caseFile/download";
+import { useInvestigateSession } from "@/components/investigate/InvestigateSessionProvider";
+import { useEstateAuditStream } from "@/hooks/useEstateAuditStream";
+import { EstateAuditStreamModal } from "@/components/estate/EstateAuditStreamModal";
 
 interface EstateExportBarProps {
   exportSqlite: () => Promise<Uint8Array>;
@@ -13,10 +15,15 @@ interface EstateExportBarProps {
   hasEstate: boolean;
 }
 
-const UPLOAD_API_ENABLED = process.env.NEXT_PUBLIC_ESTATE_UPLOAD_API === "enabled";
-
-export const EstateExportBar: React.FC<EstateExportBarProps> = ({ exportSqlite, exportJson, hasEstate }) => {
-  const [uploadStatus, setUploadStatus] = useState<string | null>(null);
+export const EstateExportBar: React.FC<EstateExportBarProps> = ({
+  exportSqlite,
+  exportJson,
+  hasEstate,
+}) => {
+  const router = useRouter();
+  const { caseFile } = useInvestigateSession();
+  const stream = useEstateAuditStream();
+  const [modalOpen, setModalOpen] = useState(false);
 
   const handleSqlite = async () => {
     const bytes = await exportSqlite();
@@ -25,45 +32,84 @@ export const EstateExportBar: React.FC<EstateExportBarProps> = ({ exportSqlite, 
 
   const handleJson = () => downloadTextFile("estate.json", exportJson(), "application/json");
 
-  const handleUpload = async () => {
-    setUploadStatus("Uploading…");
+  const handleLiveAudit = async () => {
+    setModalOpen(true);
     try {
       const bytes = await exportSqlite();
-      const form = new FormData();
-      form.append("file", new Blob([bytes as BlobPart], { type: "application/vnd.sqlite3" }), "estate.db");
-      const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-      const response = await fetch(`${base}/api/v1/estates/upload`, { method: "POST", body: form });
-      if (response.status === 404) {
-        setUploadStatus("The backend does not accept estate uploads yet (HTTP 404).");
-      } else if (!response.ok) {
-        setUploadStatus(`Upload failed (HTTP ${response.status}).`);
-      } else {
-        setUploadStatus("Uploaded.");
-      }
-    } catch {
-      setUploadStatus("Backend unreachable.");
+      const blob = new Blob([bytes as BlobPart], { type: "application/vnd.sqlite3" });
+      await stream.startAuditWithBlob(blob);
+    } catch (e) {
+      console.error("Error launching audit stream:", e);
     }
   };
 
+  const handleOpenCaseFile = (auditData: any) => {
+    setModalOpen(false);
+    caseFile.loadRaw(auditData, {
+      kind: "api",
+      label: `Auditoría en Vivo (Seed ${auditData?.seed ?? 1})`,
+    });
+    router.push("/investigate");
+  };
+
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <button type="button" onClick={handleSqlite} disabled={!hasEstate} className="app-button text-xs disabled:cursor-not-allowed disabled:opacity-50">
-        Download estate.db
-      </button>
-      <button type="button" onClick={handleJson} disabled={!hasEstate} className="app-button text-xs disabled:cursor-not-allowed disabled:opacity-50">
-        Download estate.json
-      </button>
-      <Link href="/investigate" className="text-xs text-brand-300 hover:text-brand-50">
-        Open case file viewer
-      </Link>
-      {UPLOAD_API_ENABLED && (
-        <>
-          <button type="button" onClick={handleUpload} disabled={!hasEstate} className="app-button text-xs disabled:cursor-not-allowed disabled:opacity-50">
-            Send estate.db to backend
+    <>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={handleLiveAudit}
+            disabled={!hasEstate || stream.isStreaming}
+            className="app-primary flex items-center gap-2 text-xs font-semibold py-2 px-3.5 shadow-md shadow-brand-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Play className="h-3.5 w-3.5 fill-current" />
+            Ejecutar Auditoría Forense (Live Stream)
           </button>
-          {uploadStatus && <span className="text-xs text-muted">{uploadStatus}</span>}
-        </>
-      )}
-    </div>
+
+          <button
+            type="button"
+            onClick={handleSqlite}
+            disabled={!hasEstate}
+            className="app-button flex items-center gap-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Download className="h-3.5 w-3.5 text-muted" />
+            Download estate.db
+          </button>
+
+          <button
+            type="button"
+            onClick={handleJson}
+            disabled={!hasEstate}
+            className="app-button flex items-center gap-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Download className="h-3.5 w-3.5 text-muted" />
+            Download estate.json
+          </button>
+        </div>
+
+        <Link
+          href="/investigate"
+          className="flex items-center gap-1.5 text-xs text-brand-300 hover:text-brand-100 transition-colors"
+        >
+          Open case file viewer
+          <ExternalLink className="h-3.5 w-3.5" />
+        </Link>
+      </div>
+
+      <EstateAuditStreamModal
+        isOpen={modalOpen}
+        isStreaming={stream.isStreaming}
+        currentPhase={stream.currentPhase}
+        thoughts={stream.thoughts}
+        findingsReviewed={stream.findingsReviewed}
+        leadsReviewed={stream.leadsReviewed}
+        verdict={stream.verdict}
+        completedAudit={stream.completedAudit}
+        error={stream.error}
+        agentStatuses={stream.agentStatuses}
+        onClose={() => setModalOpen(false)}
+        onOpenCaseFile={handleOpenCaseFile}
+      />
+    </>
   );
 };

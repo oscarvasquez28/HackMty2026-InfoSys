@@ -19,7 +19,11 @@ export interface UseEstateReturn {
   issues: ReturnType<typeof buildEstate>["issues"];
   totalRows: number;
   hasEstate: boolean;
-  addFiles: (files: File[]) => Promise<{ caseFiles: { fileName: string; raw: unknown }[] }>;
+  addFiles: (files: File[]) => Promise<{
+    caseFiles: { fileName: string; raw: unknown }[];
+    tables: ReturnType<typeof buildEstate>["tables"];
+    exportSqlite: () => Promise<Uint8Array>;
+  }>;
   assignTable: (fileId: string, table: SourceTable) => void;
   removeFile: (fileId: string) => void;
   clear: () => void;
@@ -29,8 +33,12 @@ export interface UseEstateReturn {
 
 export function useEstate(): UseEstateReturn {
   const [files, setFiles] = useState<EstateFileEntry[]>([]);
+  const filesRef = useRef<EstateFileEntry[]>([]);
   const [status, setStatus] = useState<UseEstateReturn["status"]>("idle");
   const counterRef = useRef(0);
+
+  // Keep ref in sync with state
+  filesRef.current = files;
 
   const { tables, issues: foldIssues } = useMemo(() => buildEstate(files), [files]);
   const issues = useMemo(() => [...files.flatMap((f) => f.fileIssues), ...foldIssues], [files, foldIssues]);
@@ -68,33 +76,49 @@ export function useEstate(): UseEstateReturn {
     });
 
     const allEntries = [...entries, ...overflowEntries];
-    setFiles((prev) => [...prev, ...allEntries]);
+    const updatedFiles = [...filesRef.current, ...allEntries];
+    filesRef.current = updatedFiles;
+    setFiles(updatedFiles);
     setStatus("ready");
 
+    const { tables: updatedTables } = buildEstate(updatedFiles);
     const caseFiles = allEntries.filter((e) => e.status === "case_file").map((e) => ({ fileName: e.fileName, raw: e.caseFileRaw }));
-    return { caseFiles };
+    return {
+      caseFiles,
+      tables: updatedTables,
+      exportSqlite: () => exportEstateSqlite(updatedTables),
+    };
   }, []);
 
   const assignTable = useCallback((fileId: string, table: SourceTable) => {
-    setFiles((prev) => prev.map((entry) => (entry.id === fileId ? assignCsvTable(entry, table) : entry)));
+    const updatedFiles = filesRef.current.map((entry) => (entry.id === fileId ? assignCsvTable(entry, table) : entry));
+    filesRef.current = updatedFiles;
+    setFiles(updatedFiles);
   }, []);
 
   const removeFile = useCallback((fileId: string) => {
-    setFiles((prev) => prev.filter((entry) => entry.id !== fileId));
+    const updatedFiles = filesRef.current.filter((entry) => entry.id !== fileId);
+    filesRef.current = updatedFiles;
+    setFiles(updatedFiles);
   }, []);
 
   const clear = useCallback(() => {
+    filesRef.current = [];
     setFiles([]);
     setStatus("idle");
   }, []);
 
-  const exportSqlite = useCallback(() => exportEstateSqlite(tables), [tables]);
+  const exportSqlite = useCallback(() => {
+    const { tables: currentTables } = buildEstate(filesRef.current);
+    return exportEstateSqlite(currentTables);
+  }, []);
 
   const exportJson = useCallback(() => {
+    const { tables: currentTables } = buildEstate(filesRef.current);
     const obj: Record<string, unknown> = {};
-    for (const table of ESTATE_TABLE_ORDER) obj[table] = tables[table];
+    for (const table of ESTATE_TABLE_ORDER) obj[table] = currentTables[table];
     return `${JSON.stringify(obj, null, 2)}\n`;
-  }, [tables]);
+  }, []);
 
   return { status, files, tables, issues, totalRows, hasEstate, addFiles, assignTable, removeFile, clear, exportSqlite, exportJson };
 }
