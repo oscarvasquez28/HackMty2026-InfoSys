@@ -15,7 +15,26 @@ from sqlalchemy.pool import StaticPool
 
 from backend.core.config import settings
 from backend.models.estate import AuditReportRecord, HISTORIC_TABLE_MODELS
-from backend.models.forensic import Base
+from backend.models.forensic import (
+    AccountMappingRecord,
+    AccountRecord,
+    Base,
+    CashTransactionRecord,
+    InvestigationCase,
+    LegalArticleVector,
+    PartyRecord,
+    TransactionRecord,
+)
+
+FORENSIC_TABLE_MODELS = [
+    InvestigationCase,
+    TransactionRecord,
+    LegalArticleVector,
+    AccountRecord,
+    AccountMappingRecord,
+    PartyRecord,
+    CashTransactionRecord,
+]
 
 logger = logging.getLogger("forensic_auditor.database")
 
@@ -220,6 +239,7 @@ def get_estate_schema_sql_path() -> Path:
         base / "backend" / "tmp" / "estate_schema - polar.sql",
         base / "student-materials" / "forensic-auditor" / "estate_schema.sql",
         Path("student-materials/forensic-auditor/estate_schema.sql"),
+        Path(__file__).resolve().parent / "estate_schema.sql",
     ]
     for p in candidates:
         if p.exists():
@@ -301,7 +321,8 @@ async def init_db(
 ) -> None:
     """
     Initializes database schema from tmp/estate_schema - polar.sql and creates
-    historic tables if not present. Outdated tables (accounts, parties, etc.) are omitted.
+    historic tables if not present. Also provisions the forensic case tables
+    (investigation_cases, transactions, agent-tool lookup tables) deliberately.
     """
     if engine is None:
         if not settings.DATABASE_URL:
@@ -311,6 +332,12 @@ async def init_db(
 
     async with engine.begin() as conn:
         await provision_estate_schema(conn, engine.dialect.name, ddl_path=ddl_path)
+        forensic_tables = [model.__table__ for model in FORENSIC_TABLE_MODELS]
+        await conn.run_sync(
+            lambda sync_conn: Base.metadata.create_all(
+                sync_conn, tables=forensic_tables, checkfirst=True
+            )
+        )
 
 
 async def close_db() -> None:

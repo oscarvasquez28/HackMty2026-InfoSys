@@ -205,9 +205,11 @@ async def test_init_db_lifecycle():
         }
         assert expected_historic.issubset(tables)
 
-        # 3. Verify deprecated/outdated tables are NOT created
-        deprecated_tables = {"accounts", "account_mappings", "parties", "cash_transactions"}
-        for dep in deprecated_tables:
-            assert dep not in tables
+        # 3. Verify forensic case tables are provisioned deliberately
+        expected_forensic = {
+            "investigation_cases", "transactions", "legal_knowledge_vectors",
+            "accounts", "account_mappings", "parties", "cash_transactions",
+        }
+        assert expected_forensic.issubset(tables)
 
     await engine.dispose()
