@@ -727,21 +727,7 @@ async def generate_estate_audit_stream(
             yield f"event: error\ndata: {json.dumps({'error': error_msg})}\n\n"
             return
 
-        # 2. Emission: Syncing Data Estate & Building Graph
-        step_counter += 1
-        sync_thought = {
-            "step": step_counter,
-            "phase": "Sincronización de Datos y Topología",
-            "message": f"Sincronizando estado financiero hacia PostgreSQL y construyendo grafo contable...",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "event_id": str(uuid.uuid4()),
-            "agent_id": "DATA_VALIDATION",
-            "action": "syncing",
-            "source": "DETERMINISTIC",
-        }
-        yield f"event: thought\ndata: {json.dumps(sync_thought)}\n\n"
-
-        # 3. Execution: Running Deterministic Detectors
+        # 2. Emission: Running Deterministic Detectors
         step_counter += 1
         suite = ForensicDetectorSuite(connector=estate_connector)
         submission = await suite.run_forensic_detection_pipeline(
