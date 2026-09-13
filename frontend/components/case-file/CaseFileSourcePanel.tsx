@@ -22,6 +22,7 @@ const DEV_FIXTURES: Array<{ id: FixtureId; label: string }> = [
   { id: "sample", label: "Sample case (illustrative)" },
   { id: "no-findings", label: "Sample: no findings (illustrative)" },
   { id: "edge-cases", label: "Sample: edge cases (invalid on purpose)" },
+  { id: "dense-trail", label: "Sample: dense money trails (diagram regression)" },
 ];
 
 export const CaseFileSourcePanel: React.FC<CaseFileSourcePanelProps> = ({
@@ -44,7 +45,7 @@ export const CaseFileSourcePanel: React.FC<CaseFileSourcePanelProps> = ({
   const openPicker = useCallback(() => inputRef.current?.click(), []);
 
   const handleAuditBlob = useCallback(
-    async (blob: Blob, seed: number = 1, companyName: string = "Empresa Auditada S.A. de C.V.") => {
+    async (blob: Blob, seed: number = 1, companyName: string = "Audited Company S.A. de C.V.") => {
       setModalOpen(true);
       await stream.startAuditWithBlob(blob, seed, companyName);
     },
@@ -66,10 +67,10 @@ export const CaseFileSourcePanel: React.FC<CaseFileSourcePanelProps> = ({
       setModalOpen(true);
       const res = await fetch("/samples/estate/estate.db");
       if (!res.ok) {
-        throw new Error("No se encontró /samples/estate/estate.db");
+        throw new Error("Could not find /samples/estate/estate.db");
       }
       const blob = await res.blob();
-      await stream.startAuditWithBlob(blob, 1, "Empresa Auditada S.A. de C.V.");
+      await stream.startAuditWithBlob(blob, 1, "Audited Company S.A. de C.V.");
     } catch (e) {
       console.error("Error loading sample estate for audit:", e);
       // Fallback to sample fixture
@@ -121,7 +122,7 @@ export const CaseFileSourcePanel: React.FC<CaseFileSourcePanelProps> = ({
       setModalOpen(false);
       caseFile.loadRaw(auditData, {
         kind: "api",
-        label: `Auditoría Forense en Vivo (Seed ${auditData?.seed ?? 1})`,
+        label: `Live Forensic Audit (Seed ${auditData?.seed ?? 1})`,
       });
     },
     [caseFile]
@@ -134,8 +135,8 @@ export const CaseFileSourcePanel: React.FC<CaseFileSourcePanelProps> = ({
           Forensic Auditor Workspace
         </h1>
         <p className="mt-2 text-sm leading-6 text-muted">
-          Ejecuta la auditoría forense determinista en tiempo real conectada al backend vía SSE, o carga
-          un archivo de dictamen previo (<code className="font-mono text-xs">submission.json</code>).
+          Run the deterministic forensic audit in real time connected to the backend via SSE, or load
+          a previous verdict file (<code className="font-mono text-xs">submission.json</code>).
         </p>
 
         {/* Action Buttons */}
@@ -147,7 +148,7 @@ export const CaseFileSourcePanel: React.FC<CaseFileSourcePanelProps> = ({
             className="app-primary flex items-center gap-2 text-sm font-semibold py-2 px-4 shadow-lg shadow-brand-500/20"
           >
             <Sparkles className="h-4 w-4" />
-            Auditar Muestra en Vivo (Live SSE)
+            Audit Sample Live (Live SSE)
           </button>
 
           <button
@@ -168,10 +169,10 @@ export const CaseFileSourcePanel: React.FC<CaseFileSourcePanelProps> = ({
               <div>
                 <h3 className="font-semibold text-foreground text-sm flex items-center gap-2">
                   <Database className="h-4 w-4 text-brand-300" />
-                  Base de Datos Contable Lista ({estate.totalRows.toLocaleString()} registros)
+                  Accounting Database Ready ({estate.totalRows.toLocaleString()} records)
                 </h3>
                 <p className="text-xs text-muted mt-0.5">
-                  Los registros contables están en memoria. Ejecuta la detección determinista con streaming SSE.
+                  The accounting records are in memory. Run deterministic detection with SSE streaming.
                 </p>
               </div>
               <button
@@ -181,7 +182,7 @@ export const CaseFileSourcePanel: React.FC<CaseFileSourcePanelProps> = ({
                 className="app-primary flex items-center gap-1.5 text-xs font-semibold py-2 px-3.5"
               >
                 <Play className="h-3.5 w-3.5 fill-current" />
-                Auditar Datos Cargados
+                Audit Loaded Data
               </button>
             </div>
           </div>
@@ -214,10 +215,10 @@ export const CaseFileSourcePanel: React.FC<CaseFileSourcePanelProps> = ({
         >
           <Upload className="h-6 w-6 text-brand-300" aria-hidden="true" />
           <p className="text-sm font-medium text-foreground">
-            Arrastra datos aquí (.db, .csv o submission.json) o haz clic para examinar
+            Drag data here (.db, .csv or submission.json) or click to browse
           </p>
           <p className="text-xs text-muted">
-            Los archivos .db o .csv ejecutan la auditoría forense determinista en vivo. JSON abre el visor directamente.
+            .db or .csv files run the deterministic forensic audit live. JSON opens the viewer directly.
           </p>
           <input
             ref={inputRef}
@@ -230,9 +231,9 @@ export const CaseFileSourcePanel: React.FC<CaseFileSourcePanelProps> = ({
         </div>
 
         <p className="mt-4 text-xs text-muted">
-          ¿Deseas inspeccionar o ensamblar tablas individualmente?{" "}
+          Want to inspect or assemble tables individually?{" "}
           <Link href="/investigate/data" className="text-brand-300 hover:text-brand-100 underline">
-            Abrir página de Data Estate
+            Open Data Estate page
           </Link>
         </p>
 

@@ -4,11 +4,13 @@
 // back to the generated one if it fails to parse/render. The "document" variant (the printable
 // document) reports its settled state to CaseFileUiContext so export buttons know every diagram has
 // finished attempting to render; the "tour" variant renders in the portal palette, does not report,
-// and tags edges/nodes so globals.css can draw the trail in.
+// and hands the mounted SVG to `onReady` so the money trail player can choreograph it.
 
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { renderMermaidSvg, themeGeneratedSource } from "@/lib/caseFile/mermaid";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { readViewBoxSize, renderMermaidSvg, themeDiagramSource } from "@/lib/caseFile/mermaid";
 import { useCaseFileUi } from "@/components/case-file/CaseFileUiContext";
+
+export type DiagramZoom = "fit" | "full";
 
 interface MermaidDiagramProps {
   diagramId: string;
@@ -16,15 +18,27 @@ interface MermaidDiagramProps {
   fallbackSource: string | null;
   ariaLabel: string;
   variant?: "document" | "tour";
+  zoom?: DiagramZoom;
+  onReady?: (svg: SVGSVGElement | null) => void;
 }
 
 type State = { status: "pending" } | { status: "ready"; svg: string } | { status: "failed"; error: string };
 
-export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ diagramId, primarySource, fallbackSource, ariaLabel, variant = "document" }) => {
+export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({
+  diagramId,
+  primarySource,
+  fallbackSource,
+  ariaLabel,
+  variant = "document",
+  zoom = "fit",
+  onReady,
+}) => {
   const { reportDiagram } = useCaseFileUi();
   const [state, setState] = useState<State>({ status: "pending" });
   const cancelledRef = useRef(false);
   const svgHostRef = useRef<HTMLDivElement>(null);
+  const onReadyRef = useRef(onReady);
+  onReadyRef.current = onReady;
   const isTour = variant === "tour";
 
   useEffect(() => {
@@ -41,7 +55,7 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ diagramId, prima
       const primary = primarySource;
       if (primary) {
         try {
-          const svg = await renderMermaidSvg(`${diagramId}${idSuffix}-svg`, primary, theme);
+          const svg = await renderMermaidSvg(`${diagramId}${idSuffix}-svg`, themeDiagramSource(primary, theme), theme);
           if (cancelledRef.current) return;
           setState({ status: "ready", svg });
           report(diagramId, { status: "ready", renderedSource: primary, usedFallback: false });
@@ -53,7 +67,7 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ diagramId, prima
       const fallback = fallbackSource;
       if (fallback) {
         try {
-          const svg = await renderMermaidSvg(`${diagramId}${idSuffix}-svg-fallback`, themeGeneratedSource(fallback, theme), theme);
+          const svg = await renderMermaidSvg(`${diagramId}${idSuffix}-svg-fallback`, themeDiagramSource(fallback, theme), theme);
           if (cancelledRef.current) return;
           setState({ status: "ready", svg });
           report(diagramId, { status: "ready", renderedSource: fallback, usedFallback: true });
@@ -78,17 +92,36 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ diagramId, prima
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [diagramId, primarySource, fallbackSource, isTour]);
 
-  // Tour only: normalize edge lengths and stagger indices so CSS can draw the trail step by step.
+  // Size the SVG for the zoom mode. Mermaid emits width="100%" plus an inline max-width, so "100%"
+  // must pin the intrinsic viewBox width instead of stretching to the container.
   useLayoutEffect(() => {
-    if (!isTour || state.status !== "ready" || !svgHostRef.current) return;
-    const host = svgHostRef.current;
-    host.querySelectorAll<SVGPathElement>(".flowchart-link").forEach((path, i) => {
-      path.setAttribute("pathLength", "1");
-      path.style.setProperty("--edge-i", String(i));
-    });
-    host.querySelectorAll<SVGGElement>(".edgeLabel").forEach((label, i) => label.style.setProperty("--edge-i", String(i)));
-    host.querySelectorAll<SVGGElement>(".node").forEach((node, i) => node.style.setProperty("--node-i", String(i)));
-  }, [isTour, state]);
+    if (state.status !== "ready" || !svgHostRef.current) return;
+    const svg = svgHostRef.current.querySelector<SVGSVGElement>("svg");
+    if (!svg) return;
+    const size = readViewBoxSize(svg);
+    if (zoom === "full" && size) {
+      svg.style.width = `${size.width}px`;
+      svg.style.maxWidth = "none";
+      svg.style.maxHeight = "none";
+    } else {
+      svg.style.width = "100%";
+      svg.style.maxWidth = size ? `${size.width}px` : "100%";
+      svg.style.maxHeight = isTour ? "70vh" : "";
+    }
+    svg.style.height = "auto";
+  }, [state, zoom, isTour]);
+
+  useLayoutEffect(() => {
+    if (state.status !== "ready" || !svgHostRef.current) {
+      onReadyRef.current?.(null);
+      return;
+    }
+    onReadyRef.current?.(svgHostRef.current.querySelector<SVGSVGElement>("svg"));
+  }, [state]);
+
+  // Stable object: the App Router's React compares dangerouslySetInnerHTML by identity, so a fresh
+  // `{ __html }` per render would replace the SVG (and detach the tour player's scene) on every update.
+  const innerHtml = useMemo(() => (state.status === "ready" ? { __html: state.svg } : undefined), [state]);
 
   if (state.status === "pending") {
     return isTour ? (
@@ -108,13 +141,5 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ diagramId, prima
       </div>
     );
   }
-  return (
-    <div
-      ref={svgHostRef}
-      role="img"
-      aria-label={ariaLabel}
-      data-trail-animate={isTour ? "" : undefined}
-      dangerouslySetInnerHTML={{ __html: state.svg }}
-    />
-  );
+  return <div ref={svgHostRef} role="img" aria-label={ariaLabel} dangerouslySetInnerHTML={innerHtml} />;
 };

@@ -195,6 +195,8 @@ body {
     animation: none !important;
   }
 
+  /* This also puts transitions on SVG geometry, which corrupts Mermaid's getBBox() layout; diagrams
+     therefore render inside .mermaid-sandbox (lib/caseFile/mermaid.ts), which opts out below. */
   *,
   *::before,
   *::after {
@@ -352,27 +354,108 @@ body {
   animation: tour-flash 1800ms ease-out;
 }
 
-.case-tour [data-trail-animate] .flowchart-link {
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  animation: tour-draw 950ms var(--tour-ease) forwards;
-  animation-delay: calc(var(--edge-i, 0) * 170ms + 450ms);
+/* Mermaid measurement sandbox: must never transition or animate (see lib/caseFile/mermaid.ts). */
+.mermaid-sandbox,
+.mermaid-sandbox * {
+  transition: none !important;
+  animation: none !important;
 }
 
-/* Mermaid positions nodes with a transform attribute, so nodes and labels only fade (never transform). */
-.case-tour [data-trail-animate] .node,
-.case-tour [data-trail-animate] .edgeLabel {
-  animation: tour-fade 520ms var(--tour-ease) both;
-  animation-delay: calc(var(--node-i, 0) * 90ms + 150ms);
+/* Money trail player (components/case-file/tour/MoneyTrailPlayer.tsx). Motion itself is driven from
+   JS (rAF + Web Animations) so these rules only describe resting states — never transitions on SVG
+   geometry. Mermaid positions nodes with a transform attribute, so nodes are never CSS-transformed. */
+.trail-canvas svg {
+  display: block;
+  margin-inline: auto;
+  height: auto;
 }
 
-.case-tour [data-trail-animate] .edgeLabel {
-  animation-delay: calc(var(--edge-i, 0) * 170ms + 900ms);
+.trail-canvas :is(.flowchart-link, .edgeLabel, .node) {
+  transition: opacity 260ms var(--tour-ease, ease);
 }
 
-/* Hold the trail animation until its block scrolls into view (one-screen finding layout). */
-.case-tour [data-reveal="hidden"] [data-trail-animate] :is(.flowchart-link, .node, .edgeLabel) {
-  animation: none;
+.trail-canvas .flowchart-link[data-trail-state="pending"] {
+  marker-end: none;
+  opacity: 0;
+}
+
+.trail-canvas .edgeLabel[data-trail-state="pending"] {
+  opacity: 0;
+}
+
+.trail-canvas [data-trail-state="dim"] {
+  opacity: 0.22;
+}
+
+.trail-canvas .node[data-trail-state="dim"] {
+  opacity: 0.45;
+}
+
+.trail-canvas .flowchart-link[data-trail-state="active"] {
+  stroke: rgb(var(--case-held)) !important;
+  stroke-width: 2.75px !important;
+}
+
+.trail-canvas .edgeLabel[data-trail-state="active"] rect.background {
+  fill: rgb(var(--case-held-soft)) !important;
+  stroke: rgb(var(--case-held) / 0.7);
+  stroke-width: 1px;
+}
+
+.trail-canvas .edgeLabel[data-trail-state="active"] text {
+  fill: rgb(var(--case-paper-ink)) !important;
+  font-weight: 600;
+}
+
+.trail-canvas .node[data-trail-state="active"] :is(rect, polygon, circle, path) {
+  stroke: rgb(var(--case-held)) !important;
+  stroke-width: 2px !important;
+}
+
+.trail-canvas .node.flagged[data-trail-state="active"] :is(rect, polygon, circle, path) {
+  stroke: rgb(var(--case-proven)) !important;
+}
+
+.trail-canvas .trail-flow {
+  fill: none;
+  stroke: rgb(var(--case-held));
+  stroke-width: 2.75px;
+  stroke-linecap: round;
+  stroke-dasharray: 2 10;
+  pointer-events: none;
+}
+
+.trail-canvas .trail-packet {
+  fill: rgb(var(--case-held));
+  pointer-events: none;
+}
+
+.trail-canvas .trail-packet-halo {
+  fill: rgb(var(--case-held) / 0.18);
+  pointer-events: none;
+}
+
+.trail-canvas .trail-ring {
+  fill: none;
+  stroke: rgb(var(--case-held));
+  stroke-width: 2px;
+  pointer-events: none;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.trail-canvas .trail-ring[data-flagged] {
+  stroke: rgb(var(--case-proven));
+}
+
+.trail-canvas .node,
+.trail-canvas .edgeLabel {
+  cursor: pointer;
+}
+
+.trail-canvas:focus-visible {
+  outline: 2px solid #79c7f5;
+  outline-offset: 3px;
 }
 
 @keyframes tour-enter-forward {

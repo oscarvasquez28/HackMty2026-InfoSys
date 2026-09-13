@@ -1,0 +1,396 @@
+{
+  "_about": "Illustrative regression fixture for money trail diagrams: parallel edges, a closed cycle, and a run-supplied source with a light-theme flagged classDef. Fictional entities.",
+  "seed": 7,
+  "header": {
+    "company": "Manufacturas del Norte Ejemplo SA de CV",
+    "company_rfc": "MNE150301AB1",
+    "audit_period": {
+      "start": "2026-01-01",
+      "end": "2026-06-30"
+    }
+  },
+  "executive_summary": {
+    "plain_narrative": "Regression fixture for money trail rendering: a vendor paid through five parallel invoices, a four-hop circular transfer, and a kickback chain whose diagram was supplied by the run."
+  },
+  "entity_names": {
+    "RFC:MNE150301AB1": "Manufacturas del Norte Ejemplo SA de CV",
+    "RFC:AAAA010101AA1": "Servicios Integrales Ejemplo SA de CV",
+    "RFC:BBBB020202BB2": "Mantenimiento Industrial Ejemplo SC",
+    "EMP:0001": "Persona Ejemplo Uno",
+    "RFC:CCCC030303CC3": "Logística Ejemplo Tres SA de CV",
+    "EMP:0014": "Persona Ejemplo Catorce",
+    "RFC:EEEE050505EE5": "Papelería Ejemplo Cinco SA de CV",
+    "RFC:FFFF060606FF6": "Consultores Ejemplo Seis SC",
+    "RFC:GGGG070707GG7": "Proveedora Ejemplo Siete SA de CV",
+    "RFC:HHHH080808HH8": "Comercializadora Ejemplo Ocho SA de CV",
+    "RFC:JJJJ090909JJ9": "Distribuidora Ejemplo Nueve SC",
+    "RFC:KKKK101010KK0": "Inversiones Ejemplo Diez SA de CV"
+  },
+  "findings": [
+    {
+      "finding_id": "F-01",
+      "scheme_type": "phantom_vendor",
+      "entities": [
+        "RFC:GGGG070707GG7"
+      ],
+      "rule_broken": "CFF Articulo 69-B (operaciones inexistentes)",
+      "rule_detail": null,
+      "narrative": "Between February and April 2026 the company paid five invoices from a vendor that the tax authority lists as issuing invoices for non-existent operations. No purchase order, contract, or delivery record supports any of the five invoices, all of which were paid in full.",
+      "peso_amount": 404950.64,
+      "confidence": "proven",
+      "money_trail": [
+        {
+          "from": "RFC:MNE150301AB1",
+          "to": "RFC:GGGG070707GG7",
+          "amount": 94440.14,
+          "date": "2026-02-20",
+          "exhibit_id": "EX-PV-INV-1"
+        },
+        {
+          "from": "RFC:MNE150301AB1",
+          "to": "RFC:GGGG070707GG7",
+          "amount": 81200.0,
+          "date": "2026-03-02",
+          "exhibit_id": "EX-PV-INV-2"
+        },
+        {
+          "from": "RFC:MNE150301AB1",
+          "to": "RFC:GGGG070707GG7",
+          "amount": 77010.5,
+          "date": "2026-03-19",
+          "exhibit_id": "EX-PV-INV-3"
+        },
+        {
+          "from": "RFC:MNE150301AB1",
+          "to": "RFC:GGGG070707GG7",
+          "amount": 92000.0,
+          "date": "2026-04-01",
+          "exhibit_id": "EX-PV-INV-4"
+        },
+        {
+          "from": "RFC:MNE150301AB1",
+          "to": "RFC:GGGG070707GG7",
+          "amount": 60300.0,
+          "date": "2026-04-15",
+          "exhibit_id": "EX-PV-INV-5"
+        }
+      ],
+      "mermaid_source": null,
+      "exhibits": [
+        {
+          "exhibit_id": "EX-PV-INV-1",
+          "source_table": "invoices",
+          "record_id": "INV-00701",
+          "amount": 94440.14,
+          "note": "CFDI invoice INV-00701 issued by the vendor with no delivery evidence."
+        },
+        {
+          "exhibit_id": "EX-PV-INV-2",
+          "source_table": "invoices",
+          "record_id": "INV-00702",
+          "amount": 81200.0,
+          "note": "CFDI invoice INV-00702 issued by the vendor with no delivery evidence."
+        },
+        {
+          "exhibit_id": "EX-PV-INV-3",
+          "source_table": "invoices",
+          "record_id": "INV-00703",
+          "amount": 77010.5,
+          "note": "CFDI invoice INV-00703 issued by the vendor with no delivery evidence."
+        },
+        {
+          "exhibit_id": "EX-PV-INV-4",
+          "source_table": "invoices",
+          "record_id": "INV-00704",
+          "amount": 92000.0,
+          "note": "CFDI invoice INV-00704 issued by the vendor with no delivery evidence."
+        },
+        {
+          "exhibit_id": "EX-PV-INV-5",
+          "source_table": "invoices",
+          "record_id": "INV-00705",
+          "amount": 60300.0,
+          "note": "CFDI invoice INV-00705 issued by the vendor with no delivery evidence."
+        },
+        {
+          "exhibit_id": "EX-PV-EFOS-6",
+          "source_table": "efos_list",
+          "record_id": "GGGG070707GG7",
+          "note": "Vendor listed as definitive EFOS under CFF Article 69-B."
+        }
+      ],
+      "reconciliation": {
+        "claimed_pesos": 404950.64,
+        "exhibits_sum": 404950.64,
+        "variance_percentage": 0.0,
+        "matched_table": "invoices",
+        "per_table_breakdown": [
+          {
+            "table": "invoices",
+            "subtotal": 404950.64
+          }
+        ]
+      },
+      "adversarial_review": {
+        "reviewer_agent_role": "challenger",
+        "challenger_argument": "The invoices could cover legitimate services delivered informally.",
+        "why_finding_held": "The vendor is a definitive EFOS and no contract, purchase order, or delivery evidence exists for any invoice."
+      }
+    },
+    {
+      "finding_id": "F-02",
+      "scheme_type": "round_tripping",
+      "entities": [
+        "RFC:HHHH080808HH8",
+        "RFC:JJJJ090909JJ9",
+        "RFC:KKKK101010KK0",
+        "RFC:MNE150301AB1"
+      ],
+      "rule_broken": "LFPIORPI Articulo 17 (estratificacion circular y retorno de fondos)",
+      "rule_detail": null,
+      "narrative": "In May 2026 the company sent money through three intermediaries that returned almost all of it to the company within five days. Each hop kept a 2% margin and none of the intermediaries delivered goods or services.",
+      "peso_amount": 250000.0,
+      "confidence": "probable",
+      "money_trail": [
+        {
+          "from": "RFC:MNE150301AB1",
+          "to": "RFC:HHHH080808HH8",
+          "amount": 250000.0,
+          "date": "2026-05-04",
+          "exhibit_id": "EX-RT-BNK-1"
+        },
+        {
+          "from": "RFC:HHHH080808HH8",
+          "to": "RFC:JJJJ090909JJ9",
+          "amount": 245000.0,
+          "date": "2026-05-06",
+          "exhibit_id": "EX-RT-BNK-2"
+        },
+        {
+          "from": "RFC:JJJJ090909JJ9",
+          "to": "RFC:KKKK101010KK0",
+          "amount": 240100.0,
+          "date": "2026-05-07",
+          "exhibit_id": "EX-RT-BNK-3"
+        },
+        {
+          "from": "RFC:KKKK101010KK0",
+          "to": "RFC:MNE150301AB1",
+          "amount": 235298.0,
+          "date": "2026-05-09",
+          "exhibit_id": "EX-RT-BNK-4"
+        }
+      ],
+      "mermaid_source": null,
+      "exhibits": [
+        {
+          "exhibit_id": "EX-RT-BNK-1",
+          "source_table": "bank_txns",
+          "record_id": "BNK-00901",
+          "amount": 250000.0,
+          "note": "SPEI transfer BNK-00901 inside the closed circuit."
+        },
+        {
+          "exhibit_id": "EX-RT-BNK-2",
+          "source_table": "bank_txns",
+          "record_id": "BNK-00902",
+          "amount": 245000.0,
+          "note": "SPEI transfer BNK-00902 inside the closed circuit."
+        },
+        {
+          "exhibit_id": "EX-RT-BNK-3",
+          "source_table": "bank_txns",
+          "record_id": "BNK-00903",
+          "amount": 240100.0,
+          "note": "SPEI transfer BNK-00903 inside the closed circuit."
+        },
+        {
+          "exhibit_id": "EX-RT-BNK-4",
+          "source_table": "bank_txns",
+          "record_id": "BNK-00904",
+          "amount": 235298.0,
+          "note": "SPEI transfer BNK-00904 inside the closed circuit."
+        }
+      ],
+      "reconciliation": {
+        "claimed_pesos": 250000.0,
+        "exhibits_sum": 250000.0,
+        "variance_percentage": 0.0,
+        "matched_table": "bank_txns",
+        "per_table_breakdown": [
+          {
+            "table": "bank_txns",
+            "subtotal": 970398.0
+          }
+        ]
+      },
+      "adversarial_review": {
+        "reviewer_agent_role": "challenger",
+        "challenger_argument": "The transfers could be ordinary supplier financing.",
+        "why_finding_held": "Funds returned to the origin within five days with no commercial documents at any hop."
+      }
+    },
+    {
+      "finding_id": "F-03",
+      "scheme_type": "kickback",
+      "entities": [
+        "RFC:BBBB020202BB2",
+        "EMP:0014"
+      ],
+      "rule_broken": "Codigo Penal Federal Articulo 222 (cohecho)",
+      "rule_detail": null,
+      "narrative": "After a June 2026 maintenance invoice was paid, the vendor transferred 30% of it to an employee, who forwarded part of that money to a third company two days later.",
+      "peso_amount": 17400.0,
+      "confidence": "probable",
+      "money_trail": [
+        {
+          "from": "RFC:MNE150301AB1",
+          "to": "RFC:BBBB020202BB2",
+          "amount": 58000.0,
+          "date": "2026-06-02",
+          "exhibit_id": "EX-SP-INV-1"
+        },
+        {
+          "from": "RFC:BBBB020202BB2",
+          "to": "EMP:0014",
+          "amount": 17400.0,
+          "date": "2026-06-04",
+          "exhibit_id": "EX-SP-BNK-2"
+        },
+        {
+          "from": "EMP:0014",
+          "to": "RFC:EEEE050505EE5",
+          "amount": 9000.0,
+          "date": "2026-06-05",
+          "exhibit_id": "EX-SP-BNK-3"
+        }
+      ],
+      "mermaid_source": "flowchart LR\n    node_1[\"RFC:MNE150301AB1\"]\n    node_2[\"RFC:BBBB020202BB2\"]\n    node_3[\"EMP:0014\"]\n    node_4[\"RFC:EEEE050505EE5\"]\n    node_1 -->|\"$58,000.00 MXN • 2026-06-02 • [EX-SP-INV-1]\"| node_2\n    node_2 -->|\"$17,400.00 MXN • 2026-06-04 • [EX-SP-BNK-2]\"| node_3\n    node_3 -->|\"$9,000.00 MXN • 2026-06-05 • [EX-SP-BNK-3]\"| node_4\n    classDef flagged fill:#F6E1DF,stroke:#8E1B1F,stroke-width:2px,color:#161B22\n    class node_3 flagged",
+      "exhibits": [
+        {
+          "exhibit_id": "EX-SP-INV-1",
+          "source_table": "invoices",
+          "record_id": "REC-INV-1",
+          "amount": 58000.0,
+          "note": "Record backing hop EX-SP-INV-1."
+        },
+        {
+          "exhibit_id": "EX-SP-BNK-2",
+          "source_table": "bank_txns",
+          "record_id": "REC-BNK-2",
+          "amount": 17400.0,
+          "note": "Record backing hop EX-SP-BNK-2."
+        },
+        {
+          "exhibit_id": "EX-SP-BNK-3",
+          "source_table": "bank_txns",
+          "record_id": "REC-BNK-3",
+          "amount": 9000.0,
+          "note": "Record backing hop EX-SP-BNK-3."
+        }
+      ],
+      "reconciliation": {
+        "claimed_pesos": 17400.0,
+        "exhibits_sum": 17400.0,
+        "variance_percentage": 0.0,
+        "matched_table": "bank_txns",
+        "per_table_breakdown": [
+          {
+            "table": "invoices",
+            "subtotal": 58000.0
+          },
+          {
+            "table": "bank_txns",
+            "subtotal": 26400.0
+          }
+        ]
+      },
+      "adversarial_review": {
+        "reviewer_agent_role": "challenger",
+        "challenger_argument": "The transfer could be a personal loan.",
+        "why_finding_held": "No loan agreement exists and the amount is exactly 30% of the invoice."
+      }
+    }
+  ],
+  "leads_not_pursued": [
+    {
+      "entity": "RFC:CCCC030303CC3",
+      "signal": "Vendor invoice volume rose 400% quarter over quarter (invoice velocity detector).",
+      "reason": "Contract CTR-00007 signed 2025-11-02 covers the expanded scope; all 12 invoices match approved purchase orders within limits and each was settled by SPEI to the vendor's registered CLABE.",
+      "tool_calls_made": [
+        "query_invoices",
+        "query_contracts",
+        "query_purchase_orders",
+        "match_bank_txns"
+      ],
+      "closed_by": "investigator",
+      "closure_category": "materiality_verified"
+    },
+    {
+      "entity": "EMP:0014",
+      "signal": "Employee bank CLABE shares the bank prefix of vendor DDDD040404DD4 (employee-vendor CLABE linkage detector).",
+      "reason": "Only the 3-digit bank institution prefix (012) matches; the full 18-digit CLABEs differ and no bank_txns record moves funds between the two accounts in the audit period.",
+      "tool_calls_made": [
+        "query_employees",
+        "query_vendors",
+        "trace_bank_txns"
+      ],
+      "closed_by": "challenger",
+      "closure_category": "no_bank_correlation"
+    },
+    {
+      "entity": "RFC:EEEE050505EE5",
+      "signal": "Two invoices of $49,900.00 within 3 days, just under the $50,000.00 approval limit (threshold splitting detector).",
+      "reason": "Invoice INV-00341 was cancelled (status cancelado) and reissued as INV-00342 with a corrected concepto; a single payment BNK-00410 of $49,900.00 settled it.",
+      "tool_calls_made": [
+        "query_invoices",
+        "query_purchase_orders",
+        "match_bank_txns"
+      ],
+      "closed_by": "validator",
+      "closure_category": "administrative_error"
+    },
+    {
+      "entity": "RFC:FFFF060606FF6",
+      "signal": "Vendor registered 20 days before its first invoice (new vendor detector).",
+      "reason": "Purchase order PO-00288 and contract CTR-00031 predate the first invoice, and the delivery acceptance in ledger entry 5521 was approved by the plant controller.",
+      "tool_calls_made": [
+        "query_vendors",
+        "query_purchase_orders",
+        "query_contracts",
+        "query_ledger"
+      ],
+      "closed_by": "investigator"
+    }
+  ],
+  "run_metadata": {
+    "llm_calls": 38,
+    "mxn_cost": 18.45,
+    "wall_clock_seconds": 14.2,
+    "cost_by_role": {
+      "investigator": 11.2,
+      "challenger": 5.1,
+      "validator": 2.15
+    },
+    "deterministic": true
+  },
+  "method_and_limits": {
+    "architecture_summary": "Deterministic detectors scan the estate for known risk signals. An investigator agent examines each lead with read-only database tools, a challenger agent argues the defense, and a deterministic validator rejects any finding whose cited records do not exist or whose amount does not reconcile within 2%.",
+    "out_of_scope": [
+      "Payroll records beyond the employees table.",
+      "CFDI XML signatures; only invoice table fields were examined.",
+      "Transactions outside the audit period 2026-01-01 to 2026-06-30."
+    ],
+    "undetectable_fraud_types": [
+      "Cash bribes paid outside the banking system.",
+      "Collusion documented only in email, messaging, or verbal agreements.",
+      "Kickbacks routed through accounts not registered in vendors or employees."
+    ],
+    "reproducibility_steps": [
+      "Generate the estate with seed 7 using the project seeder.",
+      "Run the auditor against the estate path with network access disabled.",
+      "Validate the output: python validate_format.py --submission submission.json --estate estate.db",
+      "Open the exported case file; the same seed yields an identical file."
+    ]
+  }
+}
