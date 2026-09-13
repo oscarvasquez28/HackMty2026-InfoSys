@@ -535,7 +535,7 @@ All frontend environment variables and tokens:
 | `findings[].rule_detail.{code,authority,article,legal_text_citation}` | Task 4 | `rule_broken` text only, optionally matched against `lib/caseFile/constants.ts::RULE_CATALOG` by code |
 | `findings[].mermaid_source` | Task 7 diagram | generated from `money_trail` via `lib/caseFile/mermaid.ts::buildMermaidFromTrail` |
 | `findings[].reconciliation.{matched_table,per_table_breakdown}` | Task 9 | derived in the browser from `exhibits[].amount` (or from the loaded data estate — see §11) |
-| `findings[].adversarial_review` | Task 10 | "No adversarial review was recorded for this finding." |
+| `findings[].adversarial_review` | Task 10 | "No adversarial review was recorded for this finding." (accepts the `{reviewer_agent_role, challenger_argument, why_finding_held}` object or a legacy plain string — strings map to the challenger panel and render single-panel) |
 | `leads_not_pursued[].closure_category` | Task 11 tag | "Unclassified" |
 | `method_and_limits.*` | Task 12 | "Not provided by this run." per subsection |
 | `run_metadata.cost_by_role` | Task 1 cost line | omitted |

@@ -189,12 +189,14 @@ sequenceDiagram
         alt n8n Webhook Online
             Service->>Webhook: POST payload {"action": "adversarial_review_finding", ...}
             Webhook-->>Service: {"adversarial_review": "...", "judge_verdict": "...", "adversarial_evidences": [...]}
+            Note over Service: Tolerant unwrap: arrays, {"json": ...} items, wrapper keys, alias fields.<br/>is_online only when fields were actually extracted.
         else Webhook Offline or Timeout (>= 12.0s)
             Service->>Service: Generate deterministic adversarial review & guilty verdict
         end
+        Service->>Service: parse_verdict_outcome(judge_verdict) -> upheld | acquitted | evaluated
         Service->>DB: _persist_exhibits_to_database(adversarial_evidences)
         DB-->>Service: Inserted / Updated Exhibit Records
-        Service-->>SSE: yield {"type": "finding_reviewed", "finding": {...}, "judge_verdict": "..."}
+        Service-->>SSE: yield {"type": "finding_reviewed", "finding": {...}, "judge_verdict": "...", "verdict_outcome": "..."}
     end
 
     loop For each decoy lead (1..M)
@@ -206,6 +208,11 @@ sequenceDiagram
             Service->>Service: Generate deterministic acquittal & legitimate commercial justification
         end
         Service-->>SSE: yield {"type": "lead_reviewed", "lead": {...}, "reason": "..."}
+    end
+
+    Note over Service: AI VERDICT RECLASSIFICATION — findings the judge acquitted are<br/>demoted to schema-valid leads (closed_by: challenger, closure_category: ai_acquitted)
+    loop For each acquitted finding
+        Service-->>SSE: yield {"type": "lead_reviewed", "lead": {...}, "reclassified_from_finding": true}
     end
 
     Service->>Webhook: POST payload {"action": "synthesize_case_verdict", ...}

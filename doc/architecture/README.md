@@ -415,6 +415,7 @@ When `settings.N8N_WEBHOOK_URL` is set, the backend delegates finding and decoy 
   "adversarial_review": "La defensa argumenta que los comprobantes fiscales cumplen con todos los requisitos formales del Art. 29-A. Sin embargo, no se acreditan activos ni personal operativo en el domicilio fiscal.",
   "judge_verdict": "Con base en la presunción de inexistencia de operaciones y la inclusión en la lista definitiva del 69-B, se confirma la observación.",
   "final_narrative": "Se acreditó la simulación jurídica de servicios de asesoría por $1,450,000.00 MXN mediante facturación de EFOS.",
+  "verdict_outcome": "upheld",
   "adversarial_evidences": [
     {
       "source_table": "efos_list",
@@ -425,7 +426,11 @@ When `settings.N8N_WEBHOOK_URL` is set, the backend delegates finding and decoy 
 }
 ```
 
-*Resilience Invariant*: If n8n returns a non-200 status code, times out after 12 seconds, or is unreachable, the system automatically falls back to the deterministic judicial review logic without failing the user's request.
+*Response-shape tolerance*: the backend unwraps whichever envelope n8n returns — plain objects, item arrays `[{...}]`, n8n `[{"json": {...}}]` items, or payloads nested under `output`/`body`/`data`/`result`/`response` — and resolves a broad alias set per field (`narrative`, `output`, `text`, `summary`, `defense_review`, `dictamen`, ...). `adversarial_review` may be a string or the structured `{reviewer_agent_role, challenger_argument, why_finding_held}` object the case file renders; either way the finding stored in the submission always carries the object form.
+
+*Verdict semantics*: `verdict_outcome` may be returned explicitly (`upheld` | `acquitted`) or is parsed from the `judge_verdict` text in Spanish and English (negation-safe: `no culpable`, `not guilty`, `charge dismissed`, `desestimado`). A finding the judge **acquits is reclassified into `leads_not_pursued`** (`closed_by: "challenger"`, `closure_category: "ai_acquitted"`) before the final synthesis call, so the accusation set, peso totals, and risk level reflect the AI's verdict — this is what lets evidence change the outcome.
+
+*Resilience Invariant*: If n8n returns a non-200 status code, times out after 12 seconds, is unreachable, or answers 200 with a body carrying no recognizable fields, the system automatically falls back to the deterministic judicial review logic without failing the user's request. `is_online`/`source: EXTERNAL` are only set when at least one field was actually extracted from the n8n response — fallback content is never mislabeled as AI output. All three calls retry once; non-200 responses are logged with a body snippet.
 
 ---
 
