@@ -89,6 +89,13 @@ class N8nEnrichmentService:
                     async with httpx.AsyncClient(timeout=eff_timeout) as client:
                         resp = await client.post(target_url, json=safe_payload)
                         if resp.status_code == 200:
+                            if not resp.text.strip():
+                                logger.warning(
+                                    f"n8n webhook returned HTTP 200 with an EMPTY body. "
+                                    f"Please ensure in n8n that the Webhook trigger node 'Respond' parameter is set to "
+                                    f"'When Last Node Finishes' or 'Using Respond to Webhook Node', not 'Immediately'."
+                                )
+                                break
                             online_success = True
                             res_data = resp.json()
                             if isinstance(res_data, dict):
@@ -119,12 +126,26 @@ class N8nEnrichmentService:
                                 if final_narrative and len(final_narrative.split()) <= 150:
                                     f_copy["narrative"] = final_narrative
                                 break
+                except httpx.TimeoutException:
+                    if attempt == 0:
+                        await asyncio.sleep(0.5)
+                        continue
+                    logger.warning(
+                        f"n8n call for finding {index}/{total} TIMED OUT after {eff_timeout}s. Using deterministic review."
+                    )
+                except httpx.ConnectError as conn_err:
+                    if attempt == 0:
+                        await asyncio.sleep(0.5)
+                        continue
+                    logger.warning(
+                        f"n8n connection failed for finding {index}/{total} (cannot connect to {target_url}): {conn_err}. Using deterministic review."
+                    )
                 except Exception as exc:
                     if attempt == 0:
                         await asyncio.sleep(0.5)
                         continue
                     logger.warning(
-                        f"n8n call for finding {index}/{total} failed or timed out: {exc}. Using deterministic review."
+                        f"n8n call for finding {index}/{total} failed: {exc}. Using deterministic review."
                     )
 
         if not adv_review:
@@ -227,6 +248,13 @@ class N8nEnrichmentService:
                     async with httpx.AsyncClient(timeout=eff_timeout) as client:
                         resp = await client.post(target_url, json=safe_payload)
                         if resp.status_code == 200:
+                            if not resp.text.strip():
+                                logger.warning(
+                                    f"n8n webhook returned HTTP 200 with an EMPTY body for lead {index}/{total}. "
+                                    f"Ensure the n8n Webhook trigger node 'Respond' parameter is set to "
+                                    f"'When Last Node Finishes' or 'Using Respond to Webhook Node'."
+                                )
+                                break
                             online_success = True
                             res_data = resp.json()
                             if isinstance(res_data, dict):
@@ -250,12 +278,26 @@ class N8nEnrichmentService:
                                 if ret_closed_by in VALID_CLOSED_BY:
                                     closed_by = ret_closed_by
                                 break
+                except httpx.TimeoutException:
+                    if attempt == 0:
+                        await asyncio.sleep(0.5)
+                        continue
+                    logger.warning(
+                        f"n8n call for lead {index}/{total} TIMED OUT after {eff_timeout}s. Using deterministic review."
+                    )
+                except httpx.ConnectError as conn_err:
+                    if attempt == 0:
+                        await asyncio.sleep(0.5)
+                        continue
+                    logger.warning(
+                        f"n8n connection failed for lead {index}/{total} (cannot connect to {target_url}): {conn_err}. Using deterministic review."
+                    )
                 except Exception as exc:
                     if attempt == 0:
                         await asyncio.sleep(0.5)
                         continue
                     logger.warning(
-                        f"n8n call for lead {index}/{total} failed or timed out: {exc}. Using deterministic review."
+                        f"n8n call for lead {index}/{total} failed: {exc}. Using deterministic review."
                     )
 
         if not adv_review:
@@ -345,24 +387,40 @@ class N8nEnrichmentService:
                 async with httpx.AsyncClient(timeout=eff_timeout) as client:
                     resp = await client.post(target_url, json=safe_payload)
                     if resp.status_code == 200:
-                        online_success = True
-                        res_data = resp.json()
-                        if isinstance(res_data, dict):
-                            judge_verdict = (
-                                res_data.get("judge_verdict")
-                                or res_data.get("judge_veredict")
-                                or res_data.get("verdict")
-                                or ""
+                        if not resp.text.strip():
+                            logger.warning(
+                                f"n8n webhook returned HTTP 200 with an EMPTY body for case verdict synthesis. "
+                                f"Ensure the n8n Webhook trigger node 'Respond' parameter is set to "
+                                f"'When Last Node Finishes' or 'Using Respond to Webhook Node'."
                             )
-                            final_narrative = (
-                                res_data.get("final_narrative")
-                                or res_data.get("executive_summary")
-                                or res_data.get("plain_narrative")
-                                or ""
-                            )
+                        else:
+                            online_success = True
+                            res_data = resp.json()
+                            if isinstance(res_data, dict):
+                                judge_verdict = (
+                                    res_data.get("judge_verdict")
+                                    or res_data.get("judge_veredict")
+                                    or res_data.get("verdict")
+                                    or ""
+                                )
+                                final_narrative = (
+                                    res_data.get("final_narrative")
+                                    or res_data.get("executive_summary")
+                                    or res_data.get("plain_narrative")
+                                    or ""
+                                )
+            except httpx.TimeoutException:
+                logger.warning(
+                    f"n8n case synthesis call TIMED OUT after {eff_timeout}s. Using deterministic summary."
+                )
+            except httpx.ConnectError as conn_err:
+                logger.warning(
+                    f"n8n connection failed for case synthesis (cannot connect to {target_url}): {conn_err}. Using deterministic summary."
+                )
             except Exception as exc:
                 logger.warning(
-                    f"n8n case synthesis call failed: {exc}. Using deterministic summary.")
+                    f"n8n case synthesis call failed: {exc}. Using deterministic summary."
+                )
 
         if not judge_verdict:
             judge_verdict = (
