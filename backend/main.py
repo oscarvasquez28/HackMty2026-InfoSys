@@ -6,6 +6,7 @@ from backend.core.config import settings
 from backend.api.routes.investigations import router as investigations_router
 from backend.api.routes.tts import router as tts_router
 from backend.api.routes.agent_tools import router as agent_tools_router
+from backend.api.routes.database_tools import router as database_tools_router
 
 
 try:
@@ -59,6 +60,8 @@ app.add_middleware(
 app.include_router(investigations_router, prefix=settings.API_V1_STR)
 app.include_router(tts_router, prefix=settings.API_V1_STR)
 app.include_router(agent_tools_router, prefix=settings.API_V1_STR)
+app.include_router(database_tools_router, prefix=settings.API_V1_STR)
+app.include_router(database_tools_router, prefix=f"{settings.API_V1_STR}/tools")
 
 
 @app.get("/health", tags=["health"])

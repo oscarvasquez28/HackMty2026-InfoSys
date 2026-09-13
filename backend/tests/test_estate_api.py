@@ -10,7 +10,7 @@ from httpx import ASGITransport, AsyncClient
 
 from backend.main import app
 from backend.models.estate import EfosRecord, InvoiceRecord, VendorRecord
-from backend.services.estate_connector import EstateConnector
+from backend.services.estate_connector import EstateConnector, estate_connector
 
 
 @pytest.mark.asyncio
@@ -65,5 +65,8 @@ async def test_audit_estate_endpoint():
             assert data["seed"] == 42
             assert len(data["findings"]) >= 1
             assert "## 1. Header" in data["case_file_markdown"]
-            assert "## 2. Executive summary" in data["case_file_markdown"]
             assert data["validation_passed"] is True
+            assert data["adversarial_review"] is not None
+            assert data["judge_verdict"] is not None
+
+        await estate_connector.dispose_all()

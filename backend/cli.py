@@ -108,16 +108,39 @@ async def run_audit(
         submission = await suite.run_forensic_detection_pipeline(
             estate_target=p_estate if p_estate.is_file() else estate_path,
             seed=seed,
+            company_rfc=company_rfc,
         )
 
-        # 2. Update company RFC if provided
+        # 2. n8n LLM Enrichment (or offline rule-based fallback)
+        from backend.services.n8n_enrichment import n8n_enrichment_service
+        enrichment = await n8n_enrichment_service.run_enrichment(
+            findings=submission.get("findings", []),
+            leads_not_pursued=submission.get("leads_not_pursued", []),
+            seed=seed,
+            company_name=company_name,
+            company_rfc=company_rfc,
+            estate_target=p_estate if p_estate.is_file() else estate_path,
+            n8n_url=n8n_url,
+        )
+
+        submission["findings"] = enrichment.get("findings", submission.get("findings", []))
+        submission["leads_not_pursued"] = enrichment.get("leads_not_pursued", submission.get("leads_not_pursued", []))
+        submission["adversarial_review"] = enrichment.get("adversarial_review", "")
+        submission["judge_verdict"] = enrichment.get("judge_verdict", "")
+        submission["final_narrative"] = enrichment.get("final_narrative", "")
+        submission["adversarial_evidences"] = enrichment.get("adversarial_evidences", [])
+
+        if enrichment.get("llm_calls", 0) > 0:
+            submission["run_metadata"]["llm_calls"] = enrichment["llm_calls"]
+            submission["run_metadata"]["deterministic"] = False
+
+        # 3. Update company RFC if provided
         if company_rfc:
-            # Reformat receiver if needed
             for f in submission.get("findings", []):
                 if not f.get("entities"):
                     f["entities"] = [f"RFC:{company_rfc}"]
 
-        # 3. Export artifacts
+        # 4. Export artifacts
         out_dir = Path(output_dir).resolve()
         case_file_path, submission_path = generator.export_artifacts(
             submission_data=submission,

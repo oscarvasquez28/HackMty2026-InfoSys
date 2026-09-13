@@ -72,7 +72,9 @@ class ForensicDetectorSuite:
         return dfs
 
     def detect_phantom_vendors(
-        self, dfs: Dict[str, pl.DataFrame]
+        self,
+        dfs: Dict[str, pl.DataFrame],
+        company_rfc: Optional[str] = None,
     ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         """
         Detects Phantom Vendors (Empresas Fantasma / Factureras):
@@ -93,6 +95,15 @@ class ForensicDetectorSuite:
         if invoices_df.is_empty() or "issuer_rfc" not in invoices_df.columns:
             return findings, leads
 
+        # Infer company RFC if not passed: in corporate double-entry accounting,
+        # the audited company is the primary receiver of vendor procurement invoices.
+        if not company_rfc and not invoices_df.is_empty() and "receiver_rfc" in invoices_df.columns:
+            rec_series = invoices_df["receiver_rfc"].drop_nulls()
+            if len(rec_series) > 0:
+                counts = rec_series.value_counts()
+                count_col = "count" if "count" in counts.columns else counts.columns[1]
+                company_rfc = str(counts.sort(count_col, descending=True)[0, 0]).strip()
+
         # Known EFOS RFCs
         efos_rfcs: Dict[str, str] = {}
         if not efos_df.is_empty() and "rfc" in efos_df.columns:
@@ -108,17 +119,21 @@ class ForensicDetectorSuite:
             str(r).strip() for r in po_df["vendor_rfc"].to_list() if r is not None
         ) if not po_df.is_empty() and "vendor_rfc" in po_df.columns else set()
 
-        # Group invoices by issuer_rfc (ignoring cancelled invoices which are handled by revenue inflation)
+        # Group invoices by issuer_rfc (ignoring cancelled invoices and outgoing sales by audited company)
         vendor_invoices: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
         for row in invoices_df.iter_rows(named=True):
             if str(row.get("status", "")).strip().lower() in ("cancelado", "cancelada"):
                 continue
             rfc = str(row.get("issuer_rfc", "")).strip()
+            if company_rfc and rfc == company_rfc:
+                continue
             if rfc:
                 vendor_invoices[rfc].append(row)
 
         # Screen un-invoiced EFOS listed entities (Decoy clearance)
         for efos_rfc, efos_status in efos_rfcs.items():
+            if company_rfc and efos_rfc == company_rfc:
+                continue
             if efos_rfc not in vendor_invoices:
                 leads.append({
                     "entity": format_entity(efos_rfc, "RFC"),
@@ -130,6 +145,8 @@ class ForensicDetectorSuite:
 
         # Screen high-value procurement contracts and POs without invoice discrepancies (Decoy clearance)
         for rfc in contract_rfcs.union(po_rfcs):
+            if company_rfc and rfc == company_rfc:
+                continue
             if rfc not in vendor_invoices and rfc not in efos_rfcs:
                 leads.append({
                     "entity": format_entity(rfc, "RFC"),
@@ -186,13 +203,16 @@ class ForensicDetectorSuite:
                         "exhibit_id": ex_id,
                     })
 
-                # Exhibit 3: Vendor profile
-                exhibits.append({
-                    "exhibit_id": f"EX-PV-VND-{len(exhibits)+1}",
-                    "source_table": "vendors",
-                    "record_id": vendor_rfc,
-                    "note": f"Registro fiscal de {vendor_rfc} sin infraestructura ni empleados declarados.",
-                })
+                # Exhibit 3: Vendor profile (only if present in vendors table)
+                if not vendors_df.is_empty() and "rfc" in vendors_df.columns:
+                    v_match = vendors_df.filter(pl.col("rfc").cast(pl.Utf8) == vendor_rfc)
+                    if not v_match.is_empty():
+                        exhibits.append({
+                            "exhibit_id": f"EX-PV-VND-{len(exhibits)+1}",
+                            "source_table": "vendors",
+                            "record_id": vendor_rfc,
+                            "note": f"Registro fiscal de {vendor_rfc} sin infraestructura ni empleados declarados.",
+                        })
 
                 # Exhibit 4: EFOS list if present
                 if is_efos:
@@ -485,7 +505,9 @@ class ForensicDetectorSuite:
         return findings, leads
 
     def detect_threshold_splitting(
-        self, dfs: Dict[str, pl.DataFrame]
+        self,
+        dfs: Dict[str, pl.DataFrame],
+        company_rfc: Optional[str] = None,
     ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         """
         Detects Threshold Splitting (Pitufeo / Fraccionamiento de Compras):
@@ -541,7 +563,8 @@ class ForensicDetectorSuite:
                     exhibits: List[Dict[str, Any]] = []
                     money_trail: List[Dict[str, Any]] = []
 
-                    for i, po in enumerate(split_pos[:3]):
+                    # Cite all split POs so exhibit sum matches total_split_amount exactly
+                    for i, po in enumerate(split_pos):
                         po_id = str(po["po_id"])
                         amt = float(po.get("amount") or 0.0)
                         dt = str(po.get("date", "2026-01-01"))
@@ -554,20 +577,23 @@ class ForensicDetectorSuite:
                             "note": f"Orden de compra fraccionada {po_id} por ${amt:,.2f} MXN, justo debajo del umbral de ${threshold:,.2f} MXN.",
                         })
                         money_trail.append({
-                            "from": format_entity("EMPRESA_AUDITADA", "RFC"),
+                            "from": format_entity(company_rfc or "EMPRESA_AUDITADA", "RFC"),
                             "to": format_entity(vendor_rfc, "RFC"),
                             "amount": amt,
                             "date": dt,
                             "exhibit_id": ex_id,
                         })
 
-                    # Add vendor profile exhibit
-                    exhibits.append({
-                        "exhibit_id": f"EX-TS-VND-{len(exhibits)+1}",
-                        "source_table": "vendors",
-                        "record_id": vendor_rfc,
-                        "note": f"Proveedor beneficiario {vendor_rfc} de las contrataciones fragmentadas.",
-                    })
+                    # Add vendor profile exhibit if present in vendors table
+                    if not vendors_df.is_empty() and "rfc" in vendors_df.columns:
+                        v_match = vendors_df.filter(pl.col("rfc").cast(pl.Utf8) == vendor_rfc)
+                        if not v_match.is_empty():
+                            exhibits.append({
+                                "exhibit_id": f"EX-TS-VND-{len(exhibits)+1}",
+                                "source_table": "vendors",
+                                "record_id": vendor_rfc,
+                                "note": f"Proveedor beneficiario {vendor_rfc} de las contrataciones fragmentadas.",
+                            })
 
                     narrative = (
                         f"Se detecto fraccionamiento deliberado de contrataciones con el proveedor {vendor_rfc}. "
@@ -706,6 +732,7 @@ class ForensicDetectorSuite:
         self,
         estate_target: Optional[Union[str, Path]] = None,
         seed: int = 1,
+        company_rfc: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Main execution pipeline:
@@ -719,11 +746,20 @@ class ForensicDetectorSuite:
 
         dfs = await self._load_estate_dataframes(estate_target)
 
+        # Infer company RFC if not explicitly provided
+        invoices_df = dfs.get("invoices", pl.DataFrame())
+        if not company_rfc and not invoices_df.is_empty() and "receiver_rfc" in invoices_df.columns:
+            rec_series = invoices_df["receiver_rfc"].drop_nulls()
+            if len(rec_series) > 0:
+                counts = rec_series.value_counts()
+                count_col = "count" if "count" in counts.columns else counts.columns[1]
+                company_rfc = str(counts.sort(count_col, descending=True)[0, 0]).strip()
+
         all_findings: List[Dict[str, Any]] = []
         all_leads: List[Dict[str, Any]] = []
 
-        # 1. Phantom Vendors
-        f_pv, l_pv = self.detect_phantom_vendors(dfs)
+        # 1. Phantom Vendors (excluding company's own outgoing billing)
+        f_pv, l_pv = self.detect_phantom_vendors(dfs, company_rfc=company_rfc)
         all_findings.extend(f_pv)
         all_leads.extend(l_pv)
 
@@ -738,7 +774,7 @@ class ForensicDetectorSuite:
         all_leads.extend(l_rt)
 
         # 4. Threshold Splitting
-        f_ts, l_ts = self.detect_threshold_splitting(dfs)
+        f_ts, l_ts = self.detect_threshold_splitting(dfs, company_rfc=company_rfc)
         all_findings.extend(f_ts)
         all_leads.extend(l_ts)
 

@@ -278,4 +278,8 @@ class EstateAuditResponse(BaseModel):
     status: str = Field(default="COMPLETED")
     validation_passed: Optional[bool] = Field(None)
     validation_errors: List[str] = Field(default_factory=list)
+    adversarial_review: Optional[str] = Field(None, description="Adversarial defense review text")
+    judge_verdict: Optional[str] = Field(None, description="Formal judge verdict text")
+    final_narrative: Optional[str] = Field(None, description="Final synthesized executive narrative")
+    adversarial_evidences: List[Dict[str, Any]] = Field(default_factory=list, description="Evidences examined by reviewer")
 

@@ -359,7 +359,16 @@ class ExhibitBuilder:
         as defined in tmp/estate_schema - polar.sql. Idempotent: replaces or ignores duplicates.
         """
         inserted_count = 0
+        from sqlalchemy import text
         async with self.connector.session_scope(estate_target) as session:
+            await session.execute(text("""
+                CREATE TABLE IF NOT EXISTS exhibits (
+                    exhibit_id VARCHAR(32) PRIMARY KEY,
+                    source_table VARCHAR(64),
+                    record_id VARCHAR(64),
+                    sentence TEXT
+                );
+            """))
             for ex in exhibits:
                 eid = str(ex.get("exhibit_id", "")).strip()
                 tbl = str(ex.get("source_table", "")).strip()

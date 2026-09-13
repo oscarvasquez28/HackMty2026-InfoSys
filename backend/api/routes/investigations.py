@@ -639,7 +639,7 @@ async def audit_estate_endpoint(
     import time
     from backend.services.case_file_generator import CaseFileGenerator
     from backend.services.deterministic_detectors import ForensicDetectorSuite
-    from backend.services.estate_connector import EstateConnector
+    from backend.services.estate_connector import EstateConnector, estate_connector
 
     start_time = time.perf_counter()
     p_estate = FilePath(req.estate_path).resolve()
@@ -650,40 +650,43 @@ async def audit_estate_endpoint(
             detail=f"Estate database file not found at: {req.estate_path}",
         )
 
-    connector = EstateConnector()
-    suite = ForensicDetectorSuite(connector=connector)
+    suite = ForensicDetectorSuite(connector=estate_connector)
     generator = CaseFileGenerator()
 
     try:
         submission = await suite.run_forensic_detection_pipeline(
             estate_target=p_estate if p_estate.is_file() else req.estate_path,
             seed=req.seed,
+            company_rfc=req.company_rfc,
         )
 
         findings = submission.get("findings", [])
         leads = submission.get("leads_not_pursued", [])
 
-        # Optional n8n enrichment hook
-        n8n_target = req.n8n_url or settings.N8N_WEBHOOK_URL
-        if n8n_target and findings:
-            try:
-                async with httpx.AsyncClient(timeout=3.0) as client:
-                    resp = await client.post(
-                        n8n_target,
-                        json={"action": "narrative_enhancement", "findings": findings, "seed": req.seed},
-                    )
-                    if resp.status_code == 200:
-                        payload = resp.json()
-                        enhanced = payload.get("findings")
-                        if isinstance(enhanced, list) and len(enhanced) == len(findings):
-                            for orig, enh in zip(findings, enhanced):
-                                if isinstance(enh, dict) and enh.get("narrative"):
-                                    words = enh["narrative"].split()
-                                    if len(words) <= 150:
-                                        orig["narrative"] = enh["narrative"]
-                            submission["run_metadata"]["llm_calls"] = len(findings)
-            except Exception as n8n_exc:
-                logger.warning(f"n8n webhook call failed: {n8n_exc}. Proceeding with deterministic narratives.")
+        # Step 2: n8n LLM Enrichment (or offline rule-based fallback)
+        from backend.services.n8n_enrichment import n8n_enrichment_service
+        enrichment = await n8n_enrichment_service.run_enrichment(
+            findings=submission.get("findings", []),
+            leads_not_pursued=submission.get("leads_not_pursued", []),
+            seed=req.seed,
+            company_name=req.company_name,
+            company_rfc=req.company_rfc,
+            estate_target=p_estate if p_estate.is_file() else req.estate_path,
+            n8n_url=req.n8n_url,
+        )
+
+        findings = enrichment.get("findings", findings)
+        leads = enrichment.get("leads_not_pursued", leads)
+        submission["findings"] = findings
+        submission["leads_not_pursued"] = leads
+        submission["adversarial_review"] = enrichment.get("adversarial_review", "")
+        submission["judge_verdict"] = enrichment.get("judge_verdict", "")
+        submission["final_narrative"] = enrichment.get("final_narrative", "")
+        submission["adversarial_evidences"] = enrichment.get("adversarial_evidences", [])
+
+        if enrichment.get("llm_calls", 0) > 0:
+            submission["run_metadata"]["llm_calls"] = enrichment["llm_calls"]
+            submission["run_metadata"]["deterministic"] = False
 
         # Update company RFC if provided
         if req.company_rfc:
@@ -691,7 +694,7 @@ async def audit_estate_endpoint(
                 if not f.get("entities"):
                     f["entities"] = [f"RFC:{req.company_rfc}"]
 
-        # Generate Markdown Case File
+        # Generate Markdown Case File with rendered Mermaid diagrams & adversarial reviews
         case_file_md = generator.generate_case_file_markdown(
             submission_data=submission,
             company_name=req.company_name,
@@ -722,8 +725,12 @@ async def audit_estate_endpoint(
             status="COMPLETED",
             validation_passed=validation_passed,
             validation_errors=validation_errors,
+            adversarial_review=enrichment.get("adversarial_review"),
+            judge_verdict=enrichment.get("judge_verdict"),
+            final_narrative=enrichment.get("final_narrative"),
+            adversarial_evidences=enrichment.get("adversarial_evidences", []),
         )
 
     finally:
-        await connector.dispose_all()
+        await estate_connector.dispose_all()
 

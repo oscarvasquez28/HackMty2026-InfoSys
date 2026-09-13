@@ -121,6 +121,11 @@ class CaseFileGenerator:
         total_exposure = sum(float(f.get("peso_amount", 0.0)) for f in findings)
         closed_leads_count = len(leads)
 
+        adversarial_review = submission_data.get("adversarial_review")
+        judge_verdict = submission_data.get("judge_verdict")
+        final_narrative = submission_data.get("final_narrative")
+        adversarial_evidences = submission_data.get("adversarial_evidences", [])
+
         findings_detail_str = f"{len(findings)} total"
         if findings:
             parts = []
@@ -130,7 +135,7 @@ class CaseFileGenerator:
                 parts.append(f"{probable_count} probable")
             findings_detail_str = f"{len(findings)} ({', '.join(parts)})"
 
-        summary_narrative = (
+        summary_narrative = final_narrative or (
             f"The comprehensive forensic audit identified {len(findings)} confirmed fraud schemes "
             f"representing a total exposure of ${total_exposure:,.2f} MXN. "
             f"A total of {closed_leads_count} investigative leads were thoroughly examined and formally closed "
@@ -144,6 +149,16 @@ class CaseFileGenerator:
             "",
             summary_narrative,
             "",
+        ])
+
+        if judge_verdict:
+            md_lines.extend([
+                "### Veredicto del Juez Forense / Dictamen Formal",
+                f"> **{judge_verdict}**",
+                "",
+            ])
+
+        md_lines.extend([
             "| Metric | Audit Result |",
             "|---|---|",
             f"| **Findings** | {findings_detail_str} |",
@@ -190,6 +205,13 @@ class CaseFileGenerator:
                 }
                 scheme_title = scheme_title_map.get(scheme_type, scheme_type.replace("_", " ").title())
 
+                finding_adv_review = f.get("adversarial_review") or adversarial_review or (
+                    f"El evaluador adversarial analizó si la operativa de `{entities_str}` correspondía a "
+                    "operaciones ordinarias de mercado o dispersiones de nómina. La imputación se mantuvo "
+                    f"firme debido a la coincidencia directa de transferencias, ausencia de entregables "
+                    f"fehacientes en el archivo corporativo y fundamentación en el artículo **{rule}**."
+                )
+
                 md_lines.extend([
                     f"### Hallazgo {idx}: {entities_str} — {scheme_title} (`{scheme_type}`)",
                     "",
@@ -223,13 +245,27 @@ class CaseFileGenerator:
                     f"- **Tolerancia:** Varianza $\\le 2.0\\%$ satisfecha contra registros fuente.",
                     "",
                     "#### Revisión Adversarial / Control de Calidad",
-                    (
-                        f"El evaluador adversarial analizó si la operativa de `{entities_str}` correspondía a "
-                        "operaciones ordinarias de mercado o dispersiones de nómina. La imputación se mantuvo "
-                        f"firme debido a la coincidencia directa de transferencias, ausencia de entregables "
-                        f"fehacientes en el archivo corporativo y fundamentación en el artículo **{rule}**."
-                    ),
+                    f"{finding_adv_review}",
                     "",
+                ])
+
+                # Include adversarial evidence table if present
+                if adversarial_evidences:
+                    md_lines.extend([
+                        "##### Evidencias Verificadas por la Defensa Adversarial",
+                        "",
+                        "| Cédula (Exhibit ID) | Tabla Fuente | Registro (ID) | Hecho Probatorio Cotejado |",
+                        "|---|---|---|---|",
+                    ])
+                    for adv_ex in adversarial_evidences:
+                        adv_id = adv_ex.get("exhibit_id", "EX-ADV")
+                        adv_src = adv_ex.get("source_table", "")
+                        adv_rid = adv_ex.get("record_id", "")
+                        adv_sent = (adv_ex.get("sentence") or adv_ex.get("note") or "").replace("|", "-")
+                        md_lines.append(f"| **{adv_id}** | `{adv_src}` | `{adv_rid}` | {adv_sent} |")
+                    md_lines.append("")
+
+                md_lines.extend([
                     "---",
                     "",
                 ])
