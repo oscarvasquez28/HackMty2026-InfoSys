@@ -212,11 +212,14 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 
 def get_estate_schema_sql_path() -> Path:
-    """Discovers the absolute path to estate_schema - polar.sql."""
+    """Discovers the absolute path to estate_schema - polar.sql or estate_schema.sql."""
+    base = Path(__file__).resolve().parent.parent.parent
     candidates = [
         Path("tmp/estate_schema - polar.sql"),
-        Path(__file__).resolve().parent.parent.parent / "tmp" / "estate_schema - polar.sql",
-        Path(__file__).resolve().parent.parent / "tmp" / "estate_schema - polar.sql",
+        base / "tmp" / "estate_schema - polar.sql",
+        base / "backend" / "tmp" / "estate_schema - polar.sql",
+        base / "student-materials" / "forensic-auditor" / "estate_schema.sql",
+        Path("student-materials/forensic-auditor/estate_schema.sql"),
     ]
     for p in candidates:
         if p.exists():
