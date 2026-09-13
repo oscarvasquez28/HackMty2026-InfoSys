@@ -282,4 +282,9 @@ class EstateAuditResponse(BaseModel):
     judge_verdict: Optional[str] = Field(None, description="Formal judge verdict text")
     final_narrative: Optional[str] = Field(None, description="Final synthesized executive narrative")
     adversarial_evidences: List[Dict[str, Any]] = Field(default_factory=list, description="Evidences examined by reviewer")
+    header: Optional[Dict[str, Any]] = Field(default=None, description="Case header")
+    executive_summary: Optional[Dict[str, Any]] = Field(default=None, description="Executive summary")
+    entity_names: Optional[Dict[str, str]] = Field(default=None, description="Entity names lookup")
+    method_and_limits: Optional[Dict[str, Any]] = Field(default=None, description="Method and limits")
+    submission: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Full submission format")
 

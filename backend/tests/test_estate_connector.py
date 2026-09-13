@@ -26,7 +26,16 @@ from backend.models.estate import (
     VendorRecord,
 )
 from backend.services.estate_connector import EstateConnector, estate_connector
-from tmp.validate_format import validate_against_estate, validate_structure
+
+import importlib.util
+_val_path = Path("student-materials/forensic-auditor/validate_format.py")
+if not _val_path.exists():
+    _val_path = Path("tmp/validate_format.py")
+_spec = importlib.util.spec_from_file_location("validate_format", str(_val_path))
+_mod = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_mod)
+validate_against_estate = _mod.validate_against_estate
+validate_structure = _mod.validate_structure
 
 
 @pytest.mark.asyncio
