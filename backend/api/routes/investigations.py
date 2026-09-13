@@ -786,8 +786,8 @@ async def generate_estate_audit_stream(
         step_counter += 1
         sync_thought = {
             "step": step_counter,
-            "phase": "Sincronización de Datos y Topología",
-            "message": f"Sincronizando estado financiero hacia PostgreSQL y construyendo grafo contable...",
+            "phase": "Data Sync and Topology",
+            "message": f"Syncing financial estate to PostgreSQL and building the accounting graph...",
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "event_id": str(uuid.uuid4()),
             "agent_id": "DATA_VALIDATION",
@@ -860,7 +860,11 @@ async def generate_estate_audit_stream(
 
                 thought_data = {
                     "step": step_counter,
-                    "phase": "Finding Adversarial Review",
+                    "phase": (
+                        "Finding Acquitted — Reclassified"
+                        if step_item.get("verdict_outcome") == "acquitted"
+                        else "Finding Adversarial Review"
+                    ),
                     "message": step_item.get("message", "Finding examined."),
                     "timestamp": datetime.now(timezone.utc).isoformat(),
                     "event_id": str(uuid.uuid4()),
@@ -905,8 +909,10 @@ async def generate_estate_audit_stream(
                 yield f"event: thought\ndata: {json.dumps(thought_data)}\n\n"
 
         # 4. Generate final Markdown case file
-        submission["findings"] = enriched_findings or findings
-        submission["leads_not_pursued"] = enriched_leads or leads
+        # Prefer the post-reclassification lists from the synthesis step: findings the
+        # AI judge acquitted were already demoted into leads_not_pursued.
+        submission["findings"] = last_synthesis.get("findings") or enriched_findings or findings
+        submission["leads_not_pursued"] = last_synthesis.get("leads_not_pursued") or enriched_leads or leads
         submission["adversarial_review"] = last_synthesis.get("adversarial_review", "")
         submission["judge_verdict"] = last_synthesis.get("judge_verdict", "")
         submission["final_narrative"] = last_synthesis.get("final_narrative", "")

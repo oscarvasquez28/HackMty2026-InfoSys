@@ -36,6 +36,239 @@ VALID_CLOSED_BY = {"challenger", "investigator", "validator"}
 # skipped and the deterministic local engine runs instead (zero network attempts).
 OFFLINE_MODE_SENTINEL = "offline"
 
+# ---------------------------------------------------------------------------
+# Tolerant n8n response parsing
+#
+# n8n workflows do not guarantee a stable response envelope: depending on the
+# last node, the webhook may answer a plain dict, an array of items `[{...}]`,
+# n8n's `[{"json": {...}}]` item format, or a dict nested under wrapper keys
+# (`output`, `data`, `result`, ...). These helpers normalize every observed
+# shape into the flat dict the pipeline expects, so real AI output is never
+# silently replaced by the deterministic fallback.
+# ---------------------------------------------------------------------------
+
+_WRAPPER_KEYS = ("output", "body", "data", "result", "response")
+
+ADV_REVIEW_KEYS = (
+    "adversarial_review",
+    "adversarial_defense_review",
+    "defense_review",
+    "challenger_review",
+    "challenger_argument",
+    "review",
+)
+JUDGE_VERDICT_KEYS = (
+    "judge_verdict",
+    "judge_veredict",
+    "verdict",
+    "decision",
+    "ruling",
+    "dictamen",
+)
+FINAL_NARRATIVE_KEYS = (
+    "final_narrative",
+    "narrative",
+    "plain_narrative",
+    "executive_summary",
+    "summary",
+    "text",
+    "output",
+    "narrativa",
+)
+EVIDENCES_KEYS = (
+    "adversarial_evidences",
+    "evidences",
+    "exhibits",
+    "evidence",
+)
+REASON_KEYS = ("reason", "reason_to_close", "dismissal_reason", "justification")
+OUTCOME_KEYS = ("verdict_outcome", "outcome", "resolution")
+
+# Acquittal markers are checked before upheld markers so negations like
+# "no culpable" / "not guilty" / "no se acreditó" are read correctly. The bare
+# word "dismiss" is deliberately absent: upheld verdicts routinely say things
+# like "the defense's exception is dismissed", which is not an acquittal.
+_ACQUITTAL_MARKERS = (
+    "acquit",
+    "absuel",
+    "absolv",
+    "not guilty",
+    "no culpable",
+    "inocent",
+    "exonerat",
+    "sin responsabilidad",
+    "sin cargo",
+    "charge dismissed",
+    "charges dismissed",
+    "case dismissed",
+    "lead dismissed",
+    "finding dismissed",
+    "accusation dismissed",
+    "cargo desestim",
+    "cargos desestim",
+    "imputación desestim",
+    "hallazgo desestim",
+    "acusación desestim",
+    "sobrese",
+    "not liable",
+    "no liability",
+    "not proven",
+    "not substantiated",
+    "unsubstantiated",
+    "no acredit",
+    "no se acredit",
+    "not confirmed",
+    "no confirm",
+)
+_UPHELD_MARKERS = (
+    "guilt",
+    "culpable",
+    "upheld",
+    "liable",
+    "responsabilidad",
+    "confirm",
+    "condena",
+    "acredit",
+)
+
+
+def _unwrap_n8n_payload(res_data: Any) -> Dict[str, Any]:
+    """
+    Normalizes a raw n8n webhook JSON body into a flat dict.
+
+    Handles: plain dicts, item arrays `[{...}]`, n8n `[{"json": {...}}]` items,
+    and payloads nested one level under wrapper keys (`output`, `body`, `data`,
+    `result`, `response`). Returns {} when nothing usable is found.
+    """
+    data = res_data
+    if isinstance(data, list):
+        data = data[0] if data else {}
+    if isinstance(data, dict) and isinstance(data.get("json"), dict):
+        data = data["json"]
+    if not isinstance(data, dict):
+        return {}
+    merged = dict(data)
+    for key in _WRAPPER_KEYS:
+        inner = data.get(key)
+        if isinstance(inner, dict):
+            for k, v in inner.items():
+                merged.setdefault(k, v)
+    return merged
+
+
+def _first_str(data: Dict[str, Any], *keys: str) -> str:
+    """
+    Returns the first non-empty string among alias keys. Dict-valued candidates
+    are searched for nested narrative keys (e.g. executive_summary.plain_narrative).
+    """
+    for key in keys:
+        val = data.get(key)
+        if isinstance(val, str) and val.strip():
+            return val.strip()
+        if isinstance(val, dict):
+            nested = _first_str(val, "plain_narrative", "text", "narrative", "message", "summary")
+            if nested:
+                return nested
+    return ""
+
+
+def _first_field(data: Dict[str, Any], *keys: str) -> Any:
+    """Returns the first non-empty string or dict among alias keys."""
+    for key in keys:
+        val = data.get(key)
+        if isinstance(val, str) and val.strip():
+            return val
+        if isinstance(val, dict) and val:
+            return val
+    return ""
+
+
+def _first_list(data: Dict[str, Any], *keys: str) -> List[Any]:
+    """Returns the first non-empty list among alias keys."""
+    for key in keys:
+        val = data.get(key)
+        if isinstance(val, list) and val:
+            return val
+    return []
+
+
+def _adv_review_text(raw: Any) -> str:
+    """Flattens an adversarial review (string or structured object) to display text."""
+    if isinstance(raw, str):
+        return raw.strip()
+    if isinstance(raw, dict):
+        parts = [
+            str(raw.get(k) or "").strip()
+            for k in ("challenger_argument", "argument", "defense_argument", "review", "why_finding_held", "rebuttal")
+        ]
+        return " ".join(p for p in parts if p)
+    return ""
+
+
+def _adv_review_object(raw: Any, judge_verdict: str) -> Dict[str, str]:
+    """
+    Builds the case-file adversarial_review object
+    {reviewer_agent_role, challenger_argument, why_finding_held} from whatever
+    n8n returned. A plain string becomes the challenger argument and the judge
+    verdict fills the rebuttal panel.
+    """
+    if isinstance(raw, dict):
+        return {
+            "reviewer_agent_role": str(raw.get("reviewer_agent_role") or raw.get("agent_role") or "challenger"),
+            "challenger_argument": str(
+                raw.get("challenger_argument") or raw.get("argument") or raw.get("defense_argument") or ""
+            ),
+            "why_finding_held": str(
+                raw.get("why_finding_held") or raw.get("rebuttal") or raw.get("held_reason") or judge_verdict or ""
+            ),
+        }
+    return {
+        "reviewer_agent_role": "challenger",
+        "challenger_argument": raw if isinstance(raw, str) else "",
+        "why_finding_held": judge_verdict or "",
+    }
+
+
+def parse_verdict_outcome(judge_verdict: str, explicit: str = "") -> str:
+    """
+    Parses the AI judge's decision into 'upheld' | 'acquitted' | 'evaluated'.
+    An explicit structured outcome field wins; otherwise the verdict text is
+    scanned ES/EN, checking acquittal markers first so negations like
+    'no culpable' / 'not guilty' are not read as upheld.
+    """
+    for source in (explicit, judge_verdict):
+        text = (source or "").lower()
+        if not text:
+            continue
+        if any(marker in text for marker in _ACQUITTAL_MARKERS):
+            return "acquitted"
+        if any(marker in text for marker in _UPHELD_MARKERS):
+            return "upheld"
+    return "evaluated"
+
+
+def _finding_to_dismissed_lead(finding: Dict[str, Any], adv_review_text: str = "") -> Dict[str, Any]:
+    """
+    Converts an AI-acquitted finding into a schema-valid leads_not_pursued entry,
+    preserving the judicial verdict and adversarial review as the closing reason.
+    """
+    entities = finding.get("entities") or []
+    entity = entities[0] if entities else "Unknown entity"
+    scheme = str(finding.get("scheme_type", "scheme")).replace("_", " ")
+    verdict = finding.get("judge_verdict") or ""
+    return {
+        "entity": entity,
+        "signal": f"{scheme} flagged by the deterministic engine and reviewed one-by-one by the adversarial agent.",
+        "reason": verdict or adv_review_text or "Acquitted on adversarial review: the evidence did not substantiate the charge.",
+        "tool_calls_made": ["adversarial_review_finding"],
+        "closed_by": "challenger",
+        "closure_category": "ai_acquitted",
+        "judge_verdict": verdict,
+        "adversarial_review": adv_review_text,
+        "verdict_outcome": "acquitted",
+        "reclassified_from_finding": True,
+    }
+
 
 def _resolve_n8n_url(n8n_url: Optional[str]) -> str:
     """
@@ -97,9 +330,11 @@ class N8nEnrichmentService:
         eff_timeout = timeout if timeout is not None else settings.N8N_TIMEOUT
         online_success = False
 
+        adv_review_raw: Any = ""
         adv_review: str = ""
         judge_verdict: str = ""
         final_narrative: str = ""
+        explicit_outcome: str = ""
         adv_evidences: List[Dict[str, Any]] = []
 
         f_copy = dict(finding)
@@ -125,44 +360,41 @@ class N8nEnrichmentService:
                 try:
                     async with httpx.AsyncClient(timeout=eff_timeout) as client:
                         resp = await client.post(target_url, json=safe_payload)
-                        if resp.status_code == 200:
-                            if not resp.text.strip():
-                                logger.warning(
-                                    f"n8n webhook returned HTTP 200 with an EMPTY body. "
-                                    f"Please ensure in n8n that the Webhook trigger node 'Respond' parameter is set to "
-                                    f"'When Last Node Finishes' or 'Using Respond to Webhook Node', not 'Immediately'."
-                                )
-                                break
-                            online_success = True
-                            res_data = resp.json()
-                            if isinstance(res_data, dict):
-                                adv_review = (
-                                    res_data.get("adversarial_review")
-                                    or res_data.get("adversarial_defense_review")
-                                    or res_data.get("defense_review")
-                                    or ""
-                                )
-                                judge_verdict = (
-                                    res_data.get("judge_verdict")
-                                    or res_data.get("judge_veredict")
-                                    or res_data.get("verdict")
-                                    or ""
-                                )
-                                final_narrative = (
-                                    res_data.get("final_narrative")
-                                    or res_data.get("narrative")
-                                    or res_data.get("plain_narrative")
-                                    or ""
-                                )
-                                adv_evidences = (
-                                    res_data.get("adversarial_evidences")
-                                    or res_data.get("evidences")
-                                    or res_data.get("exhibits")
-                                    or []
-                                )
-                                if final_narrative and len(final_narrative.split()) <= 150:
-                                    f_copy["narrative"] = final_narrative
-                                break
+                        if resp.status_code != 200:
+                            logger.warning(
+                                f"n8n call for finding {index}/{total} returned HTTP {resp.status_code}: "
+                                f"{resp.text[:300]}"
+                            )
+                            if attempt == 0:
+                                await asyncio.sleep(0.5)
+                            continue
+                        if not resp.text.strip():
+                            logger.warning(
+                                f"n8n webhook returned HTTP 200 with an EMPTY body. "
+                                f"Please ensure in n8n that the Webhook trigger node 'Respond' parameter is set to "
+                                f"'When Last Node Finishes' or 'Using Respond to Webhook Node', not 'Immediately'."
+                            )
+                            break
+                        res_data = _unwrap_n8n_payload(resp.json())
+                        adv_review_raw = _first_field(res_data, *ADV_REVIEW_KEYS)
+                        judge_verdict = _first_str(res_data, *JUDGE_VERDICT_KEYS)
+                        final_narrative = _first_str(res_data, *FINAL_NARRATIVE_KEYS)
+                        explicit_outcome = _first_str(res_data, *OUTCOME_KEYS)
+                        adv_evidences = _first_list(res_data, *EVIDENCES_KEYS)
+                        extracted_any = bool(
+                            adv_review_raw or judge_verdict or final_narrative or adv_evidences
+                        )
+                        if not extracted_any:
+                            logger.warning(
+                                f"n8n response for finding {index}/{total} carried no recognizable fields "
+                                f"(body starts: {resp.text[:300]}). Using deterministic review."
+                            )
+                            break
+                        online_success = True
+                        adv_review = _adv_review_text(adv_review_raw)
+                        if final_narrative and len(final_narrative.split()) <= 150:
+                            f_copy["narrative"] = final_narrative
+                        break
                 except httpx.TimeoutException:
                     if attempt == 0:
                         await asyncio.sleep(0.5)
@@ -214,14 +446,25 @@ class N8nEnrichmentService:
                     "sentence": f"Evidence verified during expert review: {ex.get('note', '')}",
                 })
 
+        verdict_outcome = parse_verdict_outcome(judge_verdict, explicit_outcome)
+
+        adv_review_obj = _adv_review_object(
+            adv_review_raw if adv_review_raw else adv_review, judge_verdict
+        )
+        if not adv_review_obj["challenger_argument"]:
+            adv_review_obj["challenger_argument"] = adv_review
+        if not adv_review_obj["why_finding_held"]:
+            adv_review_obj["why_finding_held"] = judge_verdict
+
         # Persist exhibits to database
         inserted_count = await self._persist_exhibits_to_database(adv_evidences, estate_target)
 
-        # Attach per-finding fields
-        f_copy["adversarial_review"] = adv_review
+        # Attach per-finding fields (adversarial_review uses the case-file object shape)
+        f_copy["adversarial_review"] = adv_review_obj
         f_copy["judge_verdict"] = judge_verdict
         f_copy["final_narrative"] = final_narrative
         f_copy["adversarial_evidences"] = adv_evidences
+        f_copy["verdict_outcome"] = verdict_outcome
 
         return {
             "finding": f_copy,
@@ -229,6 +472,7 @@ class N8nEnrichmentService:
             "judge_verdict": judge_verdict,
             "final_narrative": final_narrative,
             "adversarial_evidences": adv_evidences,
+            "verdict_outcome": verdict_outcome,
             "inserted_exhibits_count": inserted_count,
             "is_online": online_success,
         }
@@ -256,14 +500,15 @@ class N8nEnrichmentService:
         adv_review: str = ""
         judge_verdict: str = ""
         reason: str = ""
+        explicit_outcome: str = ""
 
         l_copy = dict(lead)
         raw_closed_by = l_copy.get("closed_by")
         closed_by = raw_closed_by if raw_closed_by in VALID_CLOSED_BY else "challenger"
         entity = l_copy.get("entity") or l_copy.get(
-            "entities") or "Entidad Auditada"
+            "entities") or "Audited Entity"
         signal = l_copy.get("signal") or l_copy.get(
-            "scheme_type") or "Señal de alerta"
+            "scheme_type") or "Alert signal"
         existing_reason = (
             l_copy.get("reason")
             or "Ordinary business transaction, documentarily verified in accordance with the law with proven materiality."
@@ -286,37 +531,38 @@ class N8nEnrichmentService:
                 try:
                     async with httpx.AsyncClient(timeout=eff_timeout) as client:
                         resp = await client.post(target_url, json=safe_payload)
-                        if resp.status_code == 200:
-                            if not resp.text.strip():
-                                logger.warning(
-                                    f"n8n webhook returned HTTP 200 with an EMPTY body for lead {index}/{total}. "
-                                    f"Ensure the n8n Webhook trigger node 'Respond' parameter is set to "
-                                    f"'When Last Node Finishes' or 'Using Respond to Webhook Node'."
-                                )
-                                break
-                            online_success = True
-                            res_data = resp.json()
-                            if isinstance(res_data, dict):
-                                adv_review = (
-                                    res_data.get("adversarial_review")
-                                    or res_data.get("defense_review")
-                                    or ""
-                                )
-                                judge_verdict = (
-                                    res_data.get("judge_verdict")
-                                    or res_data.get("judge_veredict")
-                                    or res_data.get("verdict")
-                                    or ""
-                                )
-                                reason = (
-                                    res_data.get("reason")
-                                    or res_data.get("reason_to_close")
-                                    or ""
-                                )
-                                ret_closed_by = res_data.get("closed_by")
-                                if ret_closed_by in VALID_CLOSED_BY:
-                                    closed_by = ret_closed_by
-                                break
+                        if resp.status_code != 200:
+                            logger.warning(
+                                f"n8n call for lead {index}/{total} returned HTTP {resp.status_code}: "
+                                f"{resp.text[:300]}"
+                            )
+                            if attempt == 0:
+                                await asyncio.sleep(0.5)
+                            continue
+                        if not resp.text.strip():
+                            logger.warning(
+                                f"n8n webhook returned HTTP 200 with an EMPTY body for lead {index}/{total}. "
+                                f"Ensure the n8n Webhook trigger node 'Respond' parameter is set to "
+                                f"'When Last Node Finishes' or 'Using Respond to Webhook Node'."
+                            )
+                            break
+                        res_data = _unwrap_n8n_payload(resp.json())
+                        adv_review = _adv_review_text(_first_field(res_data, *ADV_REVIEW_KEYS))
+                        judge_verdict = _first_str(res_data, *JUDGE_VERDICT_KEYS)
+                        reason = _first_str(res_data, *REASON_KEYS)
+                        explicit_outcome = _first_str(res_data, *OUTCOME_KEYS)
+                        extracted_any = bool(adv_review or judge_verdict or reason)
+                        if not extracted_any:
+                            logger.warning(
+                                f"n8n response for lead {index}/{total} carried no recognizable fields "
+                                f"(body starts: {resp.text[:300]}). Using deterministic review."
+                            )
+                            break
+                        online_success = True
+                        ret_closed_by = res_data.get("closed_by")
+                        if ret_closed_by in VALID_CLOSED_BY:
+                            closed_by = ret_closed_by
+                        break
                 except httpx.TimeoutException:
                     if attempt == 0:
                         await asyncio.sleep(0.5)
@@ -353,10 +599,13 @@ class N8nEnrichmentService:
         if not reason:
             reason = existing_reason
 
+        verdict_outcome = parse_verdict_outcome(judge_verdict, explicit_outcome)
+
         l_copy["adversarial_review"] = adv_review
         l_copy["judge_verdict"] = judge_verdict
         l_copy["reason"] = reason
         l_copy["closed_by"] = closed_by
+        l_copy["verdict_outcome"] = verdict_outcome
 
         return {
             "lead": l_copy,
@@ -364,6 +613,7 @@ class N8nEnrichmentService:
             "judge_verdict": judge_verdict,
             "reason": reason,
             "closed_by": closed_by,
+            "verdict_outcome": verdict_outcome,
             "is_online": online_success,
         }
 
@@ -422,44 +672,56 @@ class N8nEnrichmentService:
             }
             safe_payload = mask_sensitive_payload(payload)
 
-            try:
-                async with httpx.AsyncClient(timeout=eff_timeout) as client:
-                    resp = await client.post(target_url, json=safe_payload)
-                    if resp.status_code == 200:
+            for attempt in range(2):
+                try:
+                    async with httpx.AsyncClient(timeout=eff_timeout) as client:
+                        resp = await client.post(target_url, json=safe_payload)
+                        if resp.status_code != 200:
+                            logger.warning(
+                                f"n8n case synthesis call returned HTTP {resp.status_code}: {resp.text[:300]}"
+                            )
+                            if attempt == 0:
+                                await asyncio.sleep(0.5)
+                            continue
                         if not resp.text.strip():
                             logger.warning(
                                 f"n8n webhook returned HTTP 200 with an EMPTY body for case verdict synthesis. "
                                 f"Ensure the n8n Webhook trigger node 'Respond' parameter is set to "
                                 f"'When Last Node Finishes' or 'Using Respond to Webhook Node'."
                             )
-                        else:
-                            online_success = True
-                            res_data = resp.json()
-                            if isinstance(res_data, dict):
-                                judge_verdict = (
-                                    res_data.get("judge_verdict")
-                                    or res_data.get("judge_veredict")
-                                    or res_data.get("verdict")
-                                    or ""
-                                )
-                                final_narrative = (
-                                    res_data.get("final_narrative")
-                                    or res_data.get("executive_summary")
-                                    or res_data.get("plain_narrative")
-                                    or ""
-                                )
-            except httpx.TimeoutException:
-                logger.warning(
-                    f"n8n case synthesis call TIMED OUT after {eff_timeout}s. Using deterministic summary."
-                )
-            except httpx.ConnectError as conn_err:
-                logger.warning(
-                    f"n8n connection failed for case synthesis (cannot connect to {target_url}): {conn_err}. Using deterministic summary."
-                )
-            except Exception as exc:
-                logger.warning(
-                    f"n8n case synthesis call failed: {exc}. Using deterministic summary."
-                )
+                            break
+                        res_data = _unwrap_n8n_payload(resp.json())
+                        judge_verdict = _first_str(res_data, *JUDGE_VERDICT_KEYS)
+                        final_narrative = _first_str(res_data, *FINAL_NARRATIVE_KEYS)
+                        if not (judge_verdict or final_narrative):
+                            logger.warning(
+                                f"n8n synthesis response carried no recognizable fields "
+                                f"(body starts: {resp.text[:300]}). Using deterministic summary."
+                            )
+                            break
+                        online_success = True
+                        break
+                except httpx.TimeoutException:
+                    if attempt == 0:
+                        await asyncio.sleep(0.5)
+                        continue
+                    logger.warning(
+                        f"n8n case synthesis call TIMED OUT after {eff_timeout}s. Using deterministic summary."
+                    )
+                except httpx.ConnectError as conn_err:
+                    if attempt == 0:
+                        await asyncio.sleep(0.5)
+                        continue
+                    logger.warning(
+                        f"n8n connection failed for case synthesis (cannot connect to {target_url}): {conn_err}. Using deterministic summary."
+                    )
+                except Exception as exc:
+                    if attempt == 0:
+                        await asyncio.sleep(0.5)
+                        continue
+                    logger.warning(
+                        f"n8n case synthesis call failed: {exc}. Using deterministic summary."
+                    )
 
         if not judge_verdict:
             judge_verdict = (
@@ -516,6 +778,7 @@ class N8nEnrichmentService:
         enriched_findings: List[Dict[str, Any]] = []
         all_adversarial_evidences: List[Dict[str, Any]] = []
         finding_adv_reviews: List[str] = []
+        finding_is_online: List[bool] = []
         llm_calls = 0
         total_exhibits_inserted = 0
 
@@ -535,11 +798,19 @@ class N8nEnrichmentService:
             f_item = finding_res["finding"]
             enriched_findings.append(f_item)
             finding_adv_reviews.append(finding_res["adversarial_review"])
+            finding_is_online.append(bool(finding_res["is_online"]))
             all_adversarial_evidences.extend(
                 finding_res["adversarial_evidences"])
             total_exhibits_inserted += finding_res["inserted_exhibits_count"]
             if finding_res["is_online"]:
                 llm_calls += 1
+
+            outcome = finding_res["verdict_outcome"]
+            outcome_label = {
+                "upheld": "charge upheld",
+                "acquitted": "ACQUITTED — will be reclassified as a dismissed lead",
+                "evaluated": "evaluated",
+            }.get(outcome, "evaluated")
 
             yield {
                 "type": "finding_reviewed",
@@ -549,11 +820,13 @@ class N8nEnrichmentService:
                 "adversarial_review": finding_res["adversarial_review"],
                 "judge_verdict": finding_res["judge_verdict"],
                 "adversarial_evidences": finding_res["adversarial_evidences"],
+                "verdict_outcome": outcome,
+                "reclassified_to_lead": outcome == "acquitted",
                 "inserted_exhibits_count": finding_res["inserted_exhibits_count"],
                 "is_online": finding_res["is_online"],
                 "message": (
                     f"Finding {idx}/{total_findings} ({f_item.get('scheme_type')}): "
-                    f"Judicial verdict issued ({'Guilty' if 'GUILTY' in finding_res['judge_verdict'] else 'Evaluated'}). "
+                    f"judicial verdict {outcome_label}. "
                     f"{len(finding_res['adversarial_evidences'])} pieces of evidence recorded."
                 ),
             }
@@ -587,7 +860,7 @@ class N8nEnrichmentService:
                 "reason": lead_res["reason"],
                 "closed_by": lead_res["closed_by"],
                 "is_online": lead_res["is_online"],
-                "message": f"Línea preliminar {idx}/{total_leads} descartada legítimamente por `{lead_res['closed_by']}`.",
+                "message": f"Preliminary lead {idx}/{total_leads} legitimately dismissed by `{lead_res['closed_by']}`.",
             }
 
         # 3. STRICT COMPLETION BARRIER:
@@ -599,10 +872,49 @@ class N8nEnrichmentService:
                 f"leads {len(enriched_leads)}/{total_leads} before synthesis call."
             )
 
-        # 4. Synthesize overarching case verdict with all reviewed items
+        # 4. AI VERDICT RECLASSIFICATION:
+        # Findings the judicial review acquitted are demoted to dismissed leads so
+        # the final accusation set only contains AI-upheld charges. Each demotion
+        # is emitted as a lead_reviewed event so the UI narrates it live.
+        acquitted = [
+            (f_idx, f_item)
+            for f_idx, f_item in enumerate(enriched_findings)
+            if f_item.get("verdict_outcome") == "acquitted"
+        ]
+        upheld_findings = [
+            f_item for f_item in enriched_findings
+            if f_item.get("verdict_outcome") != "acquitted"
+        ]
+        reclassified_leads: List[Dict[str, Any]] = []
+        reclassified_total = total_leads + len(acquitted)
+
+        for position, (f_idx, f_item) in enumerate(acquitted, 1):
+            adv_text = finding_adv_reviews[f_idx] if f_idx < len(finding_adv_reviews) else ""
+            lead = _finding_to_dismissed_lead(f_item, adv_text)
+            reclassified_leads.append(lead)
+            yield {
+                "type": "lead_reviewed",
+                "index": total_leads + position,
+                "total": reclassified_total,
+                "lead": lead,
+                "adversarial_review": adv_text,
+                "judge_verdict": f_item.get("judge_verdict", ""),
+                "reason": lead["reason"],
+                "closed_by": "challenger",
+                "is_online": finding_is_online[f_idx] if f_idx < len(finding_is_online) else False,
+                "reclassified_from_finding": True,
+                "message": (
+                    f"Finding acquitted on adversarial review — `{lead['entity']}` "
+                    f"reclassified as a dismissed lead ({total_leads + position}/{reclassified_total})."
+                ),
+            }
+
+        all_leads = enriched_leads + reclassified_leads
+
+        # 5. Synthesize overarching case verdict with post-verdict accusation set
         synthesis = await self.synthesize_case_verdict(
-            reviewed_findings=enriched_findings,
-            reviewed_leads=enriched_leads,
+            reviewed_findings=upheld_findings,
+            reviewed_leads=all_leads,
             seed=seed,
             company_name=company_name,
             company_rfc=company_rfc,
@@ -624,8 +936,8 @@ class N8nEnrichmentService:
             "final_narrative": synthesis["final_narrative"],
             "adversarial_review": consolidated_adv_review,
             "adversarial_evidences": all_adversarial_evidences,
-            "findings": enriched_findings,
-            "leads_not_pursued": enriched_leads,
+            "findings": upheld_findings,
+            "leads_not_pursued": all_leads,
             "llm_calls": llm_calls,
             "llm_usage": estimate_llm_usage(seed) if llm_calls > 0 else None,
             "inserted_exhibits_count": total_exhibits_inserted,

@@ -148,13 +148,21 @@ async def test_n8n_enrichment_sequential_mock_online():
                 # Verify finding received its individual judge verdict
                 finding_step = next(
                     s for s in steps_collected if s["type"] == "finding_reviewed")
-                assert "CULPABLE" in finding_step["judge_verdict"]
+                assert "GUILTY" in finding_step["judge_verdict"]
+                assert finding_step["verdict_outcome"] == "upheld"
                 assert len(finding_step["adversarial_evidences"]) == 1
+                assert finding_step["is_online"] is True
+
+                # The finding carries the structured case-file adversarial_review object
+                adv_obj = finding_step["finding"]["adversarial_review"]
+                assert isinstance(adv_obj, dict)
+                assert adv_obj["challenger_argument"]
+                assert adv_obj["reviewer_agent_role"] == "challenger"
 
                 # Verify lead received its dismissal judge verdict
                 lead_step = next(
                     s for s in steps_collected if s["type"] == "lead_reviewed")
-                assert "ABSUELTO" in lead_step["judge_verdict"]
+                assert "ACQUITTED" in lead_step["judge_verdict"]
 
                 # 1. Check exhibit records were inserted into the database exhibits table
                 async with connector.session_scope(db_path) as session:
@@ -180,9 +188,9 @@ async def test_n8n_enrichment_sequential_mock_online():
                 }
                 case_md = generator.generate_case_file_markdown(
                     submission_payload)
-                assert "DICTAMEN JUDICIAL PERICIAL GLOBAL" in case_md
-                assert "Veredicto Judicial del Hallazgo" in case_md
-                assert "CULPABLE" in case_md
+                assert "GLOBAL EXPERT JUDICIAL VERDICT" in case_md
+                assert "Judicial Verdict on the Finding" in case_md
+                assert "GUILTY" in case_md
                 assert "EX-ADV-0001" in case_md
         finally:
             await connector.dispose_all()
@@ -224,14 +232,17 @@ async def test_n8n_enrichment_offline_fallback(monkeypatch):
                 n8n_url=None,
             )
 
-            assert "Artículo 69-B" in result["adversarial_review"]
-            assert "DICTAMEN PERICIAL" in result["judge_verdict"]
-            assert "auditoría forense" in result["final_narrative"]
+            assert "Article 69-B" in result["adversarial_review"]
+            assert "EXPERT VERDICT" in result["judge_verdict"]
+            assert "forensic audit" in result["final_narrative"]
             assert len(result["adversarial_evidences"]) >= 1
 
             # Check per-finding judge verdict was populated
             f0 = result["findings"][0]
-            assert "VEREDICTO DEL JUEZ (HALLAZGO 1/1)" in f0["judge_verdict"]
+            assert "JUDGE'S VERDICT (FINDING 1/1)" in f0["judge_verdict"]
+            assert f0["verdict_outcome"] == "upheld"
+            assert isinstance(f0["adversarial_review"], dict)
+            assert f0["adversarial_review"]["challenger_argument"]
 
             # Check exhibit inserted in exhibits table
             async with connector.session_scope(db_path) as session:
@@ -285,3 +296,181 @@ async def test_audit_estate_stream_sse_endpoint():
             assert "event: audit_completed" in content
 
         await estate_connector.dispose_all()
+
+
+def _sample_finding(entity: str = "RFC:PHANTOM999") -> dict:
+    return {
+        "scheme_type": "phantom_vendor",
+        "entities": [entity],
+        "narrative": "Suspected phantom company detected.",
+        "rule_broken": "SAT Article 69-B",
+        "peso_amount": 92800.00,
+        "confidence": "proven",
+        "exhibits": [
+            {"exhibit_id": "EX-001", "source_table": "invoices",
+                "record_id": "INV-1", "note": "Simulated invoice"},
+        ],
+        "money_trail": [],
+    }
+
+
+@pytest.mark.asyncio
+async def test_n8n_enrichment_array_wrapped_and_aliased_response():
+    """
+    n8n item-array responses ([{"json": {...}}]) and non-canonical key aliases
+    must still be extracted — never silently replaced by the deterministic
+    fallback while reported as online.
+    """
+    service = N8nEnrichmentService()
+
+    async def mock_post_handler(url, json=None, **kwargs):
+        action = json.get("action") if json else ""
+        if action == "adversarial_review_finding":
+            return Response(
+                status_code=200,
+                json=[{
+                    "json": {
+                        "defense_review": "El proveedor no acredita operacion material.",
+                        "verdict": "CULPABLE — cargo confirmado.",
+                        "narrative": "Operacion simulada acreditada.",
+                        "evidences": [
+                            {"source_table": "invoices", "record_id": "INV-1",
+                                "sentence": "Factura sin soporte material."},
+                        ],
+                    }
+                }],
+                request=None,
+            )
+        if action == "synthesize_case_verdict":
+            return Response(
+                status_code=200,
+                json=[{"output": {
+                    "verdict": "DICTAMEN: responsabilidad corporativa confirmada.",
+                    "summary": "Se acreditaron esquemas de simulacion por el monto total.",
+                }}],
+                request=None,
+            )
+        return Response(status_code=400, json={"error": "unknown"}, request=None)
+
+    with patch("httpx.AsyncClient.post", side_effect=mock_post_handler):
+        steps = [
+            step
+            async for step in service.stream_enrichment_steps(
+                findings=[_sample_finding()],
+                leads_not_pursued=[],
+                seed=7,
+                estate_target=None,
+                n8n_url="http://mock-n8n:5678/webhook/x",
+            )
+        ]
+
+    finding_step = next(s for s in steps if s["type"] == "finding_reviewed")
+    assert finding_step["is_online"] is True
+    assert "CULPABLE" in finding_step["judge_verdict"]
+    assert finding_step["verdict_outcome"] == "upheld"
+    adv_obj = finding_step["finding"]["adversarial_review"]
+    assert isinstance(adv_obj, dict)
+    assert "operacion material" in adv_obj["challenger_argument"]
+    assert len(finding_step["adversarial_evidences"]) == 1
+
+    synthesis = next(s for s in steps if s["type"] == "verdict_synthesized")
+    assert "DICTAMEN" in synthesis["judge_verdict"]
+    assert "simulacion" in synthesis["final_narrative"]
+    assert synthesis["llm_calls"] == 2
+
+
+@pytest.mark.asyncio
+async def test_n8n_enrichment_acquitted_finding_reclassified():
+    """
+    An AI acquittal demotes the finding into leads_not_pursued so the final
+    accusation set only contains charges the judicial review upheld.
+    """
+    service = N8nEnrichmentService()
+
+    async def mock_post_handler(url, json=None, **kwargs):
+        action = json.get("action") if json else ""
+        if action == "adversarial_review_finding":
+            return Response(
+                status_code=200,
+                json={
+                    "adversarial_review": "La defensa acredito contratos y entregables reales.",
+                    "judge_verdict": "JUDGE'S VERDICT: ACQUITTED — CHARGE DISMISSED for lack of evidence.",
+                    "verdict_outcome": "acquitted",
+                },
+                request=None,
+            )
+        if action == "synthesize_case_verdict":
+            return Response(
+                status_code=200,
+                json={
+                    "judge_verdict": "No corporate liability declared.",
+                    "final_narrative": "Audit closed with no proven schemes.",
+                },
+                request=None,
+            )
+        return Response(status_code=400, json={"error": "unknown"}, request=None)
+
+    with patch("httpx.AsyncClient.post", side_effect=mock_post_handler):
+        steps = [
+            step
+            async for step in service.stream_enrichment_steps(
+                findings=[_sample_finding()],
+                leads_not_pursued=[],
+                seed=11,
+                estate_target=None,
+                n8n_url="http://mock-n8n:5678/webhook/x",
+            )
+        ]
+
+    finding_step = next(s for s in steps if s["type"] == "finding_reviewed")
+    assert finding_step["verdict_outcome"] == "acquitted"
+    assert finding_step["reclassified_to_lead"] is True
+
+    reclassified = next(
+        s for s in steps
+        if s["type"] == "lead_reviewed" and s.get("reclassified_from_finding")
+    )
+    assert reclassified["lead"]["entity"] == "RFC:PHANTOM999"
+    assert reclassified["lead"]["closed_by"] == "challenger"
+    assert reclassified["lead"]["reason"]
+
+    synthesis = next(s for s in steps if s["type"] == "verdict_synthesized")
+    assert synthesis["findings"] == []
+    assert len(synthesis["leads_not_pursued"]) == 1
+    assert synthesis["leads_not_pursued"][0]["entity"] == "RFC:PHANTOM999"
+
+
+@pytest.mark.asyncio
+async def test_n8n_enrichment_unparseable_shape_marks_offline():
+    """
+    A 200 response with no recognizable fields must report is_online=False and
+    fall back deterministically instead of masquerading as an LLM result.
+    """
+    service = N8nEnrichmentService()
+
+    async def mock_post_handler(url, json=None, **kwargs):
+        return Response(
+            status_code=200,
+            json={"unexpected_key": 123},
+            request=None,
+        )
+
+    with patch("httpx.AsyncClient.post", side_effect=mock_post_handler):
+        steps = [
+            step
+            async for step in service.stream_enrichment_steps(
+                findings=[_sample_finding()],
+                leads_not_pursued=[],
+                seed=13,
+                estate_target=None,
+                n8n_url="http://mock-n8n:5678/webhook/x",
+            )
+        ]
+
+    finding_step = next(s for s in steps if s["type"] == "finding_reviewed")
+    assert finding_step["is_online"] is False
+    assert "JUDGE'S VERDICT" in finding_step["judge_verdict"]
+
+    synthesis = next(s for s in steps if s["type"] == "verdict_synthesized")
+    assert synthesis["llm_calls"] == 0
+    assert synthesis["llm_usage"] is None

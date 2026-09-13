@@ -107,8 +107,8 @@ async def upload_estate(
                 n8n_url=req.n8n_url,
             )
 
-            findings = enrichment.get("enriched_findings", submission.get("findings", []))
-            leads = enrichment.get("enriched_leads", submission.get("leads_not_pursued", []))
+            findings = enrichment.get("findings", submission.get("findings", []))
+            leads = enrichment.get("leads_not_pursued", submission.get("leads_not_pursued", []))
 
             submission["findings"] = findings
             submission["leads_not_pursued"] = leads
