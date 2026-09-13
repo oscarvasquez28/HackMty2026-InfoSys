@@ -27,6 +27,7 @@ from backend.core.database import (
     get_engine,
     get_session_factory,
     normalize_database_url,
+    provision_estate_schema,
 )
 from backend.models.estate import (
     BankTxnRecord,
@@ -194,26 +195,13 @@ class EstateConnector:
         self, target: Optional[Union[str, Path]] = None, ddl_path: Optional[Path] = None
     ) -> None:
         """
-        Creates all estate tables in the target database.
-        Uses SQLAlchemy metadata.create_all for standard DDL, and can execute
-        custom SQL DDL script if supplied.
+        Creates all estate tables in the target database from estate_schema - polar.sql
+        and ensures the 9 historic archive tables exist.
         """
         engine, _ = self.get_engine_and_factory(target)
 
         async with engine.begin() as conn:
-            # For PostgreSQL / TigerData, try enabling extensions if permitted
-            if engine.dialect.name == "postgresql":
-                try:
-                    await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
-                except Exception as exc:
-                    logger.debug(f"pgvector extension notice: {exc}")
-                try:
-                    await conn.execute(text("CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;"))
-                except Exception as exc:
-                    logger.debug(f"timescaledb extension notice: {exc}")
-
-            # Provision all estate tables registered under Base.metadata
-            await conn.run_sync(Base.metadata.create_all)
+            await provision_estate_schema(conn, engine.dialect.name, ddl_path=ddl_path)
 
         logger.info(f"Initialized estate schema successfully on target: {self._normalize_target(target)}")
 

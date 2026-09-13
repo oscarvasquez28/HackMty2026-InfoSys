@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from pathlib import Path
 from typing import Any, AsyncGenerator, Dict, Optional, Tuple
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
@@ -13,11 +14,8 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.pool import StaticPool
 
 from backend.core.config import settings
-from backend.models.forensic import (
-    Base,
-    seed_core_banking_data,
-    seed_legal_knowledge,
-)
+from backend.models.estate import HISTORIC_TABLE_MODELS
+from backend.models.forensic import Base
 
 logger = logging.getLogger("forensic_auditor.database")
 
@@ -213,10 +211,93 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             await session.close()
 
 
-async def init_db(engine: Optional[AsyncEngine] = None) -> None:
+def get_estate_schema_sql_path() -> Path:
+    """Discovers the absolute path to estate_schema - polar.sql."""
+    candidates = [
+        Path("tmp/estate_schema - polar.sql"),
+        Path(__file__).resolve().parent.parent.parent / "tmp" / "estate_schema - polar.sql",
+        Path(__file__).resolve().parent.parent / "tmp" / "estate_schema - polar.sql",
+    ]
+    for p in candidates:
+        if p.exists():
+            return p.resolve()
+    return candidates[0]
+
+
+async def provision_estate_schema(
+    conn: Any,
+    dialect_name: str,
+    ddl_path: Optional[Path] = None,
+) -> None:
     """
-    Initializes database schema, creates pgvector extension if on PostgreSQL,
-    and populates seed Mexican AML legal precedent articles idempotently.
+    Provisions data estate schema by executing estate_schema - polar.sql
+    and ensuring the 9 historic archive tables exist (checkfirst=True).
+    Prevents generation of deprecated tables (accounts, parties, etc.).
+    """
+    sql_file = ddl_path or get_estate_schema_sql_path()
+    if not sql_file.exists():
+        logger.error(f"Estate schema SQL file not found at {sql_file}")
+        raise FileNotFoundError(f"Estate schema DDL not found: {sql_file}")
+
+    content = sql_file.read_text(encoding="utf-8")
+    # Strip line comments before splitting on semicolon to prevent embedded semicolons in comments from breaking statements
+    clean_sql = "\n".join(line.split("--", 1)[0] for line in content.splitlines())
+    raw_statements = [s.strip() for s in clean_sql.split(";") if s.strip()]
+
+    for stmt in raw_statements:
+        clean_stmt = stmt.strip()
+        if not clean_stmt:
+            continue
+
+        upper_clean = clean_stmt.upper()
+        if upper_clean.startswith("CREATE EXTENSION"):
+            if dialect_name == "postgresql":
+                try:
+                    await conn.execute(text(f"{clean_stmt};"))
+                except Exception as exc:
+                    logger.warning(f"Could not initialize extension: {exc}")
+            # In SQLite, skip extensions
+            continue
+
+        if upper_clean.startswith("DROP TABLE"):
+            if dialect_name == "sqlite":
+                # SQLite does not support multiple comma-separated tables in DROP TABLE, nor CASCADE
+                if "IF EXISTS" in upper_clean:
+                    idx = upper_clean.find("IF EXISTS") + len("IF EXISTS")
+                    prefix = "DROP TABLE IF EXISTS"
+                    tbls_part = clean_stmt[idx:]
+                else:
+                    idx = upper_clean.find("DROP TABLE") + len("DROP TABLE")
+                    prefix = "DROP TABLE"
+                    tbls_part = clean_stmt[idx:]
+
+                tbls_part = tbls_part.replace(" CASCADE", "").replace(" cascade", "").strip()
+                tbl_names = [t.strip() for t in tbls_part.split(",") if t.strip()]
+                for tbl in tbl_names:
+                    await conn.execute(text(f"{prefix} {tbl};"))
+                continue
+
+        await conn.execute(text(f"{clean_stmt};"))
+
+    # Ensure historic archive tables exist without dropping existing run history
+    historic_tables = [model.__table__ for model in HISTORIC_TABLE_MODELS.values()]
+    await conn.run_sync(
+        lambda sync_conn: Base.metadata.create_all(
+            sync_conn, tables=historic_tables, checkfirst=True
+        )
+    )
+    logger.info(
+        f"Estate operational tables ({sql_file.name}) and 9 historic archive tables successfully provisioned for dialect '{dialect_name}'."
+    )
+
+
+async def init_db(
+    engine: Optional[AsyncEngine] = None,
+    ddl_path: Optional[Path] = None,
+) -> None:
+    """
+    Initializes database schema from tmp/estate_schema - polar.sql and creates
+    historic tables if not present. Outdated tables (accounts, parties, etc.) are omitted.
     """
     if engine is None:
         if not settings.DATABASE_URL:
@@ -225,31 +306,7 @@ async def init_db(engine: Optional[AsyncEngine] = None) -> None:
         engine = get_engine()
 
     async with engine.begin() as conn:
-        if engine.dialect.name == "postgresql":
-            try:
-                await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
-            except Exception as exc:
-                logger.warning(f"Failed to create pgvector extension: {exc}")
-
-        # Create all registered tables
-        await conn.run_sync(Base.metadata.create_all)
-
-    if _session_factory is not None and engine == _engine:
-        factory = _session_factory
-    else:
-        factory = async_sessionmaker(
-            bind=engine,
-            class_=AsyncSession,
-            expire_on_commit=False,
-            autoflush=False,
-        )
-
-    async with factory() as session:
-        count = await seed_legal_knowledge(session)
-        banking_counts = await seed_core_banking_data(session)
-        logger.info(
-            f"Database schema initialized: {count} precedents, core banking records {banking_counts} verified."
-        )
+        await provision_estate_schema(conn, engine.dialect.name, ddl_path=ddl_path)
 
 
 async def close_db() -> None:
