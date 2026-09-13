@@ -22,7 +22,7 @@ export const ConfidenceBadge: React.FC<ConfidenceBadgeProps> = ({ value, size = 
 
   if (value === "proven") {
     badge = (
-      <span data-confidence={value} className={`${base} bg-evidence-proven text-white`}>
+      <span data-confidence={value} className={`${base} bg-evidence-proven text-evidence-on`}>
         <Gavel className="h-3.5 w-3.5" aria-hidden="true" />
         {CONFIDENCE_COPY.proven.label}
       </span>
@@ -30,7 +30,7 @@ export const ConfidenceBadge: React.FC<ConfidenceBadgeProps> = ({ value, size = 
     description = CONFIDENCE_COPY.proven.description;
   } else if (value === "probable") {
     badge = (
-      <span data-confidence={value} className={`${base} bg-evidence-probable text-white`}>
+      <span data-confidence={value} className={`${base} bg-evidence-probable text-evidence-on`}>
         <TriangleAlert className="h-3.5 w-3.5" aria-hidden="true" />
         {CONFIDENCE_COPY.probable.label}
       </span>

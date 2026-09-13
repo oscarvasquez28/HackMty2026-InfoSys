@@ -16,7 +16,7 @@ function DeterminismBadge({ deterministic, seed }: { deterministic: boolean | nu
   const base = "inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-[11px] font-bold";
   if (deterministic === true) {
     return (
-      <span className={`${base} bg-evidence-reconciled text-white`}>
+      <span className={`${base} bg-evidence-reconciled text-evidence-on`}>
         <ShieldCheck className="h-3 w-3" aria-hidden="true" />
         REPRODUCIBLE (SEED {seed ?? "?"})
       </span>
@@ -24,13 +24,13 @@ function DeterminismBadge({ deterministic, seed }: { deterministic: boolean | nu
   }
   if (deterministic === false) {
     return (
-      <span className={`${base} bg-evidence-probable text-white`}>
+      <span className={`${base} bg-evidence-probable text-evidence-on`}>
         <TriangleAlert className="h-3 w-3" aria-hidden="true" />
         NON-DETERMINISTIC RUN
       </span>
     );
   }
-  return <span className={`${base} bg-paper-muted text-white`}>DETERMINISM NOT REPORTED</span>;
+  return <span className={`${base} bg-paper-muted text-evidence-on`}>DETERMINISM NOT REPORTED</span>;
 }
 
 export const CaseHeader: React.FC<CaseHeaderProps> = ({ document }) => {

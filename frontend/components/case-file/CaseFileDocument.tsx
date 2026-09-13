@@ -32,7 +32,7 @@ export const CaseFileDocument: React.FC<CaseFileDocumentProps> = ({ view, source
       className="case-paper mx-auto max-w-[960px] rounded-sm bg-paper px-6 py-8 text-paper-ink shadow-panel ring-1 ring-paper-border sm:px-12 sm:py-12"
     >
       {source.kind === "sample" && (
-        <div className="mb-6 border border-evidence-probable bg-evidence-probable-soft px-3 py-2 font-mono text-xs text-evidence-probable">
+        <div className="mb-6 border border-evidence-held bg-evidence-held-soft px-3 py-2 font-mono text-xs text-evidence-held">
           Sample data — illustrative, fictional entities. Not a real audit.
         </div>
       )}

@@ -15,9 +15,10 @@ interface MoneyTrailProps {
   finding: FindingView;
   figureNumber: number;
   issues: ValidationIssue[];
+  variant?: "document" | "tour";
 }
 
-export const MoneyTrail: React.FC<MoneyTrailProps> = ({ finding, figureNumber, issues }) => {
+export const MoneyTrail: React.FC<MoneyTrailProps> = ({ finding, figureNumber, issues, variant = "document" }) => {
   const [zoom, setZoom] = useState<"fit" | "full">("fit");
   const { trail, mermaidPrimary, mermaidGenerated } = finding;
   const { diagrams } = useCaseFileUi();
@@ -43,7 +44,7 @@ export const MoneyTrail: React.FC<MoneyTrailProps> = ({ finding, figureNumber, i
   return (
     <div>
       {hasSource && (
-        <figure className="case-avoid-break rounded-sm border border-paper-border bg-white p-4">
+        <figure className="case-avoid-break rounded-sm border border-paper-border bg-paper-sheet p-4">
           <div data-print="hide" data-export="exclude" className="mb-2 flex justify-end gap-1">
             <button
               type="button"
@@ -66,6 +67,7 @@ export const MoneyTrail: React.FC<MoneyTrailProps> = ({ finding, figureNumber, i
               primarySource={mermaidPrimary}
               fallbackSource={mermaidGenerated}
               ariaLabel={`Money trail diagram for finding ${finding.number}`}
+              variant={variant}
             />
           </div>
           <figcaption className="mt-3 font-mono text-[11px] text-paper-muted">

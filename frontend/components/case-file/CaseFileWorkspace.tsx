@@ -2,7 +2,8 @@
 
 // Top-level shell for /investigate: wires the loaded case file (from InvestigateSessionProvider)
 // through validation and derivation, then renders either the source-selection empty state or the
-// full document with its export toolbar. See doc/frontend/case-file-plan.md Fase 3/4/5.
+// guided tour with its export toolbar. The full document stays mounted (hidden on screen) as the
+// source for Print and the HTML export. See doc/frontend/README.md §10.
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useInvestigateSession } from "@/components/investigate/InvestigateSessionProvider";
@@ -12,6 +13,7 @@ import { CaseFileUiProvider } from "@/components/case-file/CaseFileUiContext";
 import { ExportToolbar } from "@/components/case-file/ExportToolbar";
 import { ValidationPanel } from "@/components/case-file/ValidationPanel";
 import { CaseFileDocument } from "@/components/case-file/CaseFileDocument";
+import { CaseFileTour } from "@/components/case-file/tour/CaseFileTour";
 import { buildCaseFileView } from "@/lib/caseFile/derive";
 import { collectWarnings } from "@/lib/caseFile/validate";
 import { validateAgainstEstate } from "@/lib/estate/estateCheck";
@@ -80,8 +82,13 @@ export const CaseFileWorkspace: React.FC = () => {
             onToggleValidation={() => setShowValidation((v) => !v)}
           />
           <ValidationPanel issues={issues} open={showValidation} />
-          <main className="px-4 py-8 sm:px-6 print:p-0">
-            <CaseFileDocument view={view} source={loaded.source} issues={issues} />
+          <main className="print:p-0">
+            {/* Screen: the guided tour. It comes first so in-page #anchors resolve to it. */}
+            <CaseFileTour loaded={loaded} view={view} issues={issues} estateChecked={estate.hasEstate} onReset={reset} />
+            {/* Print and HTML/Markdown exports: the full vertical document, hidden on screen. */}
+            <div className="hidden print:block">
+              <CaseFileDocument view={view} source={loaded.source} issues={issues} />
+            </div>
           </main>
         </CaseFileUiProvider>
       )}

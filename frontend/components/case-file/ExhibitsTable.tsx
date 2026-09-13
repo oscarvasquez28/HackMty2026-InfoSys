@@ -55,7 +55,7 @@ export const ExhibitsTable: React.FC<ExhibitsTableProps> = ({ finding, issues })
               const validTable = isSourceTable(sourceTable);
               const amountCol = isSourceTable(sourceTable) ? AMOUNT_COLUMN[sourceTable] : undefined;
               return (
-                <tr key={`${exhibit.exhibit_id}-${index}`} id={anchor} className="scroll-mt-24 border-t border-paper-border align-top odd:bg-white even:bg-paper-raised target:bg-evidence-held-soft">
+                <tr key={`${exhibit.exhibit_id}-${index}`} id={anchor} className="scroll-mt-24 border-t border-paper-border align-top odd:bg-paper-sheet even:bg-paper-raised target:bg-evidence-held-soft">
                   <td className="px-3 py-2 font-mono font-bold">
                     {exhibit.exhibit_id}
                     {isDuplicate && <span className="ml-1 text-evidence-proven">duplicate</span>}

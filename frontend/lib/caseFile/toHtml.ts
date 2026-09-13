@@ -46,7 +46,7 @@ export function buildStandaloneHtml({ documentElement, title, raw }: BuildStanda
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escapeHtml(title)}</title>
 <style>${css}
-body.case-export{margin:0;padding:32px 16px;background:#E9E6DF !important;color:#161B22}
+body.case-export{margin:0;padding:32px 16px;background:#EEF1F5 !important;color:#161B22}
 @media print{body.case-export{background:#fff !important;padding:0}}</style></head>
 <body class="case-export">${clone.outerHTML}
 <script type="application/json" id="case-file-data">${json}</script></body></html>`;

@@ -15,17 +15,17 @@ interface ReconciliationBlockProps {
 export const ReconciliationBlock: React.FC<ReconciliationBlockProps> = ({ reconciliation: rec }) => {
   const statusBar =
     rec.status === "reconciled" ? (
-      <div className="flex items-center gap-2 bg-evidence-reconciled px-4 py-2 font-mono text-xs font-bold text-white">
+      <div className="flex items-center gap-2 bg-evidence-reconciled px-4 py-2 font-mono text-xs font-bold text-evidence-on">
         <CircleCheck className="h-3.5 w-3.5" aria-hidden="true" />
         RECONCILED (≤ 2% VARIANCE)
       </div>
     ) : rec.status === "not_reconciled" ? (
-      <div className="flex items-center gap-2 bg-evidence-proven px-4 py-2 font-mono text-xs font-bold text-white">
+      <div className="flex items-center gap-2 bg-evidence-proven px-4 py-2 font-mono text-xs font-bold text-evidence-on">
         <CircleX className="h-3.5 w-3.5" aria-hidden="true" />
         NOT RECONCILED — VARIANCE EXCEEDS 2%
       </div>
     ) : (
-      <div className="flex items-center gap-2 bg-paper-muted px-4 py-2 font-mono text-xs font-bold text-white">
+      <div className="flex items-center gap-2 bg-paper-muted px-4 py-2 font-mono text-xs font-bold text-evidence-on">
         <CircleHelp className="h-3.5 w-3.5" aria-hidden="true" />
         NOT VERIFIABLE — NO EXHIBIT AMOUNTS SUPPLIED
       </div>

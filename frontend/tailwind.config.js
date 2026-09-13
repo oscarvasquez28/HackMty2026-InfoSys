@@ -1,3 +1,5 @@
+const caseVar = (name) => `rgb(var(--case-${name}) / <alpha-value>)`;
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
@@ -30,24 +32,29 @@ module.exports = {
           500: "#79C7F5",
           600: "#389DDD",
         },
+        // Case file tokens resolve through CSS variables so the same components render light in the
+        // printable document (.case-paper) and in the portal palette inside the guided tour
+        // (.case-tour). Values live in app/globals.css.
         paper: {
-          DEFAULT: "#FBFAF7",
-          raised: "#F2EFE8",
-          border: "#D8D2C6",
-          ink: "#161B22",
-          muted: "#5A6270",
+          DEFAULT: caseVar("paper"),
+          raised: caseVar("paper-raised"),
+          border: caseVar("paper-border"),
+          ink: caseVar("paper-ink"),
+          muted: caseVar("paper-muted"),
+          sheet: caseVar("paper-sheet"),
         },
         evidence: {
-          proven: "#8E1B1F",
-          "proven-soft": "#F6E1DF",
-          probable: "#9A5A06",
-          "probable-soft": "#FBEBD2",
-          reconciled: "#1E6A3B",
-          "reconciled-soft": "#DFF0E3",
-          held: "#1C4F8C",
-          "held-soft": "#E2EBF6",
-          neutral: "#4B5563",
-          "neutral-soft": "#ECEAE5",
+          proven: caseVar("proven"),
+          "proven-soft": caseVar("proven-soft"),
+          probable: caseVar("probable"),
+          "probable-soft": caseVar("probable-soft"),
+          reconciled: caseVar("reconciled"),
+          "reconciled-soft": caseVar("reconciled-soft"),
+          held: caseVar("held"),
+          "held-soft": caseVar("held-soft"),
+          neutral: caseVar("neutral"),
+          "neutral-soft": caseVar("neutral-soft"),
+          on: caseVar("evidence-on"),
         },
       },
       boxShadow: {

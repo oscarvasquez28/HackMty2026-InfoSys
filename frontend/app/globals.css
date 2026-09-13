@@ -185,6 +185,16 @@ body {
     transform: none;
   }
 
+  .case-tour *,
+  .case-tour {
+    animation-delay: 0ms !important;
+  }
+
+  .tour-nudge,
+  .tour-ring {
+    animation: none !important;
+  }
+
   *,
   *::before,
   *::after {
@@ -193,6 +203,247 @@ body {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Case file palette tokens (consumed by tailwind.config.js `paper.*` / `evidence.*`).
+   Light neutral values: the printable/exported document. Dark values: the guided tour. */
+:root,
+.case-paper {
+  --case-paper: 255 255 255;
+  --case-paper-raised: 243 245 248;
+  --case-paper-border: 214 220 228;
+  --case-paper-ink: 22 27 34;
+  --case-paper-muted: 90 98 112;
+  --case-paper-sheet: 255 255 255;
+  --case-proven: 142 27 31;
+  --case-proven-soft: 246 225 223;
+  --case-probable: 154 90 6;
+  --case-probable-soft: 251 235 210;
+  --case-reconciled: 30 106 59;
+  --case-reconciled-soft: 223 240 227;
+  --case-held: 28 79 140;
+  --case-held-soft: 226 235 246;
+  --case-neutral: 75 85 99;
+  --case-neutral-soft: 237 240 244;
+  --case-evidence-on: 255 255 255;
+}
+
+.case-tour {
+  --case-paper: 17 21 27;
+  --case-paper-raised: 25 31 40;
+  --case-paper-border: 41 50 64;
+  --case-paper-ink: 242 246 250;
+  --case-paper-muted: 160 173 189;
+  --case-paper-sheet: 10 13 17;
+  --case-proven: 235 153 155;
+  --case-proven-soft: 58 34 38;
+  --case-probable: 226 185 120;
+  --case-probable-soft: 51 41 26;
+  --case-reconciled: 146 201 170;
+  --case-reconciled-soft: 27 46 37;
+  --case-held: 121 199 245;
+  --case-held-soft: 16 28 37;
+  --case-neutral: 160 173 189;
+  --case-neutral-soft: 25 31 40;
+  --case-evidence-on: 6 16 23;
+  --tour-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  color: rgb(var(--case-paper-ink));
+}
+
+/* Serif reads as "document"; the tour is software UI, so it keeps the portal's sans stack. */
+.case-tour .font-serif {
+  font-family: inherit;
+}
+
+/* Guided tour (components/case-file/tour/*): chapter transitions and choreography. */
+.tour-shell {
+  background-image:
+    radial-gradient(circle at 82% 8%, rgba(56, 157, 221, 0.08), transparent 30rem),
+    linear-gradient(rgba(121, 199, 245, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(121, 199, 245, 0.025) 1px, transparent 1px);
+  background-size: auto, 72px 72px, 72px 72px;
+}
+
+.tour-stage {
+  display: grid;
+}
+
+.tour-stage > .tour-chapter {
+  grid-area: 1 / 1;
+  min-width: 0;
+}
+
+.tour-chapter[data-motion="enter-forward"] {
+  animation: tour-enter-forward 560ms var(--tour-ease) 90ms both;
+}
+
+.tour-chapter[data-motion="enter-back"] {
+  animation: tour-enter-back 560ms var(--tour-ease) 90ms both;
+}
+
+.tour-chapter[data-motion="exit-forward"] {
+  animation: tour-exit-forward 200ms ease-in both;
+  pointer-events: none;
+}
+
+.tour-chapter[data-motion="exit-back"] {
+  animation: tour-exit-back 200ms ease-in both;
+  pointer-events: none;
+}
+
+.tour-rise {
+  animation: tour-rise 640ms var(--tour-ease) both;
+  animation-delay: calc(var(--i, 0) * 70ms + 180ms);
+}
+
+.tour-stamp {
+  animation: tour-stamp 700ms var(--tour-ease) both;
+  animation-delay: var(--stamp-delay, 450ms);
+}
+
+.tour-grow-x {
+  transform-origin: left center;
+  animation: tour-grow-x 900ms var(--tour-ease) both;
+  animation-delay: calc(var(--i, 0) * 90ms + 350ms);
+}
+
+.tour-grow-y {
+  transform-origin: top center;
+  animation: tour-grow-y 1200ms var(--tour-ease) 300ms both;
+}
+
+.tour-mask {
+  display: block;
+  overflow: hidden;
+}
+
+.tour-mask > span {
+  display: block;
+  animation: tour-mask-up 760ms var(--tour-ease) both;
+  animation-delay: var(--mask-delay, 120ms);
+}
+
+[data-reveal] {
+  transition:
+    opacity 700ms var(--tour-ease),
+    transform 700ms var(--tour-ease);
+}
+
+[data-reveal="hidden"] {
+  opacity: 0;
+  transform: translateY(28px);
+}
+
+.tour-nudge {
+  animation: tour-nudge 3200ms ease-in-out 1800ms infinite;
+}
+
+.tour-check-path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: tour-draw 800ms var(--tour-ease) 350ms forwards;
+}
+
+.tour-ring {
+  animation: tour-ring 1400ms var(--tour-ease) 200ms both;
+}
+
+.tour-flash {
+  animation: tour-flash 1800ms ease-out;
+}
+
+.case-tour [data-trail-animate] .flowchart-link {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: tour-draw 950ms var(--tour-ease) forwards;
+  animation-delay: calc(var(--edge-i, 0) * 170ms + 450ms);
+}
+
+/* Mermaid positions nodes with a transform attribute, so nodes and labels only fade (never transform). */
+.case-tour [data-trail-animate] .node,
+.case-tour [data-trail-animate] .edgeLabel {
+  animation: tour-fade 520ms var(--tour-ease) both;
+  animation-delay: calc(var(--node-i, 0) * 90ms + 150ms);
+}
+
+.case-tour [data-trail-animate] .edgeLabel {
+  animation-delay: calc(var(--edge-i, 0) * 170ms + 900ms);
+}
+
+/* Hold the trail animation until its block scrolls into view (one-screen finding layout). */
+.case-tour [data-reveal="hidden"] [data-trail-animate] :is(.flowchart-link, .node, .edgeLabel) {
+  animation: none;
+}
+
+@keyframes tour-enter-forward {
+  from { opacity: 0; transform: translateX(48px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes tour-enter-back {
+  from { opacity: 0; transform: translateX(-48px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes tour-exit-forward {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(-28px); }
+}
+
+@keyframes tour-exit-back {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(28px); }
+}
+
+@keyframes tour-rise {
+  from { opacity: 0; transform: translateY(22px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes tour-stamp {
+  0% { opacity: 0; transform: scale(1.4) rotate(-5deg); }
+  60% { opacity: 1; transform: scale(0.95) rotate(0deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+
+@keyframes tour-grow-x {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes tour-grow-y {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+@keyframes tour-mask-up {
+  from { transform: translateY(105%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes tour-nudge {
+  0%, 18%, 100% { transform: translateX(0); }
+  9% { transform: translateX(5px); }
+}
+
+@keyframes tour-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes tour-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes tour-ring {
+  0% { opacity: 0; transform: scale(0.6); }
+  50% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.8); }
+}
+
+@keyframes tour-flash {
+  0%, 45% { background-color: rgb(var(--case-held-soft)); }
+  100% { background-color: transparent; }
 }
 
 /* Case file viewer: focus rings, print layout, and export chrome (see CaseFileWorkspace.tsx). */
