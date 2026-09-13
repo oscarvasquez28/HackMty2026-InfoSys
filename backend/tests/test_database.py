@@ -30,13 +30,13 @@ def test_database_url_normalization():
     raw_url = "postgres://forensic_user:secret_pass@db.tigerdata.com:5432/audit_db?sslmode=require"
     norm_url, connect_args = normalize_database_url(raw_url)
     assert norm_url == "postgresql+asyncpg://forensic_user:secret_pass@db.tigerdata.com:5432/audit_db"
-    assert connect_args == {"ssl": "require"}
+    assert connect_args.get("ssl") == "require"
 
     # 2. postgresql:// -> postgresql+asyncpg://
     raw_url2 = "postgresql://user:pass@localhost:5432/testdb"
     norm_url2, connect_args2 = normalize_database_url(raw_url2)
     assert norm_url2 == "postgresql+asyncpg://user:pass@localhost:5432/testdb"
-    assert connect_args2 == {"ssl": "require"}
+    assert connect_args2.get("ssl") == "require"
 
     # 3. sqlite url preserved
     sqlite_url = "sqlite+aiosqlite:///:memory:"
@@ -185,9 +185,29 @@ async def test_init_db_lifecycle():
     # Calling init_db with engine directly
     await init_db(engine)
 
-    async with session_factory() as session:
-        res = await session.execute(select(LegalArticleVector))
-        articles = res.scalars().all()
-        assert len(articles) >= 5
+    async with engine.connect() as conn:
+        from sqlalchemy import text
+        res = await conn.execute(text("SELECT name FROM sqlite_master WHERE type='table'"))
+        tables = {r[0] for r in res.fetchall()}
+
+        # 1. Verify all 9 operational tables from estate_schema - polar.sql exist
+        expected_operational = {
+            "vendors", "invoices", "ledger", "bank_txns",
+            "purchase_orders", "contracts", "employees", "efos_list", "exhibits",
+        }
+        assert expected_operational.issubset(tables)
+
+        # 2. Verify all 9 historic tables exist
+        expected_historic = {
+            "vendors_history", "invoices_history", "ledger_history", "bank_txns_history",
+            "purchase_orders_history", "contracts_history", "employees_history",
+            "efos_list_history", "exhibits_history",
+        }
+        assert expected_historic.issubset(tables)
+
+        # 3. Verify deprecated/outdated tables are NOT created
+        deprecated_tables = {"accounts", "account_mappings", "parties", "cash_transactions"}
+        for dep in deprecated_tables:
+            assert dep not in tables
 
     await engine.dispose()

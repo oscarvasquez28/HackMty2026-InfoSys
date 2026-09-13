@@ -21,7 +21,7 @@ class VendorRecord(Base):
     """
     __tablename__ = "vendors"
 
-    rfc: Mapped[str] = mapped_column(String(13), primary_key=True, index=True)
+    rfc: Mapped[str] = mapped_column(String(64), primary_key=True, index=True)
     legal_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     registered_date: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     address: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
@@ -38,8 +38,8 @@ class InvoiceRecord(Base):
     __tablename__ = "invoices"
 
     uuid: Mapped[str] = mapped_column(String(64), primary_key=True, index=True)
-    issuer_rfc: Mapped[Optional[str]] = mapped_column(String(13), index=True, nullable=True)
-    receiver_rfc: Mapped[Optional[str]] = mapped_column(String(13), index=True, nullable=True)
+    issuer_rfc: Mapped[Optional[str]] = mapped_column(String(64), index=True, nullable=True)
+    receiver_rfc: Mapped[Optional[str]] = mapped_column(String(64), index=True, nullable=True)
     issue_date: Mapped[Optional[str]] = mapped_column(String(64), index=True, nullable=True)
     subtotal: Mapped[Optional[Decimal]] = mapped_column(Numeric(15, 2), nullable=True)
     iva: Mapped[Optional[Decimal]] = mapped_column(Numeric(15, 2), nullable=True)
@@ -94,7 +94,7 @@ class PurchaseOrderRecord(Base):
     __tablename__ = "purchase_orders"
 
     po_id: Mapped[str] = mapped_column(String(64), primary_key=True, index=True)
-    vendor_rfc: Mapped[Optional[str]] = mapped_column(String(13), index=True, nullable=True)
+    vendor_rfc: Mapped[Optional[str]] = mapped_column(String(64), index=True, nullable=True)
     date: Mapped[Optional[str]] = mapped_column(String(64), index=True, nullable=True)
     amount: Mapped[Optional[Decimal]] = mapped_column(Numeric(15, 2), nullable=True)
     requester: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
@@ -110,7 +110,7 @@ class ContractRecord(Base):
     __tablename__ = "contracts"
 
     contract_id: Mapped[str] = mapped_column(String(64), primary_key=True, index=True)
-    vendor_rfc: Mapped[Optional[str]] = mapped_column(String(13), index=True, nullable=True)
+    vendor_rfc: Mapped[Optional[str]] = mapped_column(String(64), index=True, nullable=True)
     start_date: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     value: Mapped[Optional[Decimal]] = mapped_column(Numeric(15, 2), nullable=True)
     scope_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
@@ -137,7 +137,7 @@ class EfosRecord(Base):
     """
     __tablename__ = "efos_list"
 
-    rfc: Mapped[str] = mapped_column(String(13), primary_key=True, index=True)
+    rfc: Mapped[str] = mapped_column(String(64), primary_key=True, index=True)
     legal_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     status: Mapped[Optional[str]] = mapped_column(String(32), index=True, nullable=True)
     publication_date: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
@@ -167,7 +167,7 @@ class VendorHistoryRecord(Base):
     run_id: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
     archived_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
-    rfc: Mapped[str] = mapped_column(String(13), index=True, nullable=False)
+    rfc: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
     legal_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     registered_date: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     address: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
@@ -185,8 +185,8 @@ class InvoiceHistoryRecord(Base):
     archived_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     uuid: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
-    issuer_rfc: Mapped[Optional[str]] = mapped_column(String(13), index=True, nullable=True)
-    receiver_rfc: Mapped[Optional[str]] = mapped_column(String(13), index=True, nullable=True)
+    issuer_rfc: Mapped[Optional[str]] = mapped_column(String(64), index=True, nullable=True)
+    receiver_rfc: Mapped[Optional[str]] = mapped_column(String(64), index=True, nullable=True)
     issue_date: Mapped[Optional[str]] = mapped_column(String(64), index=True, nullable=True)
     subtotal: Mapped[Optional[Decimal]] = mapped_column(Numeric(15, 2), nullable=True)
     iva: Mapped[Optional[Decimal]] = mapped_column(Numeric(15, 2), nullable=True)
@@ -244,7 +244,7 @@ class PurchaseOrderHistoryRecord(Base):
     archived_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     po_id: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
-    vendor_rfc: Mapped[Optional[str]] = mapped_column(String(13), index=True, nullable=True)
+    vendor_rfc: Mapped[Optional[str]] = mapped_column(String(64), index=True, nullable=True)
     date: Mapped[Optional[str]] = mapped_column(String(64), index=True, nullable=True)
     amount: Mapped[Optional[Decimal]] = mapped_column(Numeric(15, 2), nullable=True)
     requester: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
@@ -261,7 +261,7 @@ class ContractHistoryRecord(Base):
     archived_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     contract_id: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
-    vendor_rfc: Mapped[Optional[str]] = mapped_column(String(13), index=True, nullable=True)
+    vendor_rfc: Mapped[Optional[str]] = mapped_column(String(64), index=True, nullable=True)
     start_date: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     value: Mapped[Optional[Decimal]] = mapped_column(Numeric(15, 2), nullable=True)
     scope_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
@@ -290,7 +290,7 @@ class EfosHistoryRecord(Base):
     run_id: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
     archived_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
-    rfc: Mapped[str] = mapped_column(String(13), index=True, nullable=False)
+    rfc: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
     legal_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     status: Mapped[Optional[str]] = mapped_column(String(32), index=True, nullable=True)
     publication_date: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
