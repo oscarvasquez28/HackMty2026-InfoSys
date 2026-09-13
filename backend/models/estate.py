@@ -6,7 +6,7 @@ conforming to CFDI 4.0 and Mexican corporate/tax compliance conventions.
 
 from datetime import datetime
 from decimal import Decimal
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 from sqlalchemy import BigInteger, DateTime, Integer, Numeric, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
