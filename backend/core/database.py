@@ -87,10 +87,16 @@ def normalize_database_url(raw_url: str) -> Tuple[str, Dict[str, Any]]:
                 connect_args["ssl"] = mode
         elif settings.DB_SSL_REQUIRE:
             connect_args["ssl"] = "require"
+
+        if settings.POSTGRES_TIMEOUT is not None:
+            connect_args.setdefault("command_timeout", float(settings.POSTGRES_TIMEOUT))
+            connect_args.setdefault("timeout", float(settings.POSTGRES_TIMEOUT))
     elif "psycopg" in scheme:
         # psycopg handles sslmode query parameter directly
         if "sslmode" not in query_params and settings.DB_SSL_REQUIRE:
             query_params["sslmode"] = ["require"]
+        if settings.POSTGRES_TIMEOUT is not None:
+            connect_args.setdefault("connect_timeout", int(settings.POSTGRES_TIMEOUT))
 
     new_query = urlencode(query_params, doseq=True)
     normalized_url = urlunparse((
@@ -142,6 +148,7 @@ def create_engine_and_sessionmaker(
             max_overflow=settings.DB_MAX_OVERFLOW,
             pool_pre_ping=settings.DB_POOL_PRE_PING,
             pool_recycle=settings.DB_POOL_RECYCLE,
+            pool_timeout=settings.POSTGRES_TIMEOUT,
             connect_args=connect_args,
         )
 
