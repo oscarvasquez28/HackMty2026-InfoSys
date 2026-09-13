@@ -1,7 +1,36 @@
 rfc,legal_name,registered_date,address,bank_clabe,category,contact_email
-AAAA010101AA1,Servicios Integrales Ejemplo SA de CV,2026-01-20,"Calle Ejemplo 14, Col. Centro, Monterrey",000000000000000001,Consultoria,contacto@serviciosejemplo.mx
-BBBB020202BB2,Mantenimiento Industrial Ejemplo SC,2024-06-30,"Av. Ejemplo 200, Monterrey",000000000000000002,Mantenimiento,dos@example.mx
-CCCC030303CC3,Logística Ejemplo Tres SA de CV,2023-03-15,"Blvd. Ejemplo 300, Apodaca",012000000000000003,Logistica,tres@example.mx
-DDDD040404DD4,Suministros Ejemplo Cuatro SA de CV,2022-09-01,"Calle Ejemplo 400, Monterrey",012000000000000004,Suministros,cuatro@example.mx
-EEEE050505EE5,Papelería Ejemplo Cinco SA de CV,2021-05-10,"Av. Ejemplo 500, San Nicolas",000000000000000005,Papeleria,cinco@example.mx
-FFFF060606FF6,Consultores Ejemplo Seis SC,2026-01-10,"Calle Ejemplo 600, Monterrey",000000000000000006,Consultoria,seis@example.mx
+CBS1801220ZU,Constructora del Bajio S de RL de CV,2020-06-30,"Blvd. Manuel Avila Camacho 3661, Guadalajara, JAL",127756243459444311,Consultoria,contacto@cbs18012.com.mx
+CON22031775L,Comercializadora del Norte SC,2022-08-01,"Av. Juarez 1423, Saltillo, COAH",044723280341858650,Mantenimiento Industrial,contacto@con22031.com.mx
+MAN1106273JJ,Mantenimiento del Norte SC,2022-03-07,"Av. Insurgentes Sur 4463, Guadalajara, JAL",002187775680286238,Logistica y Transporte,contacto@man11062.com.mx
+CGS1205175QH,Consultores Globales S de RL de CV,2022-01-09,"Av. Americas 2653, Tijuana, BC",127847387327627161,Sistemas y TI,contacto@cgs12051.com.mx
+ASG180804JCA,Asesores Globales SC,2022-02-08,"Av. Insurgentes Sur 582, San Pedro Garza Garcia, NL",012702109458264863,Seguridad Privada,contacto@asg18080.com.mx
+SEN960522SU0,Servicios del Norte SC,2023-12-13,"Av. Eugenio Garza Sada 3434, San Pedro Garza Garcia, NL",044690420948776895,Papeleria y Suministros,contacto@sen96052.com.mx
+SIS1608280Y9,Servicios Integrales S de RL de CV,2019-07-21,"Av. Insurgentes Sur 2136, San Pedro Garza Garcia, NL",002512560773265072,Servicios Legales y Fiscales,contacto@sis16082.com.mx
+LES960515J7R,Logistica Estrategicos S de RL de CV,2023-10-31,"Av. Chapultepec 220, Ciudad de Mexico, CDMX",127663147154820856,Limpieza y Gestion de Instalaciones,contacto@les96051.com.mx
+LAS130702FAP,Logistica Avanzadas S de RL de CV,2024-03-12,"Av. Hidalgo 4086, Guadalajara, JAL",127903506089517386,Capacitacion y Recursos Humanos,contacto@las13070.com.mx
+LCS191218CLB,Logistica del Centro SAPI de CV,2021-09-03,"Av. Constitucion 4260, Ciudad de Mexico, CDMX",044973337560058837,Consultoria,contacto@lcs19121.com.mx
+COI1307048VV,Consultores Integrales SA de CV,2019-03-23,"Calzada del Valle 2691, Queretaro, QRO",044183898162647166,Mantenimiento Industrial,contacto@coi13070.com.mx
+LOG980322XR7,Logistica Globales SC,2024-03-31,"Av. Revolucion 919, Ciudad de Mexico, CDMX",002109935726999430,Logistica y Transporte,contacto@log98032.com.mx
+MAE970208NF4,Mantenimiento Especializados SC,2022-12-11,"Calzada del Valle 164, Saltillo, COAH",014726993658137773,Sistemas y TI,contacto@mae97020.com.mx
+TEG12050461F,Tecnologia Globales SA de CV,2020-07-31,"Av. Lazaro Cardenas 2262, Saltillo, COAH",044315560317938315,Seguridad Privada,contacto@teg12050.com.mx
+COC980502A2X,Comercializadora del Centro SA de CV,2020-06-20,"Av. Americas 3603, Saltillo, COAH",012859849121130974,Papeleria y Suministros,contacto@coc98050.com.mx
+SOI210318BNU,Soluciones Integrales SA de CV,2021-05-30,"Av. Constitucion 3031, San Pedro Garza Garcia, NL",012142585685997831,Servicios Legales y Fiscales,contacto@soi21031.com.mx
+ASE18072017J,Asesores Especializados SA de CV,2019-11-29,"Paseo de la Reforma 2821, Tijuana, BC",127930117707910232,Limpieza y Gestion de Instalaciones,contacto@ase18072.com.mx
+AGS950728BSG,Asesores del Golfo SAPI de CV,2024-02-24,"Av. Constitucion 1682, Tijuana, BC",021458410422862665,Capacitacion y Recursos Humanos,contacto@ags95072.com.mx
+DIC140621TZ4,Distribuidora del Centro SA de CV,2020-11-09,"Av. Revolucion 2274, Monterrey, NL",002218325967472123,Consultoria,contacto@dic14062.com.mx
+SBS220614WTP,Servicios del Bajio S de RL de CV,2022-03-26,"Calzada del Valle 1714, Puebla, PUE",012360118728527896,Mantenimiento Industrial,contacto@sbs22061.com.mx
+COI2002246TY,Constructora Integrales SC,2020-10-30,"Paseo de la Reforma 1671, Tijuana, BC",021813842842734405,Logistica y Transporte,contacto@coi20022.com.mx
+AIS1407184LH,Asesores Industriales SAPI de CV,2023-05-29,"Av. Eugenio Garza Sada 3719, Toluca, MEX",044721557616122021,Sistemas y TI,contacto@ais14071.com.mx
+AES221206YKY,Asesores Especializados S de RL de CV,2022-06-22,"Av. Chapultepec 2642, San Pedro Garza Garcia, NL",014195432908848040,Seguridad Privada,contacto@aes22120.com.mx
+LOA9810282R6,Logistica Avanzadas SA de CV,2022-03-24,"Av. Eugenio Garza Sada 3373, San Pedro Garza Garcia, NL",012835645304262793,Papeleria y Suministros,contacto@loa98102.com.mx
+COG230225QF8,Consultores Globales SA de CV,2021-11-26,"Av. Insurgentes Sur 3839, Guadalajara, JAL",021151424588107450,Servicios Legales y Fiscales,contacto@cog23022.com.mx
+EFOS810101AA1,Servicios Empresariales Fantasma SA de CV,2025-01-10,"Calle Falsa 123, Monterrey, NL",014217476351046207,Consultoria Estrategica,contacto@efos810101aa1.mx
+KICK830202BB1,Soluciones Industriales Coludidas SA de CV,2024-03-15,"Av. Parque Industrial 400, Monterrey, NL",012926942746620275,Mantenimiento Industrial,ventas@kick830202bb1.mx
+RNDA960303CC1,Intermediaria de Capitales SA de CV,2024-05-10,"Paseo de la Sierra 300, Monterrey, NL",072670917171379690,Consultoria Financiera,info@rnda960303cc1.mx
+RNDB940404DD1,Servicios de Flujo Circular SC,2024-06-12,"Av. Valle Oriente 700, San Pedro, NL",127810111486792347,Servicios Especializados,operaciones@rndb940404dd1.mx
+SPLT330505EE1,Comercializadora de Suministros Fraccionados SA de CV,2024-02-18,"Av. San Jeronimo 500, Monterrey, NL",014819519292296060,Papeleria y Suministros,ventas@splt330505ee1.mx
+REVI530606FF1,Corporacion Comercial Fantasma del Golfo SA de CV,2025-08-20,"Blvd. Costero 800, Tampico, TAMPS",014106879246717922,Distribuidor Mayorista,tesoreria@revi530606ff1.mx
+DECY940101AA1,Transportes y Fletes Expresos del Norte SA de CV,2023-04-10,"Av. Alfonso Reyes 2200, Monterrey, NL",021171187216058389,Logistica y Transporte,logistica@decy940101aa1.mx
+DECY770202BB2,Maquinaria Pesada y Montacargas de Mexico SA de CV,2022-01-15,"Carretera Miguel Aleman Km 14, Apodaca, NL",012485719327089608,Mantenimiento Industrial,ventas@decy770202bb2.mx
+DECY530303CC3,Logistica Multimodal Aduanal SA de CV,2021-08-11,"Av. Las Americas 100, Nuevo Laredo, TAMPS",012478913527254156,Logistica y Transporte,aduanas@decy530303cc3.mx
+DECY860505EE5,Servicios Empresariales Monterrey SA de CV,2020-09-01,"Av. Simon Bolivar 1200, Monterrey, NL",002153321430470944,Servicios Legales y Fiscales,contacto@decy860505ee5.mx

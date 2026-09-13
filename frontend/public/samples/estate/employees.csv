@@ -1,0 +1,21 @@
+emp_id,name,role,bank_clabe,hire_date
+EMP:0001,Arturo Lopez Hernandez,Director General,072381411165735844,2019-07-26
+EMP:0002,Adriana Lopez Aguilar,Director de Finanzas,072658876828107540,2022-09-25
+EMP:0003,Sofia Hernandez Martinez,Gerente de Compras,012338937748630578,2018-04-19
+EMP:0004,Lucia Rodriguez Ortiz,Contador General,072818681750806944,2020-06-21
+EMP:0005,Mauricio Gutierrez Ramirez,Auditor Interno,127990349358038371,2022-09-28
+EMP:0006,Javier Ramirez Gonzalez,Gerente de Logistica,012881243305644737,2019-01-15
+EMP:0007,Ricardo Lopez Gomez,Jefe de Almacen,127452469527219239,2018-06-27
+EMP:0008,Adriana Jimenez Torres,Analista de Tesoreria,002487833528882967,2021-04-15
+EMP:0009,Manuel Mendoza Ruiz,Especialista de Sistemas,127470382495123833,2018-10-12
+EMP:0010,Sofia Aguilar Sanchez,Coordinador de Calidad,127396228214288126,2020-08-11
+EMP:0011,Lorena Lopez Morales,Supervisor de Produccion,014564330417787532,2022-02-25
+EMP:0012,Camila Rodriguez Aguilar,Abogado Corporativo,014818213732253873,2024-10-31
+EMP:0013,Arturo Perez Torres,Gerente de Recursos Humanos,072350708313505117,2022-04-04
+EMP:0014,Eduardo Mendoza Ortiz,Analista Contable,044324558900687830,2018-08-18
+EMP:0015,Valeria Mendez Garcia,Director General,127423460827280271,2018-09-29
+EMP:0016,Fernando Gutierrez Ortiz,Director de Finanzas,014317772395970771,2022-06-09
+EMP:0017,Arturo Jimenez Gonzalez,Gerente de Compras,014242854255018193,2020-12-12
+EMP:0018,Adriana Gutierrez Vazquez,Contador General,044508416195339754,2019-07-21
+EMP:0019,Hector Reyes Martinez,Auditor Interno,127148265833107420,2019-09-19
+EMP:0020,Arturo Perez Alvarez,Gerente de Logistica,072532211514918928,2022-04-26

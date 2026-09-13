@@ -1,0 +1,249 @@
+entry_id,date,account_code,account_name,debit,credit,description,invoice_uuid,cost_center,approver
+1,2025-12-21,5000,Gastos operativos,59813.56,0.0,Provision factura INV-00001 Logistica del Centro SAPI de C,INV-00001,CC-200 Administracion,Arturo Perez Alvarez
+2,2025-12-21,2100,Cuentas por pagar,0.0,59813.56,Provision factura INV-00001 Logistica del Centro SAPI de C,INV-00001,CC-200 Administracion,Arturo Perez Alvarez
+3,2026-01-10,2100,Cuentas por pagar,59813.56,0.0,Liquidacion SPEI BNK-00001 factura INV-00001,INV-00001,CC-100 Operaciones,Arturo Perez Alvarez
+4,2026-01-10,1100,Bancos e inversiones,0.0,59813.56,Liquidacion SPEI BNK-00001 factura INV-00001,INV-00001,CC-100 Operaciones,Arturo Perez Alvarez
+5,2025-08-21,5000,Gastos operativos,84736.54,0.0,Provision factura INV-00002 Consultores Integrales SA de C,INV-00002,CC-100 Operaciones,Adriana Lopez Aguilar
+6,2025-08-21,2100,Cuentas por pagar,0.0,84736.54,Provision factura INV-00002 Consultores Integrales SA de C,INV-00002,CC-100 Operaciones,Adriana Lopez Aguilar
+7,2025-09-07,2100,Cuentas por pagar,84736.54,0.0,Liquidacion SPEI BNK-00002 factura INV-00002,INV-00002,CC-100 Operaciones,Adriana Lopez Aguilar
+8,2025-09-07,1100,Bancos e inversiones,0.0,84736.54,Liquidacion SPEI BNK-00002 factura INV-00002,INV-00002,CC-100 Operaciones,Adriana Lopez Aguilar
+9,2026-01-26,5000,Gastos operativos,119964.36,0.0,Provision factura INV-00003 Logistica Avanzadas SA de CV,INV-00003,CC-100 Operaciones,Arturo Jimenez Gonzalez
+10,2026-01-26,2100,Cuentas por pagar,0.0,119964.36,Provision factura INV-00003 Logistica Avanzadas SA de CV,INV-00003,CC-100 Operaciones,Arturo Jimenez Gonzalez
+11,2026-02-20,2100,Cuentas por pagar,119964.36,0.0,Liquidacion SPEI BNK-00003 factura INV-00003,INV-00003,CC-100 Operaciones,Arturo Perez Alvarez
+12,2026-02-20,1100,Bancos e inversiones,0.0,119964.36,Liquidacion SPEI BNK-00003 factura INV-00003,INV-00003,CC-100 Operaciones,Arturo Perez Alvarez
+13,2025-02-21,5000,Gastos operativos,71565.96,0.0,Provision factura INV-00004 Servicios del Bajio S de RL de,INV-00004,CC-100 Operaciones,Valeria Mendez Garcia
+14,2025-02-21,2100,Cuentas por pagar,0.0,71565.96,Provision factura INV-00004 Servicios del Bajio S de RL de,INV-00004,CC-100 Operaciones,Valeria Mendez Garcia
+15,2025-02-28,2100,Cuentas por pagar,71565.96,0.0,Liquidacion SPEI BNK-00004 factura INV-00004,INV-00004,CC-100 Operaciones,Arturo Perez Alvarez
+16,2025-02-28,1100,Bancos e inversiones,0.0,71565.96,Liquidacion SPEI BNK-00004 factura INV-00004,INV-00004,CC-100 Operaciones,Arturo Perez Alvarez
+17,2025-01-28,5000,Gastos operativos,69903.19,0.0,Provision factura INV-00005 Asesores Globales SC,INV-00005,CC-300 Logistica,Arturo Jimenez Gonzalez
+18,2025-01-28,2100,Cuentas por pagar,0.0,69903.19,Provision factura INV-00005 Asesores Globales SC,INV-00005,CC-300 Logistica,Arturo Jimenez Gonzalez
+19,2025-02-04,2100,Cuentas por pagar,69903.19,0.0,Liquidacion SPEI BNK-00005 factura INV-00005,INV-00005,CC-100 Operaciones,Arturo Perez Torres
+20,2025-02-04,1100,Bancos e inversiones,0.0,69903.19,Liquidacion SPEI BNK-00005 factura INV-00005,INV-00005,CC-100 Operaciones,Arturo Perez Torres
+21,2025-06-24,5000,Gastos operativos,109025.89,0.0,Provision factura INV-00006 Soluciones Integrales SA de CV,INV-00006,CC-200 Administracion,Adriana Lopez Aguilar
+22,2025-06-24,2100,Cuentas por pagar,0.0,109025.89,Provision factura INV-00006 Soluciones Integrales SA de CV,INV-00006,CC-200 Administracion,Adriana Lopez Aguilar
+23,2025-07-13,2100,Cuentas por pagar,109025.89,0.0,Liquidacion SPEI BNK-00006 factura INV-00006,INV-00006,CC-100 Operaciones,Arturo Jimenez Gonzalez
+24,2025-07-13,1100,Bancos e inversiones,0.0,109025.89,Liquidacion SPEI BNK-00006 factura INV-00006,INV-00006,CC-100 Operaciones,Arturo Jimenez Gonzalez
+25,2025-12-18,5000,Gastos operativos,127841.85,0.0,Provision factura INV-00007 Mantenimiento del Norte SC,INV-00007,CC-300 Logistica,Arturo Perez Torres
+26,2025-12-18,2100,Cuentas por pagar,0.0,127841.85,Provision factura INV-00007 Mantenimiento del Norte SC,INV-00007,CC-300 Logistica,Arturo Perez Torres
+27,2026-01-01,2100,Cuentas por pagar,127841.85,0.0,Liquidacion SPEI BNK-00007 factura INV-00007,INV-00007,CC-100 Operaciones,Adriana Lopez Aguilar
+28,2026-01-01,1100,Bancos e inversiones,0.0,127841.85,Liquidacion SPEI BNK-00007 factura INV-00007,INV-00007,CC-100 Operaciones,Adriana Lopez Aguilar
+29,2025-11-07,5000,Gastos operativos,163714.48,0.0,Provision factura INV-00008 Asesores del Golfo SAPI de CV,INV-00008,CC-300 Logistica,Fernando Gutierrez Ortiz
+30,2025-11-07,2100,Cuentas por pagar,0.0,163714.48,Provision factura INV-00008 Asesores del Golfo SAPI de CV,INV-00008,CC-300 Logistica,Fernando Gutierrez Ortiz
+31,2025-11-28,2100,Cuentas por pagar,163714.48,0.0,Liquidacion SPEI BNK-00008 factura INV-00008,INV-00008,CC-100 Operaciones,Arturo Perez Torres
+32,2025-11-28,1100,Bancos e inversiones,0.0,163714.48,Liquidacion SPEI BNK-00008 factura INV-00008,INV-00008,CC-100 Operaciones,Arturo Perez Torres
+33,2025-06-06,5000,Gastos operativos,206891.99,0.0,Provision factura INV-00009 Distribuidora del Centro SA de,INV-00009,CC-300 Logistica,Adriana Lopez Aguilar
+34,2025-06-06,2100,Cuentas por pagar,0.0,206891.99,Provision factura INV-00009 Distribuidora del Centro SA de,INV-00009,CC-300 Logistica,Adriana Lopez Aguilar
+35,2025-05-16,5000,Gastos operativos,137123.58,0.0,Provision factura INV-00010 Servicios Integrales S de RL d,INV-00010,CC-100 Operaciones,Sofia Hernandez Martinez
+36,2025-05-16,2100,Cuentas por pagar,0.0,137123.58,Provision factura INV-00010 Servicios Integrales S de RL d,INV-00010,CC-100 Operaciones,Sofia Hernandez Martinez
+37,2025-05-28,2100,Cuentas por pagar,137123.58,0.0,Liquidacion SPEI BNK-00009 factura INV-00010,INV-00010,CC-100 Operaciones,Arturo Lopez Hernandez
+38,2025-05-28,1100,Bancos e inversiones,0.0,137123.58,Liquidacion SPEI BNK-00009 factura INV-00010,INV-00010,CC-100 Operaciones,Arturo Lopez Hernandez
+39,2025-11-01,5000,Gastos operativos,103626.41,0.0,Provision factura INV-00011 Tecnologia Globales SA de CV,INV-00011,CC-100 Operaciones,Arturo Perez Torres
+40,2025-11-01,2100,Cuentas por pagar,0.0,103626.41,Provision factura INV-00011 Tecnologia Globales SA de CV,INV-00011,CC-100 Operaciones,Arturo Perez Torres
+41,2025-11-30,2100,Cuentas por pagar,103626.41,0.0,Liquidacion SPEI BNK-00010 factura INV-00011,INV-00011,CC-100 Operaciones,Arturo Jimenez Gonzalez
+42,2025-11-30,1100,Bancos e inversiones,0.0,103626.41,Liquidacion SPEI BNK-00010 factura INV-00011,INV-00011,CC-100 Operaciones,Arturo Jimenez Gonzalez
+43,2025-05-16,5000,Gastos operativos,148965.47,0.0,Provision factura INV-00012 Mantenimiento del Norte SC,INV-00012,CC-200 Administracion,Adriana Lopez Aguilar
+44,2025-05-16,2100,Cuentas por pagar,0.0,148965.47,Provision factura INV-00012 Mantenimiento del Norte SC,INV-00012,CC-200 Administracion,Adriana Lopez Aguilar
+45,2025-06-12,2100,Cuentas por pagar,148965.47,0.0,Liquidacion SPEI BNK-00011 factura INV-00012,INV-00012,CC-100 Operaciones,Sofia Hernandez Martinez
+46,2025-06-12,1100,Bancos e inversiones,0.0,148965.47,Liquidacion SPEI BNK-00011 factura INV-00012,INV-00012,CC-100 Operaciones,Sofia Hernandez Martinez
+47,2025-02-06,5000,Gastos operativos,175617.2,0.0,Provision factura INV-00013 Logistica Avanzadas S de RL de,INV-00013,CC-300 Logistica,Arturo Perez Torres
+48,2025-02-06,2100,Cuentas por pagar,0.0,175617.2,Provision factura INV-00013 Logistica Avanzadas S de RL de,INV-00013,CC-300 Logistica,Arturo Perez Torres
+49,2025-02-27,2100,Cuentas por pagar,175617.2,0.0,Liquidacion SPEI BNK-00012 factura INV-00013,INV-00013,CC-100 Operaciones,Arturo Perez Torres
+50,2025-02-27,1100,Bancos e inversiones,0.0,175617.2,Liquidacion SPEI BNK-00012 factura INV-00013,INV-00013,CC-100 Operaciones,Arturo Perez Torres
+51,2025-05-20,5000,Gastos operativos,94440.14,0.0,Provision factura INV-00014 Asesores Especializados S de R,INV-00014,CC-200 Administracion,Adriana Lopez Aguilar
+52,2025-05-20,2100,Cuentas por pagar,0.0,94440.14,Provision factura INV-00014 Asesores Especializados S de R,INV-00014,CC-200 Administracion,Adriana Lopez Aguilar
+53,2025-06-09,2100,Cuentas por pagar,94440.14,0.0,Liquidacion SPEI BNK-00013 factura INV-00014,INV-00014,CC-100 Operaciones,Valeria Mendez Garcia
+54,2025-06-09,1100,Bancos e inversiones,0.0,94440.14,Liquidacion SPEI BNK-00013 factura INV-00014,INV-00014,CC-100 Operaciones,Valeria Mendez Garcia
+55,2025-02-16,5000,Gastos operativos,65320.41,0.0,Provision factura INV-00015 Servicios del Bajio S de RL de,INV-00015,CC-300 Logistica,Arturo Perez Torres
+56,2025-02-16,2100,Cuentas por pagar,0.0,65320.41,Provision factura INV-00015 Servicios del Bajio S de RL de,INV-00015,CC-300 Logistica,Arturo Perez Torres
+57,2025-02-28,2100,Cuentas por pagar,65320.41,0.0,Liquidacion SPEI BNK-00014 factura INV-00015,INV-00015,CC-100 Operaciones,Arturo Jimenez Gonzalez
+58,2025-02-28,1100,Bancos e inversiones,0.0,65320.41,Liquidacion SPEI BNK-00014 factura INV-00015,INV-00015,CC-100 Operaciones,Arturo Jimenez Gonzalez
+59,2025-05-23,5000,Gastos operativos,142098.92,0.0,Provision factura INV-00016 Asesores Especializados SA de ,INV-00016,CC-300 Logistica,Arturo Jimenez Gonzalez
+60,2025-05-23,2100,Cuentas por pagar,0.0,142098.92,Provision factura INV-00016 Asesores Especializados SA de ,INV-00016,CC-300 Logistica,Arturo Jimenez Gonzalez
+61,2025-06-20,5000,Gastos operativos,83999.74,0.0,Provision factura INV-00017 Soluciones Integrales SA de CV,INV-00017,CC-200 Administracion,Fernando Gutierrez Ortiz
+62,2025-06-20,2100,Cuentas por pagar,0.0,83999.74,Provision factura INV-00017 Soluciones Integrales SA de CV,INV-00017,CC-200 Administracion,Fernando Gutierrez Ortiz
+63,2025-07-06,2100,Cuentas por pagar,83999.74,0.0,Liquidacion SPEI BNK-00015 factura INV-00017,INV-00017,CC-100 Operaciones,Fernando Gutierrez Ortiz
+64,2025-07-06,1100,Bancos e inversiones,0.0,83999.74,Liquidacion SPEI BNK-00015 factura INV-00017,INV-00017,CC-100 Operaciones,Fernando Gutierrez Ortiz
+65,2025-08-21,5000,Gastos operativos,122688.49,0.0,Provision factura INV-00018 Consultores Globales SA de CV,INV-00018,CC-200 Administracion,Adriana Lopez Aguilar
+66,2025-08-21,2100,Cuentas por pagar,0.0,122688.49,Provision factura INV-00018 Consultores Globales SA de CV,INV-00018,CC-200 Administracion,Adriana Lopez Aguilar
+67,2026-02-27,5000,Gastos operativos,182943.89,0.0,Provision factura INV-00019 Mantenimiento Especializados S,INV-00019,CC-200 Administracion,Arturo Lopez Hernandez
+68,2026-02-27,2100,Cuentas por pagar,0.0,182943.89,Provision factura INV-00019 Mantenimiento Especializados S,INV-00019,CC-200 Administracion,Arturo Lopez Hernandez
+69,2026-03-17,2100,Cuentas por pagar,182943.89,0.0,Liquidacion SPEI BNK-00016 factura INV-00019,INV-00019,CC-100 Operaciones,Arturo Jimenez Gonzalez
+70,2026-03-17,1100,Bancos e inversiones,0.0,182943.89,Liquidacion SPEI BNK-00016 factura INV-00019,INV-00019,CC-100 Operaciones,Arturo Jimenez Gonzalez
+71,2025-01-27,5000,Gastos operativos,102006.64,0.0,Provision factura INV-00020 Constructora Integrales SC,INV-00020,CC-200 Administracion,Arturo Jimenez Gonzalez
+72,2025-01-27,2100,Cuentas por pagar,0.0,102006.64,Provision factura INV-00020 Constructora Integrales SC,INV-00020,CC-200 Administracion,Arturo Jimenez Gonzalez
+73,2025-11-19,5000,Gastos operativos,40640.95,0.0,Provision factura INV-00021 Soluciones Integrales SA de CV,INV-00021,CC-200 Administracion,Arturo Perez Alvarez
+74,2025-11-19,2100,Cuentas por pagar,0.0,40640.95,Provision factura INV-00021 Soluciones Integrales SA de CV,INV-00021,CC-200 Administracion,Arturo Perez Alvarez
+75,2025-12-09,2100,Cuentas por pagar,40640.95,0.0,Liquidacion SPEI BNK-00017 factura INV-00021,INV-00021,CC-100 Operaciones,Adriana Lopez Aguilar
+76,2025-12-09,1100,Bancos e inversiones,0.0,40640.95,Liquidacion SPEI BNK-00017 factura INV-00021,INV-00021,CC-100 Operaciones,Adriana Lopez Aguilar
+77,2025-02-28,5000,Gastos operativos,207318.02,0.0,Provision factura INV-00022 Logistica Estrategicos S de RL,INV-00022,CC-200 Administracion,Arturo Perez Torres
+78,2025-02-28,2100,Cuentas por pagar,0.0,207318.02,Provision factura INV-00022 Logistica Estrategicos S de RL,INV-00022,CC-200 Administracion,Arturo Perez Torres
+79,2025-03-15,2100,Cuentas por pagar,207318.02,0.0,Liquidacion SPEI BNK-00018 factura INV-00022,INV-00022,CC-100 Operaciones,Fernando Gutierrez Ortiz
+80,2025-03-15,1100,Bancos e inversiones,0.0,207318.02,Liquidacion SPEI BNK-00018 factura INV-00022,INV-00022,CC-100 Operaciones,Fernando Gutierrez Ortiz
+81,2025-05-05,5000,Gastos operativos,205018.82,0.0,Provision factura INV-00023 Soluciones Integrales SA de CV,INV-00023,CC-200 Administracion,Javier Ramirez Gonzalez
+82,2025-05-05,2100,Cuentas por pagar,0.0,205018.82,Provision factura INV-00023 Soluciones Integrales SA de CV,INV-00023,CC-200 Administracion,Javier Ramirez Gonzalez
+83,2025-03-11,5000,Gastos operativos,160240.39,0.0,Provision factura INV-00024 Asesores Especializados SA de ,INV-00024,CC-200 Administracion,Valeria Mendez Garcia
+84,2025-03-11,2100,Cuentas por pagar,0.0,160240.39,Provision factura INV-00024 Asesores Especializados SA de ,INV-00024,CC-200 Administracion,Valeria Mendez Garcia
+85,2025-01-02,5000,Gastos operativos,68536.85,0.0,Provision factura INV-00025 Asesores Especializados SA de ,INV-00025,CC-100 Operaciones,Arturo Jimenez Gonzalez
+86,2025-01-02,2100,Cuentas por pagar,0.0,68536.85,Provision factura INV-00025 Asesores Especializados SA de ,INV-00025,CC-100 Operaciones,Arturo Jimenez Gonzalez
+87,2025-01-20,2100,Cuentas por pagar,68536.85,0.0,Liquidacion SPEI BNK-00019 factura INV-00025,INV-00025,CC-100 Operaciones,Valeria Mendez Garcia
+88,2025-01-20,1100,Bancos e inversiones,0.0,68536.85,Liquidacion SPEI BNK-00019 factura INV-00025,INV-00025,CC-100 Operaciones,Valeria Mendez Garcia
+89,2025-07-13,5000,Gastos operativos,163413.83,0.0,Provision factura INV-00026 Asesores del Golfo SAPI de CV,INV-00026,CC-300 Logistica,Javier Ramirez Gonzalez
+90,2025-07-13,2100,Cuentas por pagar,0.0,163413.83,Provision factura INV-00026 Asesores del Golfo SAPI de CV,INV-00026,CC-300 Logistica,Javier Ramirez Gonzalez
+91,2025-07-27,2100,Cuentas por pagar,163413.83,0.0,Liquidacion SPEI BNK-00020 factura INV-00026,INV-00026,CC-100 Operaciones,Fernando Gutierrez Ortiz
+92,2025-07-27,1100,Bancos e inversiones,0.0,163413.83,Liquidacion SPEI BNK-00020 factura INV-00026,INV-00026,CC-100 Operaciones,Fernando Gutierrez Ortiz
+93,2025-08-31,5000,Gastos operativos,78298.94,0.0,Provision factura INV-00027 Comercializadora del Norte SC,INV-00027,CC-300 Logistica,Sofia Hernandez Martinez
+94,2025-08-31,2100,Cuentas por pagar,0.0,78298.94,Provision factura INV-00027 Comercializadora del Norte SC,INV-00027,CC-300 Logistica,Sofia Hernandez Martinez
+95,2025-09-08,2100,Cuentas por pagar,78298.94,0.0,Liquidacion SPEI BNK-00021 factura INV-00027,INV-00027,CC-100 Operaciones,Sofia Hernandez Martinez
+96,2025-09-08,1100,Bancos e inversiones,0.0,78298.94,Liquidacion SPEI BNK-00021 factura INV-00027,INV-00027,CC-100 Operaciones,Sofia Hernandez Martinez
+97,2025-06-19,5000,Gastos operativos,202168.67,0.0,Provision factura INV-00028 Asesores Especializados SA de ,INV-00028,CC-100 Operaciones,Arturo Perez Alvarez
+98,2025-06-19,2100,Cuentas por pagar,0.0,202168.67,Provision factura INV-00028 Asesores Especializados SA de ,INV-00028,CC-100 Operaciones,Arturo Perez Alvarez
+99,2025-07-29,5000,Gastos operativos,155675.75,0.0,Provision factura INV-00029 Constructora del Bajio S de RL,INV-00029,CC-200 Administracion,Arturo Perez Torres
+100,2025-07-29,2100,Cuentas por pagar,0.0,155675.75,Provision factura INV-00029 Constructora del Bajio S de RL,INV-00029,CC-200 Administracion,Arturo Perez Torres
+101,2025-08-27,2100,Cuentas por pagar,155675.75,0.0,Liquidacion SPEI BNK-00022 factura INV-00029,INV-00029,CC-100 Operaciones,Fernando Gutierrez Ortiz
+102,2025-08-27,1100,Bancos e inversiones,0.0,155675.75,Liquidacion SPEI BNK-00022 factura INV-00029,INV-00029,CC-100 Operaciones,Fernando Gutierrez Ortiz
+103,2025-06-18,5000,Gastos operativos,32772.35,0.0,Provision factura INV-00030 Constructora Integrales SC,INV-00030,CC-200 Administracion,Arturo Jimenez Gonzalez
+104,2025-06-18,2100,Cuentas por pagar,0.0,32772.35,Provision factura INV-00030 Constructora Integrales SC,INV-00030,CC-200 Administracion,Arturo Jimenez Gonzalez
+105,2025-05-01,5000,Gastos operativos,135581.74,0.0,Provision factura INV-00031 Comercializadora del Norte SC,INV-00031,CC-300 Logistica,Adriana Lopez Aguilar
+106,2025-05-01,2100,Cuentas por pagar,0.0,135581.74,Provision factura INV-00031 Comercializadora del Norte SC,INV-00031,CC-300 Logistica,Adriana Lopez Aguilar
+107,2025-05-11,2100,Cuentas por pagar,135581.74,0.0,Liquidacion SPEI BNK-00023 factura INV-00031,INV-00031,CC-100 Operaciones,Adriana Lopez Aguilar
+108,2025-05-11,1100,Bancos e inversiones,0.0,135581.74,Liquidacion SPEI BNK-00023 factura INV-00031,INV-00031,CC-100 Operaciones,Adriana Lopez Aguilar
+109,2025-06-03,5000,Gastos operativos,49242.22,0.0,Provision factura INV-00032 Comercializadora del Centro SA,INV-00032,CC-100 Operaciones,Arturo Perez Torres
+110,2025-06-03,2100,Cuentas por pagar,0.0,49242.22,Provision factura INV-00032 Comercializadora del Centro SA,INV-00032,CC-100 Operaciones,Arturo Perez Torres
+111,2025-06-23,2100,Cuentas por pagar,49242.22,0.0,Liquidacion SPEI BNK-00024 factura INV-00032,INV-00032,CC-100 Operaciones,Sofia Hernandez Martinez
+112,2025-06-23,1100,Bancos e inversiones,0.0,49242.22,Liquidacion SPEI BNK-00024 factura INV-00032,INV-00032,CC-100 Operaciones,Sofia Hernandez Martinez
+113,2025-10-17,5000,Gastos operativos,119065.23,0.0,Provision factura INV-00033 Logistica Estrategicos S de RL,INV-00033,CC-100 Operaciones,Adriana Lopez Aguilar
+114,2025-10-17,2100,Cuentas por pagar,0.0,119065.23,Provision factura INV-00033 Logistica Estrategicos S de RL,INV-00033,CC-100 Operaciones,Adriana Lopez Aguilar
+115,2025-11-05,2100,Cuentas por pagar,119065.23,0.0,Liquidacion SPEI BNK-00025 factura INV-00033,INV-00033,CC-100 Operaciones,Javier Ramirez Gonzalez
+116,2025-11-05,1100,Bancos e inversiones,0.0,119065.23,Liquidacion SPEI BNK-00025 factura INV-00033,INV-00033,CC-100 Operaciones,Javier Ramirez Gonzalez
+117,2025-03-15,5000,Gastos operativos,192115.48,0.0,Provision factura INV-00034 Soluciones Integrales SA de CV,INV-00034,CC-200 Administracion,Arturo Perez Torres
+118,2025-03-15,2100,Cuentas por pagar,0.0,192115.48,Provision factura INV-00034 Soluciones Integrales SA de CV,INV-00034,CC-200 Administracion,Arturo Perez Torres
+119,2025-04-05,2100,Cuentas por pagar,192115.48,0.0,Liquidacion SPEI BNK-00026 factura INV-00034,INV-00034,CC-100 Operaciones,Arturo Perez Torres
+120,2025-04-05,1100,Bancos e inversiones,0.0,192115.48,Liquidacion SPEI BNK-00026 factura INV-00034,INV-00034,CC-100 Operaciones,Arturo Perez Torres
+121,2025-02-07,5000,Gastos operativos,122018.88,0.0,Provision factura INV-00035 Asesores Industriales SAPI de ,INV-00035,CC-300 Logistica,Fernando Gutierrez Ortiz
+122,2025-02-07,2100,Cuentas por pagar,0.0,122018.88,Provision factura INV-00035 Asesores Industriales SAPI de ,INV-00035,CC-300 Logistica,Fernando Gutierrez Ortiz
+123,2025-02-28,2100,Cuentas por pagar,122018.88,0.0,Liquidacion SPEI BNK-00027 factura INV-00035,INV-00035,CC-100 Operaciones,Arturo Perez Torres
+124,2025-02-28,1100,Bancos e inversiones,0.0,122018.88,Liquidacion SPEI BNK-00027 factura INV-00035,INV-00035,CC-100 Operaciones,Arturo Perez Torres
+125,2026-03-13,5000,Gastos operativos,208680.1,0.0,Provision factura INV-00036 Servicios Integrales S de RL d,INV-00036,CC-200 Administracion,Valeria Mendez Garcia
+126,2026-03-13,2100,Cuentas por pagar,0.0,208680.1,Provision factura INV-00036 Servicios Integrales S de RL d,INV-00036,CC-200 Administracion,Valeria Mendez Garcia
+127,2026-03-01,5000,Gastos operativos,21599.23,0.0,Provision factura INV-00037 Logistica del Centro SAPI de C,INV-00037,CC-100 Operaciones,Arturo Lopez Hernandez
+128,2026-03-01,2100,Cuentas por pagar,0.0,21599.23,Provision factura INV-00037 Logistica del Centro SAPI de C,INV-00037,CC-100 Operaciones,Arturo Lopez Hernandez
+129,2025-05-27,5000,Gastos operativos,112473.6,0.0,Provision factura INV-00038 Logistica Avanzadas SA de CV,INV-00038,CC-100 Operaciones,Javier Ramirez Gonzalez
+130,2025-05-27,2100,Cuentas por pagar,0.0,112473.6,Provision factura INV-00038 Logistica Avanzadas SA de CV,INV-00038,CC-100 Operaciones,Javier Ramirez Gonzalez
+131,2025-06-24,2100,Cuentas por pagar,112473.6,0.0,Liquidacion SPEI BNK-00028 factura INV-00038,INV-00038,CC-100 Operaciones,Sofia Hernandez Martinez
+132,2025-06-24,1100,Bancos e inversiones,0.0,112473.6,Liquidacion SPEI BNK-00028 factura INV-00038,INV-00038,CC-100 Operaciones,Sofia Hernandez Martinez
+133,2025-11-18,5000,Gastos operativos,35997.18,0.0,Provision factura INV-00039 Constructora Integrales SC,INV-00039,CC-200 Administracion,Arturo Lopez Hernandez
+134,2025-11-18,2100,Cuentas por pagar,0.0,35997.18,Provision factura INV-00039 Constructora Integrales SC,INV-00039,CC-200 Administracion,Arturo Lopez Hernandez
+135,2025-12-18,2100,Cuentas por pagar,35997.18,0.0,Liquidacion SPEI BNK-00029 factura INV-00039,INV-00039,CC-100 Operaciones,Sofia Hernandez Martinez
+136,2025-12-18,1100,Bancos e inversiones,0.0,35997.18,Liquidacion SPEI BNK-00029 factura INV-00039,INV-00039,CC-100 Operaciones,Sofia Hernandez Martinez
+137,2025-06-17,5000,Gastos operativos,191502.76,0.0,Provision factura INV-00040 Mantenimiento del Norte SC,INV-00040,CC-100 Operaciones,Sofia Hernandez Martinez
+138,2025-06-17,2100,Cuentas por pagar,0.0,191502.76,Provision factura INV-00040 Mantenimiento del Norte SC,INV-00040,CC-100 Operaciones,Sofia Hernandez Martinez
+139,2025-07-05,2100,Cuentas por pagar,191502.76,0.0,Liquidacion SPEI BNK-00030 factura INV-00040,INV-00040,CC-100 Operaciones,Arturo Perez Alvarez
+140,2025-07-05,1100,Bancos e inversiones,0.0,191502.76,Liquidacion SPEI BNK-00030 factura INV-00040,INV-00040,CC-100 Operaciones,Arturo Perez Alvarez
+141,2026-03-02,5000,Gastos operativos,192241.41,0.0,Provision factura INV-00041 Asesores Especializados SA de ,INV-00041,CC-200 Administracion,Valeria Mendez Garcia
+142,2026-03-02,2100,Cuentas por pagar,0.0,192241.41,Provision factura INV-00041 Asesores Especializados SA de ,INV-00041,CC-200 Administracion,Valeria Mendez Garcia
+143,2026-03-23,2100,Cuentas por pagar,192241.41,0.0,Liquidacion SPEI BNK-00031 factura INV-00041,INV-00041,CC-100 Operaciones,Adriana Lopez Aguilar
+144,2026-03-23,1100,Bancos e inversiones,0.0,192241.41,Liquidacion SPEI BNK-00031 factura INV-00041,INV-00041,CC-100 Operaciones,Adriana Lopez Aguilar
+145,2025-04-26,5000,Gastos operativos,161744.6,0.0,Provision factura INV-00042 Asesores Globales SC,INV-00042,CC-100 Operaciones,Fernando Gutierrez Ortiz
+146,2025-04-26,2100,Cuentas por pagar,0.0,161744.6,Provision factura INV-00042 Asesores Globales SC,INV-00042,CC-100 Operaciones,Fernando Gutierrez Ortiz
+147,2025-05-20,2100,Cuentas por pagar,161744.6,0.0,Liquidacion SPEI BNK-00032 factura INV-00042,INV-00042,CC-100 Operaciones,Adriana Lopez Aguilar
+148,2025-05-20,1100,Bancos e inversiones,0.0,161744.6,Liquidacion SPEI BNK-00032 factura INV-00042,INV-00042,CC-100 Operaciones,Adriana Lopez Aguilar
+149,2026-01-19,5000,Gastos operativos,87947.29,0.0,Provision factura INV-00043 Comercializadora del Centro SA,INV-00043,CC-300 Logistica,Valeria Mendez Garcia
+150,2026-01-19,2100,Cuentas por pagar,0.0,87947.29,Provision factura INV-00043 Comercializadora del Centro SA,INV-00043,CC-300 Logistica,Valeria Mendez Garcia
+151,2026-02-02,2100,Cuentas por pagar,87947.29,0.0,Liquidacion SPEI BNK-00033 factura INV-00043,INV-00043,CC-100 Operaciones,Arturo Jimenez Gonzalez
+152,2026-02-02,1100,Bancos e inversiones,0.0,87947.29,Liquidacion SPEI BNK-00033 factura INV-00043,INV-00043,CC-100 Operaciones,Arturo Jimenez Gonzalez
+153,2025-10-15,5000,Gastos operativos,135981.27,0.0,Provision factura INV-00044 Constructora del Bajio S de RL,INV-00044,CC-300 Logistica,Adriana Lopez Aguilar
+154,2025-10-15,2100,Cuentas por pagar,0.0,135981.27,Provision factura INV-00044 Constructora del Bajio S de RL,INV-00044,CC-300 Logistica,Adriana Lopez Aguilar
+155,2025-11-05,2100,Cuentas por pagar,135981.27,0.0,Liquidacion SPEI BNK-00034 factura INV-00044,INV-00044,CC-100 Operaciones,Arturo Perez Torres
+156,2025-11-05,1100,Bancos e inversiones,0.0,135981.27,Liquidacion SPEI BNK-00034 factura INV-00044,INV-00044,CC-100 Operaciones,Arturo Perez Torres
+157,2025-03-13,5000,Gastos operativos,95547.83,0.0,Provision factura INV-00045 Constructora Integrales SC,INV-00045,CC-200 Administracion,Adriana Lopez Aguilar
+158,2025-03-13,2100,Cuentas por pagar,0.0,95547.83,Provision factura INV-00045 Constructora Integrales SC,INV-00045,CC-200 Administracion,Adriana Lopez Aguilar
+159,2025-04-06,2100,Cuentas por pagar,95547.83,0.0,Liquidacion SPEI BNK-00035 factura INV-00045,INV-00045,CC-100 Operaciones,Sofia Hernandez Martinez
+160,2025-04-06,1100,Bancos e inversiones,0.0,95547.83,Liquidacion SPEI BNK-00035 factura INV-00045,INV-00045,CC-100 Operaciones,Sofia Hernandez Martinez
+161,2025-12-10,5000,Gastos operativos,104227.42,0.0,Provision factura INV-00046 Mantenimiento Especializados S,INV-00046,CC-300 Logistica,Sofia Hernandez Martinez
+162,2025-12-10,2100,Cuentas por pagar,0.0,104227.42,Provision factura INV-00046 Mantenimiento Especializados S,INV-00046,CC-300 Logistica,Sofia Hernandez Martinez
+163,2025-09-08,5000,Gastos operativos,36352.74,0.0,Provision factura INV-00047 Constructora Integrales SC,INV-00047,CC-100 Operaciones,Valeria Mendez Garcia
+164,2025-09-08,2100,Cuentas por pagar,0.0,36352.74,Provision factura INV-00047 Constructora Integrales SC,INV-00047,CC-100 Operaciones,Valeria Mendez Garcia
+165,2025-09-29,2100,Cuentas por pagar,36352.74,0.0,Liquidacion SPEI BNK-00036 factura INV-00047,INV-00047,CC-100 Operaciones,Javier Ramirez Gonzalez
+166,2025-09-29,1100,Bancos e inversiones,0.0,36352.74,Liquidacion SPEI BNK-00036 factura INV-00047,INV-00047,CC-100 Operaciones,Javier Ramirez Gonzalez
+167,2025-12-18,5000,Gastos operativos,36416.47,0.0,Provision factura INV-00048 Logistica Globales SC,INV-00048,CC-100 Operaciones,Fernando Gutierrez Ortiz
+168,2025-12-18,2100,Cuentas por pagar,0.0,36416.47,Provision factura INV-00048 Logistica Globales SC,INV-00048,CC-100 Operaciones,Fernando Gutierrez Ortiz
+169,2025-12-28,2100,Cuentas por pagar,36416.47,0.0,Liquidacion SPEI BNK-00037 factura INV-00048,INV-00048,CC-100 Operaciones,Arturo Jimenez Gonzalez
+170,2025-12-28,1100,Bancos e inversiones,0.0,36416.47,Liquidacion SPEI BNK-00037 factura INV-00048,INV-00048,CC-100 Operaciones,Arturo Jimenez Gonzalez
+171,2025-11-25,5000,Gastos operativos,144253.93,0.0,Provision factura INV-00049 Mantenimiento del Norte SC,INV-00049,CC-100 Operaciones,Valeria Mendez Garcia
+172,2025-11-25,2100,Cuentas por pagar,0.0,144253.93,Provision factura INV-00049 Mantenimiento del Norte SC,INV-00049,CC-100 Operaciones,Valeria Mendez Garcia
+173,2025-12-06,2100,Cuentas por pagar,144253.93,0.0,Liquidacion SPEI BNK-00038 factura INV-00049,INV-00049,CC-100 Operaciones,Javier Ramirez Gonzalez
+174,2025-12-06,1100,Bancos e inversiones,0.0,144253.93,Liquidacion SPEI BNK-00038 factura INV-00049,INV-00049,CC-100 Operaciones,Javier Ramirez Gonzalez
+175,2025-10-11,5000,Gastos operativos,176227.13,0.0,Provision factura INV-00050 Mantenimiento del Norte SC,INV-00050,CC-100 Operaciones,Valeria Mendez Garcia
+176,2025-10-11,2100,Cuentas por pagar,0.0,176227.13,Provision factura INV-00050 Mantenimiento del Norte SC,INV-00050,CC-100 Operaciones,Valeria Mendez Garcia
+177,2025-11-06,2100,Cuentas por pagar,176227.13,0.0,Liquidacion SPEI BNK-00039 factura INV-00050,INV-00050,CC-100 Operaciones,Arturo Lopez Hernandez
+178,2025-11-06,1100,Bancos e inversiones,0.0,176227.13,Liquidacion SPEI BNK-00039 factura INV-00050,INV-00050,CC-100 Operaciones,Arturo Lopez Hernandez
+179,2025-03-16,5000,Gastos operativos,181698.93,0.0,Provision factura INV-00051 Logistica Avanzadas S de RL de,INV-00051,CC-100 Operaciones,Adriana Lopez Aguilar
+180,2025-03-16,2100,Cuentas por pagar,0.0,181698.93,Provision factura INV-00051 Logistica Avanzadas S de RL de,INV-00051,CC-100 Operaciones,Adriana Lopez Aguilar
+181,2025-03-23,2100,Cuentas por pagar,181698.93,0.0,Liquidacion SPEI BNK-00040 factura INV-00051,INV-00051,CC-100 Operaciones,Sofia Hernandez Martinez
+182,2025-03-23,1100,Bancos e inversiones,0.0,181698.93,Liquidacion SPEI BNK-00040 factura INV-00051,INV-00051,CC-100 Operaciones,Sofia Hernandez Martinez
+183,2026-02-08,5000,Gastos operativos,85967.58,0.0,Provision factura INV-00052 Constructora del Bajio S de RL,INV-00052,CC-100 Operaciones,Sofia Hernandez Martinez
+184,2026-02-08,2100,Cuentas por pagar,0.0,85967.58,Provision factura INV-00052 Constructora del Bajio S de RL,INV-00052,CC-100 Operaciones,Sofia Hernandez Martinez
+185,2026-02-19,2100,Cuentas por pagar,85967.58,0.0,Liquidacion SPEI BNK-00041 factura INV-00052,INV-00052,CC-100 Operaciones,Fernando Gutierrez Ortiz
+186,2026-02-19,1100,Bancos e inversiones,0.0,85967.58,Liquidacion SPEI BNK-00041 factura INV-00052,INV-00052,CC-100 Operaciones,Fernando Gutierrez Ortiz
+187,2025-02-02,5000,Gastos operativos,39152.48,0.0,Provision factura INV-00053 Asesores Especializados SA de ,INV-00053,CC-300 Logistica,Adriana Lopez Aguilar
+188,2025-02-02,2100,Cuentas por pagar,0.0,39152.48,Provision factura INV-00053 Asesores Especializados SA de ,INV-00053,CC-300 Logistica,Adriana Lopez Aguilar
+189,2025-02-16,2100,Cuentas por pagar,39152.48,0.0,Liquidacion SPEI BNK-00042 factura INV-00053,INV-00053,CC-100 Operaciones,Arturo Lopez Hernandez
+190,2025-02-16,1100,Bancos e inversiones,0.0,39152.48,Liquidacion SPEI BNK-00042 factura INV-00053,INV-00053,CC-100 Operaciones,Arturo Lopez Hernandez
+191,2026-03-20,5000,Gastos operativos,167309.64,0.0,Provision factura INV-00054 Logistica Avanzadas SA de CV,INV-00054,CC-200 Administracion,Arturo Lopez Hernandez
+192,2026-03-20,2100,Cuentas por pagar,0.0,167309.64,Provision factura INV-00054 Logistica Avanzadas SA de CV,INV-00054,CC-200 Administracion,Arturo Lopez Hernandez
+193,2025-02-25,5000,Gastos operativos,98988.77,0.0,Provision factura INV-00055 Mantenimiento Especializados S,INV-00055,CC-100 Operaciones,Valeria Mendez Garcia
+194,2025-02-25,2100,Cuentas por pagar,0.0,98988.77,Provision factura INV-00055 Mantenimiento Especializados S,INV-00055,CC-100 Operaciones,Valeria Mendez Garcia
+195,2025-03-06,2100,Cuentas por pagar,98988.77,0.0,Liquidacion SPEI BNK-00043 factura INV-00055,INV-00055,CC-100 Operaciones,Sofia Hernandez Martinez
+196,2025-03-06,1100,Bancos e inversiones,0.0,98988.77,Liquidacion SPEI BNK-00043 factura INV-00055,INV-00055,CC-100 Operaciones,Sofia Hernandez Martinez
+197,2025-10-27,5000,Gastos operativos,136894.37,0.0,Provision factura INV-00056 Logistica Avanzadas S de RL de,INV-00056,CC-300 Logistica,Arturo Perez Alvarez
+198,2025-10-27,2100,Cuentas por pagar,0.0,136894.37,Provision factura INV-00056 Logistica Avanzadas S de RL de,INV-00056,CC-300 Logistica,Arturo Perez Alvarez
+199,2025-11-19,2100,Cuentas por pagar,136894.37,0.0,Liquidacion SPEI BNK-00044 factura INV-00056,INV-00056,CC-100 Operaciones,Fernando Gutierrez Ortiz
+200,2025-11-19,1100,Bancos e inversiones,0.0,136894.37,Liquidacion SPEI BNK-00044 factura INV-00056,INV-00056,CC-100 Operaciones,Fernando Gutierrez Ortiz
+201,2025-02-28,5000,Gastos operativos,169198.6,0.0,Provision factura INV-00057 Consultores Globales S de RL d,INV-00057,CC-200 Administracion,Arturo Jimenez Gonzalez
+202,2025-02-28,2100,Cuentas por pagar,0.0,169198.6,Provision factura INV-00057 Consultores Globales S de RL d,INV-00057,CC-200 Administracion,Arturo Jimenez Gonzalez
+203,2025-08-21,5000,Gastos operativos,82271.52,0.0,Provision factura INV-00058 Tecnologia Globales SA de CV,INV-00058,CC-200 Administracion,Fernando Gutierrez Ortiz
+204,2025-08-21,2100,Cuentas por pagar,0.0,82271.52,Provision factura INV-00058 Tecnologia Globales SA de CV,INV-00058,CC-200 Administracion,Fernando Gutierrez Ortiz
+205,2025-09-05,2100,Cuentas por pagar,82271.52,0.0,Liquidacion SPEI BNK-00045 factura INV-00058,INV-00058,CC-100 Operaciones,Valeria Mendez Garcia
+206,2025-09-05,1100,Bancos e inversiones,0.0,82271.52,Liquidacion SPEI BNK-00045 factura INV-00058,INV-00058,CC-100 Operaciones,Valeria Mendez Garcia
+207,2025-08-31,5000,Gastos operativos,148857.55,0.0,Provision factura INV-00059 Asesores Globales SC,INV-00059,CC-100 Operaciones,Fernando Gutierrez Ortiz
+208,2025-08-31,2100,Cuentas por pagar,0.0,148857.55,Provision factura INV-00059 Asesores Globales SC,INV-00059,CC-100 Operaciones,Fernando Gutierrez Ortiz
+209,2025-09-30,2100,Cuentas por pagar,148857.55,0.0,Liquidacion SPEI BNK-00046 factura INV-00059,INV-00059,CC-100 Operaciones,Valeria Mendez Garcia
+210,2025-09-30,1100,Bancos e inversiones,0.0,148857.55,Liquidacion SPEI BNK-00046 factura INV-00059,INV-00059,CC-100 Operaciones,Valeria Mendez Garcia
+211,2025-10-28,5000,Gastos operativos,123889.36,0.0,Provision factura INV-00060 Asesores Globales SC,INV-00060,CC-300 Logistica,Adriana Lopez Aguilar
+212,2025-10-28,2100,Cuentas por pagar,0.0,123889.36,Provision factura INV-00060 Asesores Globales SC,INV-00060,CC-300 Logistica,Adriana Lopez Aguilar
+213,2025-11-25,2100,Cuentas por pagar,123889.36,0.0,Liquidacion SPEI BNK-00047 factura INV-00060,INV-00060,CC-100 Operaciones,Fernando Gutierrez Ortiz
+214,2025-11-25,1100,Bancos e inversiones,0.0,123889.36,Liquidacion SPEI BNK-00047 factura INV-00060,INV-00060,CC-100 Operaciones,Fernando Gutierrez Ortiz
+215,2026-01-31,5100,Sueldos y salarios operativos,59327.96,0.0,Nomina quincenal ordinaria Arturo Lopez Hernandez,,CC-200 Administracion,Director de Finanzas
+216,2026-01-31,1100,Bancos e inversiones,0.0,59327.96,Nomina quincenal ordinaria Arturo Lopez Hernandez,,CC-200 Administracion,Director de Finanzas
+217,2026-01-31,5100,Sueldos y salarios operativos,53005.61,0.0,Nomina quincenal ordinaria Adriana Lopez Aguilar,,CC-200 Administracion,Director de Finanzas
+218,2026-01-31,1100,Bancos e inversiones,0.0,53005.61,Nomina quincenal ordinaria Adriana Lopez Aguilar,,CC-200 Administracion,Director de Finanzas
+219,2026-01-31,5100,Sueldos y salarios operativos,63641.14,0.0,Nomina quincenal ordinaria Sofia Hernandez Martinez,,CC-200 Administracion,Director de Finanzas
+220,2026-01-31,1100,Bancos e inversiones,0.0,63641.14,Nomina quincenal ordinaria Sofia Hernandez Martinez,,CC-200 Administracion,Director de Finanzas
+221,2026-01-31,5100,Sueldos y salarios operativos,47817.63,0.0,Nomina quincenal ordinaria Lucia Rodriguez Ortiz,,CC-200 Administracion,Director de Finanzas
+222,2026-01-31,1100,Bancos e inversiones,0.0,47817.63,Nomina quincenal ordinaria Lucia Rodriguez Ortiz,,CC-200 Administracion,Director de Finanzas
+223,2026-01-31,5100,Sueldos y salarios operativos,37120.79,0.0,Nomina quincenal ordinaria Mauricio Gutierrez Ramirez,,CC-200 Administracion,Director de Finanzas
+224,2026-01-31,1100,Bancos e inversiones,0.0,37120.79,Nomina quincenal ordinaria Mauricio Gutierrez Ramirez,,CC-200 Administracion,Director de Finanzas
+225,2026-01-31,5100,Sueldos y salarios operativos,46850.5,0.0,Nomina quincenal ordinaria Javier Ramirez Gonzalez,,CC-200 Administracion,Director de Finanzas
+226,2026-01-31,1100,Bancos e inversiones,0.0,46850.5,Nomina quincenal ordinaria Javier Ramirez Gonzalez,,CC-200 Administracion,Director de Finanzas
+227,2026-01-31,5100,Sueldos y salarios operativos,31147.77,0.0,Nomina quincenal ordinaria Ricardo Lopez Gomez,,CC-200 Administracion,Director de Finanzas
+228,2026-01-31,1100,Bancos e inversiones,0.0,31147.77,Nomina quincenal ordinaria Ricardo Lopez Gomez,,CC-200 Administracion,Director de Finanzas
+229,2026-01-31,5100,Sueldos y salarios operativos,50239.66,0.0,Nomina quincenal ordinaria Adriana Jimenez Torres,,CC-200 Administracion,Director de Finanzas
+230,2026-01-31,1100,Bancos e inversiones,0.0,50239.66,Nomina quincenal ordinaria Adriana Jimenez Torres,,CC-200 Administracion,Director de Finanzas
+231,2026-01-31,5100,Sueldos y salarios operativos,31642.53,0.0,Nomina quincenal ordinaria Manuel Mendoza Ruiz,,CC-200 Administracion,Director de Finanzas
+232,2026-01-31,1100,Bancos e inversiones,0.0,31642.53,Nomina quincenal ordinaria Manuel Mendoza Ruiz,,CC-200 Administracion,Director de Finanzas
+233,2026-01-31,5100,Sueldos y salarios operativos,26653.39,0.0,Nomina quincenal ordinaria Sofia Aguilar Sanchez,,CC-200 Administracion,Director de Finanzas
+234,2026-01-31,1100,Bancos e inversiones,0.0,26653.39,Nomina quincenal ordinaria Sofia Aguilar Sanchez,,CC-200 Administracion,Director de Finanzas
+235,2026-02-10,5000,Gastos operativos,92800.0,0.0,Registro factura fantasma INV-00061,INV-00061,CC-999 General,SIN_AUTORIZACION
+236,2026-02-10,2100,Cuentas por pagar,0.0,92800.0,Registro factura fantasma INV-00061,INV-00061,CC-999 General,SIN_AUTORIZACION
+237,2026-02-14,2100,Cuentas por pagar,92800.0,0.0,Transferencia SPEI a EFOS BNK-00058,INV-00061,CC-100 Operaciones,SIN_AUTORIZACION
+238,2026-02-14,1100,Bancos e inversiones,0.0,92800.0,Transferencia SPEI a EFOS BNK-00058,INV-00061,CC-100 Operaciones,SIN_AUTORIZACION
+239,2026-02-22,5000,Gastos operativos,46400.0,0.0,Registro factura fantasma INV-00062,INV-00062,CC-999 General,SIN_AUTORIZACION
+240,2026-02-22,2100,Cuentas por pagar,0.0,46400.0,Registro factura fantasma INV-00062,INV-00062,CC-999 General,SIN_AUTORIZACION
+241,2026-02-26,2100,Cuentas por pagar,46400.0,0.0,Transferencia SPEI a EFOS BNK-00059,INV-00062,CC-100 Operaciones,SIN_AUTORIZACION
+242,2026-02-26,1100,Bancos e inversiones,0.0,46400.0,Transferencia SPEI a EFOS BNK-00059,INV-00062,CC-100 Operaciones,SIN_AUTORIZACION
+243,2026-03-28,1200,Clientes y cuentas por cobrar,160000.0,0.0,Registro de venta a credito fin de trimestre INV-00069,INV-00069,CC-400 Comercial,Director de Finanzas
+244,2026-03-28,4000,Ingresos por ventas,0.0,160000.0,Registro de venta a credito fin de trimestre INV-00069,INV-00069,CC-400 Comercial,Director de Finanzas
+245,2026-03-29,1200,Clientes y cuentas por cobrar,160000.0,0.0,Registro de venta a credito fin de trimestre INV-00070,INV-00070,CC-400 Comercial,Director de Finanzas
+246,2026-03-29,4000,Ingresos por ventas,0.0,160000.0,Registro de venta a credito fin de trimestre INV-00070,INV-00070,CC-400 Comercial,Director de Finanzas
+247,2026-01-15,5100,Sueldos y prestaciones laborales,55000.0,0.0,Prestacion de traslado y reubicacion aprobada RH Manuel Mendoza Ruiz,,CC-200 Administracion,Gerente de Recursos Humanos
+248,2026-01-15,1100,Bancos e inversiones,0.0,55000.0,Prestacion de traslado y reubicacion aprobada RH Manuel Mendoza Ruiz,,CC-200 Administracion,Gerente de Recursos Humanos

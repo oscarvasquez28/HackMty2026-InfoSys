@@ -1,0 +1,50 @@
+po_id,vendor_rfc,date,amount,requester,approver,description
+PO-00001,LAS130702FAP,2026-01-28,121097.73,Fernando Gutierrez Ortiz,Javier Ramirez Gonzalez,Suministro ordinario de capacitacion y recursos humanos conforme a requisicion
+PO-00002,LAS130702FAP,2025-08-14,30072.84,Sofia Aguilar Sanchez,Javier Ramirez Gonzalez,Suministro ordinario de capacitacion y recursos humanos conforme a requisicion
+PO-00003,LAS130702FAP,2025-06-21,61562.24,Adriana Gutierrez Vazquez,Adriana Lopez Aguilar,Suministro ordinario de capacitacion y recursos humanos conforme a requisicion
+PO-00004,ASG180804JCA,2025-03-19,50063.99,Mauricio Gutierrez Ramirez,Javier Ramirez Gonzalez,Suministro ordinario de seguridad privada conforme a requisicion
+PO-00005,MAN1106273JJ,2025-08-01,72987.92,Adriana Gutierrez Vazquez,Arturo Jimenez Gonzalez,Suministro ordinario de logistica y transporte conforme a requisicion
+PO-00006,TEG12050461F,2025-02-01,46888.47,Eduardo Mendoza Ortiz,Fernando Gutierrez Ortiz,Suministro ordinario de seguridad privada conforme a requisicion
+PO-00007,COG230225QF8,2025-10-27,142988.06,Arturo Lopez Hernandez,Fernando Gutierrez Ortiz,Suministro ordinario de servicios legales y fiscales conforme a requisicion
+PO-00008,SOI210318BNU,2025-01-04,142556.42,Sofia Aguilar Sanchez,Fernando Gutierrez Ortiz,Suministro ordinario de servicios legales y fiscales conforme a requisicion
+PO-00009,TEG12050461F,2025-10-03,117177.04,Adriana Gutierrez Vazquez,Javier Ramirez Gonzalez,Suministro ordinario de seguridad privada conforme a requisicion
+PO-00010,SOI210318BNU,2025-04-23,55481.59,Fernando Gutierrez Ortiz,Arturo Lopez Hernandez,Suministro ordinario de servicios legales y fiscales conforme a requisicion
+PO-00011,MAE970208NF4,2025-06-22,106953.57,Arturo Perez Torres,Sofia Hernandez Martinez,Suministro ordinario de sistemas y ti conforme a requisicion
+PO-00012,COC980502A2X,2025-03-07,147493.86,Adriana Gutierrez Vazquez,Arturo Lopez Hernandez,Suministro ordinario de papeleria y suministros conforme a requisicion
+PO-00013,MAE970208NF4,2025-10-31,93370.96,Arturo Lopez Hernandez,Adriana Lopez Aguilar,Suministro ordinario de sistemas y ti conforme a requisicion
+PO-00014,COI2002246TY,2025-08-08,37640.93,Valeria Mendez Garcia,Sofia Hernandez Martinez,Suministro ordinario de logistica y transporte conforme a requisicion
+PO-00015,CON22031775L,2025-05-14,69283.5,Ricardo Lopez Gomez,Arturo Jimenez Gonzalez,Suministro ordinario de mantenimiento industrial conforme a requisicion
+PO-00016,COI1307048VV,2025-06-22,118959.86,Arturo Perez Torres,Arturo Perez Torres,Suministro ordinario de mantenimiento industrial conforme a requisicion
+PO-00017,COG230225QF8,2026-03-02,74803.43,Sofia Hernandez Martinez,Arturo Jimenez Gonzalez,Suministro ordinario de servicios legales y fiscales conforme a requisicion
+PO-00018,CBS1801220ZU,2026-01-19,90124.48,Camila Rodriguez Aguilar,Javier Ramirez Gonzalez,Suministro ordinario de consultoria conforme a requisicion
+PO-00019,COI2002246TY,2025-02-05,121560.3,Adriana Lopez Aguilar,Arturo Lopez Hernandez,Suministro ordinario de logistica y transporte conforme a requisicion
+PO-00020,LES960515J7R,2025-04-13,129099.75,Arturo Perez Alvarez,Sofia Hernandez Martinez,Suministro ordinario de limpieza y gestion de instalaciones conforme a requisicion
+PO-00021,LES960515J7R,2025-03-06,81562.94,Lucia Rodriguez Ortiz,Javier Ramirez Gonzalez,Suministro ordinario de limpieza y gestion de instalaciones conforme a requisicion
+PO-00022,COC980502A2X,2025-12-25,53311.68,Camila Rodriguez Aguilar,Sofia Hernandez Martinez,Suministro ordinario de papeleria y suministros conforme a requisicion
+PO-00023,SBS220614WTP,2025-11-07,145285.52,Lucia Rodriguez Ortiz,Sofia Hernandez Martinez,Suministro ordinario de mantenimiento industrial conforme a requisicion
+PO-00024,LCS191218CLB,2025-02-25,95229.02,Sofia Aguilar Sanchez,Fernando Gutierrez Ortiz,Suministro ordinario de consultoria conforme a requisicion
+PO-00025,MAE970208NF4,2026-01-02,45782.87,Hector Reyes Martinez,Javier Ramirez Gonzalez,Suministro ordinario de sistemas y ti conforme a requisicion
+PO-00026,CGS1205175QH,2025-12-23,120422.52,Arturo Perez Alvarez,Adriana Lopez Aguilar,Suministro ordinario de sistemas y ti conforme a requisicion
+PO-00027,DIC140621TZ4,2026-02-05,25338.99,Adriana Gutierrez Vazquez,Fernando Gutierrez Ortiz,Suministro ordinario de consultoria conforme a requisicion
+PO-00028,AIS1407184LH,2025-07-09,28964.38,Lorena Lopez Morales,Arturo Lopez Hernandez,Suministro ordinario de sistemas y ti conforme a requisicion
+PO-00029,TEG12050461F,2026-02-26,83726.22,Eduardo Mendoza Ortiz,Valeria Mendez Garcia,Suministro ordinario de seguridad privada conforme a requisicion
+PO-00030,COI2002246TY,2026-03-01,79766.12,Mauricio Gutierrez Ramirez,Fernando Gutierrez Ortiz,Suministro ordinario de logistica y transporte conforme a requisicion
+PO-00031,SEN960522SU0,2026-01-11,87827.08,Manuel Mendoza Ruiz,Arturo Perez Alvarez,Suministro ordinario de papeleria y suministros conforme a requisicion
+PO-00032,COG230225QF8,2025-09-05,80433.59,Hector Reyes Martinez,Arturo Perez Torres,Suministro ordinario de servicios legales y fiscales conforme a requisicion
+PO-00033,COI1307048VV,2026-03-13,51914.37,Sofia Hernandez Martinez,Arturo Perez Torres,Suministro ordinario de mantenimiento industrial conforme a requisicion
+PO-00034,COC980502A2X,2025-05-05,117561.92,Hector Reyes Martinez,Fernando Gutierrez Ortiz,Suministro ordinario de papeleria y suministros conforme a requisicion
+PO-00035,COI1307048VV,2025-01-15,84259.85,Lorena Lopez Morales,Sofia Hernandez Martinez,Suministro ordinario de mantenimiento industrial conforme a requisicion
+PO-00036,SOI210318BNU,2025-04-19,66127.25,Manuel Mendoza Ruiz,Valeria Mendez Garcia,Suministro ordinario de servicios legales y fiscales conforme a requisicion
+PO-00037,LAS130702FAP,2026-03-27,97500.15,Manuel Mendoza Ruiz,Arturo Perez Alvarez,Suministro ordinario de capacitacion y recursos humanos conforme a requisicion
+PO-00038,CBS1801220ZU,2025-09-22,143248.14,Sofia Hernandez Martinez,Javier Ramirez Gonzalez,Suministro ordinario de consultoria conforme a requisicion
+PO-00039,LOA9810282R6,2025-07-28,83515.12,Adriana Jimenez Torres,Arturo Jimenez Gonzalez,Suministro ordinario de papeleria y suministros conforme a requisicion
+PO-00040,COI2002246TY,2025-12-31,83806.77,Arturo Lopez Hernandez,Adriana Lopez Aguilar,Suministro ordinario de logistica y transporte conforme a requisicion
+PO-00041,KICK830202BB1,2026-02-01,125000.0,Mauricio Gutierrez Ramirez,Mauricio Gutierrez Ramirez,Servicios de mantenimiento correctivo de alta prioridad
+PO-00042,SPLT330505EE1,2026-02-20,48600.0,J. Comprador,J. Comprador,Suministros de oficina lote fraccionado 1/4
+PO-00043,SPLT330505EE1,2026-02-21,48600.0,J. Comprador,J. Comprador,Suministros de oficina lote fraccionado 2/4
+PO-00044,SPLT330505EE1,2026-02-22,48600.0,J. Comprador,J. Comprador,Suministros de oficina lote fraccionado 3/4
+PO-00045,SPLT330505EE1,2026-02-23,48600.0,J. Comprador,J. Comprador,Suministros de oficina lote fraccionado 4/4
+PO-00046,DECY940101AA1,2026-01-11,47000.0,Gerente de Logistica,Director de Finanzas,Flete urgente dividido por restriccion de tonelaje de transporte (NOM-012-SCT)
+PO-00047,DECY940101AA1,2026-01-12,47000.0,Gerente de Logistica,Director de Finanzas,Flete urgente dividido por restriccion de tonelaje de transporte (NOM-012-SCT)
+PO-00048,DECY940101AA1,2026-01-13,47000.0,Gerente de Logistica,Director de Finanzas,Flete urgente dividido por restriccion de tonelaje de transporte (NOM-012-SCT)
+PO-00049,DECY770202BB2,2025-10-15,450000.0,Jefe de Almacen,Consejo de Administracion,Compra autorizada mediante Acta de Consejo No. 58

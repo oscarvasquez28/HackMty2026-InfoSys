@@ -1,0 +1,75 @@
+uuid,issuer_rfc,receiver_rfc,issue_date,subtotal,iva,total,concepto_text,uso_cfdi,forma_pago,metodo_pago,status
+INV-00001,LCS191218CLB,EMP920101AB1,2025-12-21,51563.41,8250.15,59813.56,Servicios y suministros operativos de consultoria,G02,03,PPD,vigente
+INV-00002,COI1307048VV,EMP920101AB1,2025-08-21,73048.74,11687.8,84736.54,Servicios y suministros operativos de mantenimiento industrial,G03,03,PPD,vigente
+INV-00003,LOA9810282R6,EMP920101AB1,2026-01-26,103417.55,16546.81,119964.36,Servicios y suministros operativos de papeleria y suministros,I04,03,PUE,vigente
+INV-00004,SBS220614WTP,EMP920101AB1,2025-02-21,61694.79,9871.17,71565.96,Servicios y suministros operativos de mantenimiento industrial,I08,03,PPD,vigente
+INV-00005,ASG180804JCA,EMP920101AB1,2025-01-28,60261.37,9641.82,69903.19,Servicios y suministros operativos de seguridad privada,I02,03,PUE,vigente
+INV-00006,SOI210318BNU,EMP920101AB1,2025-06-24,93987.84,15038.05,109025.89,Servicios y suministros operativos de servicios legales y fiscales,G02,03,PPD,vigente
+INV-00007,MAN1106273JJ,EMP920101AB1,2025-12-18,110208.49,17633.36,127841.85,Servicios y suministros operativos de logistica y transporte,G01,03,PUE,vigente
+INV-00008,AGS950728BSG,EMP920101AB1,2025-11-07,141133.17,22581.31,163714.48,Servicios y suministros operativos de capacitacion y recursos humanos,I02,02,PUE,vigente
+INV-00009,DIC140621TZ4,EMP920101AB1,2025-06-06,178355.16,28536.83,206891.99,Servicios y suministros operativos de consultoria,I02,02,PUE,vigente
+INV-00010,SIS1608280Y9,EMP920101AB1,2025-05-16,118209.98,18913.6,137123.58,Servicios y suministros operativos de servicios legales y fiscales,I04,03,PUE,vigente
+INV-00011,TEG12050461F,EMP920101AB1,2025-11-01,89333.11,14293.3,103626.41,Servicios y suministros operativos de seguridad privada,I01,03,PUE,vigente
+INV-00012,MAN1106273JJ,EMP920101AB1,2025-05-16,128418.51,20546.96,148965.47,Servicios y suministros operativos de logistica y transporte,I08,02,PUE,vigente
+INV-00013,LAS130702FAP,EMP920101AB1,2025-02-06,151394.14,24223.06,175617.2,Servicios y suministros operativos de capacitacion y recursos humanos,G01,03,PPD,vigente
+INV-00014,AES221206YKY,EMP920101AB1,2025-05-20,81413.91,13026.23,94440.14,Servicios y suministros operativos de seguridad privada,I02,02,PPD,vigente
+INV-00015,SBS220614WTP,EMP920101AB1,2025-02-16,56310.7,9009.71,65320.41,Servicios y suministros operativos de mantenimiento industrial,G02,02,PUE,vigente
+INV-00016,ASE18072017J,EMP920101AB1,2025-05-23,122499.07,19599.85,142098.92,Servicios y suministros operativos de limpieza y gestion de instalaciones,G02,02,PPD,vigente
+INV-00017,SOI210318BNU,EMP920101AB1,2025-06-20,72413.57,11586.17,83999.74,Servicios y suministros operativos de servicios legales y fiscales,G03,03,PUE,vigente
+INV-00018,COG230225QF8,EMP920101AB1,2025-08-21,105765.94,16922.55,122688.49,Servicios y suministros operativos de servicios legales y fiscales,G01,03,PPD,vigente
+INV-00019,MAE970208NF4,EMP920101AB1,2026-02-27,157710.25,25233.64,182943.89,Servicios y suministros operativos de sistemas y ti,G01,02,PPD,vigente
+INV-00020,COI2002246TY,EMP920101AB1,2025-01-27,87936.76,14069.88,102006.64,Servicios y suministros operativos de logistica y transporte,G02,03,PUE,vigente
+INV-00021,SOI210318BNU,EMP920101AB1,2025-11-19,35035.3,5605.65,40640.95,Servicios y suministros operativos de servicios legales y fiscales,I02,03,PUE,vigente
+INV-00022,LES960515J7R,EMP920101AB1,2025-02-28,178722.43,28595.59,207318.02,Servicios y suministros operativos de limpieza y gestion de instalaciones,I01,03,PUE,vigente
+INV-00023,SOI210318BNU,EMP920101AB1,2025-05-05,176740.36,28278.46,205018.82,Servicios y suministros operativos de servicios legales y fiscales,I01,02,PUE,vigente
+INV-00024,ASE18072017J,EMP920101AB1,2025-03-11,138138.27,22102.12,160240.39,Servicios y suministros operativos de limpieza y gestion de instalaciones,I08,03,PPD,vigente
+INV-00025,ASE18072017J,EMP920101AB1,2025-01-02,59083.49,9453.36,68536.85,Servicios y suministros operativos de limpieza y gestion de instalaciones,G03,03,PPD,vigente
+INV-00026,AGS950728BSG,EMP920101AB1,2025-07-13,140873.99,22539.84,163413.83,Servicios y suministros operativos de capacitacion y recursos humanos,I01,03,PUE,vigente
+INV-00027,CON22031775L,EMP920101AB1,2025-08-31,67499.09,10799.85,78298.94,Servicios y suministros operativos de mantenimiento industrial,I04,01,PPD,vigente
+INV-00028,ASE18072017J,EMP920101AB1,2025-06-19,174283.34,27885.33,202168.67,Servicios y suministros operativos de limpieza y gestion de instalaciones,I08,03,PPD,vigente
+INV-00029,CBS1801220ZU,EMP920101AB1,2025-07-29,134203.23,21472.52,155675.75,Servicios y suministros operativos de consultoria,I08,03,PUE,vigente
+INV-00030,COI2002246TY,EMP920101AB1,2025-06-18,28252.03,4520.32,32772.35,Servicios y suministros operativos de logistica y transporte,I08,02,PPD,vigente
+INV-00031,CON22031775L,EMP920101AB1,2025-05-01,116880.81,18700.93,135581.74,Servicios y suministros operativos de mantenimiento industrial,I04,03,PUE,vigente
+INV-00032,COC980502A2X,EMP920101AB1,2025-06-03,42450.19,6792.03,49242.22,Servicios y suministros operativos de papeleria y suministros,G01,03,PPD,vigente
+INV-00033,LES960515J7R,EMP920101AB1,2025-10-17,102642.44,16422.79,119065.23,Servicios y suministros operativos de limpieza y gestion de instalaciones,I04,03,PUE,vigente
+INV-00034,SOI210318BNU,EMP920101AB1,2025-03-15,165616.79,26498.69,192115.48,Servicios y suministros operativos de servicios legales y fiscales,G02,01,PPD,vigente
+INV-00035,AIS1407184LH,EMP920101AB1,2025-02-07,105188.69,16830.19,122018.88,Servicios y suministros operativos de sistemas y ti,I01,03,PPD,vigente
+INV-00036,SIS1608280Y9,EMP920101AB1,2026-03-13,179896.64,28783.46,208680.1,Servicios y suministros operativos de servicios legales y fiscales,I01,03,PUE,vigente
+INV-00037,LCS191218CLB,EMP920101AB1,2026-03-01,18620.03,2979.2,21599.23,Servicios y suministros operativos de consultoria,I04,01,PPD,vigente
+INV-00038,LOA9810282R6,EMP920101AB1,2025-05-27,96960.0,15513.6,112473.6,Servicios y suministros operativos de papeleria y suministros,I08,03,PPD,vigente
+INV-00039,COI2002246TY,EMP920101AB1,2025-11-18,31032.05,4965.13,35997.18,Servicios y suministros operativos de logistica y transporte,I04,03,PPD,vigente
+INV-00040,MAN1106273JJ,EMP920101AB1,2025-06-17,165088.59,26414.17,191502.76,Servicios y suministros operativos de logistica y transporte,I04,01,PUE,vigente
+INV-00041,ASE18072017J,EMP920101AB1,2026-03-02,165725.35,26516.06,192241.41,Servicios y suministros operativos de limpieza y gestion de instalaciones,G02,03,PPD,vigente
+INV-00042,ASG180804JCA,EMP920101AB1,2025-04-26,139435.0,22309.6,161744.6,Servicios y suministros operativos de seguridad privada,I08,01,PPD,vigente
+INV-00043,COC980502A2X,EMP920101AB1,2026-01-19,75816.63,12130.66,87947.29,Servicios y suministros operativos de papeleria y suministros,I04,03,PPD,vigente
+INV-00044,CBS1801220ZU,EMP920101AB1,2025-10-15,117225.23,18756.04,135981.27,Servicios y suministros operativos de consultoria,G03,02,PUE,vigente
+INV-00045,COI2002246TY,EMP920101AB1,2025-03-13,82368.82,13179.01,95547.83,Servicios y suministros operativos de logistica y transporte,G01,03,PPD,vigente
+INV-00046,MAE970208NF4,EMP920101AB1,2025-12-10,89851.22,14376.2,104227.42,Servicios y suministros operativos de sistemas y ti,I04,02,PPD,vigente
+INV-00047,COI2002246TY,EMP920101AB1,2025-09-08,31338.57,5014.17,36352.74,Servicios y suministros operativos de logistica y transporte,I02,01,PPD,vigente
+INV-00048,LOG980322XR7,EMP920101AB1,2025-12-18,31393.51,5022.96,36416.47,Servicios y suministros operativos de logistica y transporte,G03,02,PPD,vigente
+INV-00049,MAN1106273JJ,EMP920101AB1,2025-11-25,124356.84,19897.09,144253.93,Servicios y suministros operativos de logistica y transporte,I04,02,PUE,vigente
+INV-00050,MAN1106273JJ,EMP920101AB1,2025-10-11,151919.94,24307.19,176227.13,Servicios y suministros operativos de logistica y transporte,G02,02,PUE,vigente
+INV-00051,LAS130702FAP,EMP920101AB1,2025-03-16,156637.01,25061.92,181698.93,Servicios y suministros operativos de capacitacion y recursos humanos,G02,02,PPD,vigente
+INV-00052,CBS1801220ZU,EMP920101AB1,2026-02-08,74109.98,11857.6,85967.58,Servicios y suministros operativos de consultoria,G02,02,PPD,vigente
+INV-00053,ASE18072017J,EMP920101AB1,2025-02-02,33752.14,5400.34,39152.48,Servicios y suministros operativos de limpieza y gestion de instalaciones,I01,01,PPD,vigente
+INV-00054,LOA9810282R6,EMP920101AB1,2026-03-20,144232.45,23077.19,167309.64,Servicios y suministros operativos de papeleria y suministros,I04,02,PPD,vigente
+INV-00055,MAE970208NF4,EMP920101AB1,2025-02-25,85335.15,13653.62,98988.77,Servicios y suministros operativos de sistemas y ti,I01,01,PUE,vigente
+INV-00056,LAS130702FAP,EMP920101AB1,2025-10-27,118012.39,18881.98,136894.37,Servicios y suministros operativos de capacitacion y recursos humanos,I02,03,PPD,vigente
+INV-00057,CGS1205175QH,EMP920101AB1,2025-02-28,145860.86,23337.74,169198.6,Servicios y suministros operativos de sistemas y ti,I08,02,PUE,vigente
+INV-00058,TEG12050461F,EMP920101AB1,2025-08-21,70923.72,11347.8,82271.52,Servicios y suministros operativos de seguridad privada,I01,01,PUE,vigente
+INV-00059,ASG180804JCA,EMP920101AB1,2025-08-31,128325.47,20532.08,148857.55,Servicios y suministros operativos de seguridad privada,G01,03,PUE,vigente
+INV-00060,ASG180804JCA,EMP920101AB1,2025-10-28,106801.17,17088.19,123889.36,Servicios y suministros operativos de seguridad privada,I02,02,PPD,vigente
+INV-00061,EFOS810101AA1,EMP920101AB1,2026-02-10,80000.0,12800.0,92800.0,Servicios de asesoria estrategica en optimizacion de infraestructura intangible,G03,03,PUE,vigente
+INV-00062,EFOS810101AA1,EMP920101AB1,2026-02-22,40000.0,6400.0,46400.0,Servicios de asesoria estrategica en optimizacion de infraestructura intangible,G03,03,PUE,vigente
+INV-00063,KICK830202BB1,EMP920101AB1,2026-02-05,107758.62,17241.38,125000.0,Mantenimiento preventivo mayor y calibracion de turbinas,G03,03,PUE,vigente
+INV-00064,RNDA960303CC1,EMP920101AB1,2026-03-01,215517.24,34482.76,250000.0,Honorarios por estructuracion financiera y asesoria corporativa,G03,03,PUE,vigente
+INV-00065,SPLT330505EE1,EMP920101AB1,2026-02-20,41896.55,6703.45,48600.0,Entrega de papeleria y consumibles administrativos entrega 1,G03,03,PUE,vigente
+INV-00066,SPLT330505EE1,EMP920101AB1,2026-02-21,41896.55,6703.45,48600.0,Entrega de papeleria y consumibles administrativos entrega 2,G03,03,PUE,vigente
+INV-00067,SPLT330505EE1,EMP920101AB1,2026-02-22,41896.55,6703.45,48600.0,Entrega de papeleria y consumibles administrativos entrega 3,G03,03,PUE,vigente
+INV-00068,SPLT330505EE1,EMP920101AB1,2026-02-23,41896.55,6703.45,48600.0,Entrega de papeleria y consumibles administrativos entrega 4,G03,03,PUE,vigente
+INV-00069,EMP920101AB1,REVI530606FF1,2026-03-28,137931.03,22068.97,160000.0,Venta al por mayor de licencias de software y soporte corporativo anual,G01,03,PPD,vigente
+INV-00070,EMP920101AB1,REVI530606FF1,2026-03-29,137931.03,22068.97,160000.0,Venta al por mayor de licencias de software y soporte corporativo anual,G01,03,PPD,vigente
+INV-00071,DECY940101AA1,EMP920101AB1,2026-01-11,40517.24,6482.76,47000.0,Servicio de flete urgente Monterrey-Laredo viaje 1,G03,03,PUE,vigente
+INV-00072,DECY940101AA1,EMP920101AB1,2026-01-12,40517.24,6482.76,47000.0,Servicio de flete urgente Monterrey-Laredo viaje 2,G03,03,PUE,vigente
+INV-00073,DECY940101AA1,EMP920101AB1,2026-01-13,40517.24,6482.76,47000.0,Servicio de flete urgente Monterrey-Laredo viaje 3,G03,03,PUE,vigente
+INV-00074,DECY770202BB2,EMP920101AB1,2025-10-20,387931.03,62068.97,450000.0,Montacargas electrico trifasico de 3 toneladas modelo 2025,I04,03,PUE,vigente
