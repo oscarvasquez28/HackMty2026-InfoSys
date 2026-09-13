@@ -4,8 +4,8 @@ services:
   # Backend FastAPI
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     ports:
       - "8000:8000"
     environment:
@@ -14,7 +14,7 @@ services:
       - N8N_WEBHOOK_URL=http://n8n:5678/webhook/investigation-stream
       - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY}
     volumes:
-      - ./backend:/app
+      - .:/app
 
   # Frontend Next.js
   frontend:
