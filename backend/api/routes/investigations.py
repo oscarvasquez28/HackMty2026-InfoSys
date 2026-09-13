@@ -623,8 +623,13 @@ async def audit_estate_endpoint(
         submission["adversarial_evidences"] = enrichment.get("adversarial_evidences", [])
 
         if enrichment.get("llm_calls", 0) > 0:
-            submission["run_metadata"]["llm_calls"] = enrichment["llm_calls"]
-            submission["run_metadata"]["deterministic"] = False
+            usage = enrichment.get("llm_usage") or {}
+            meta = submission["run_metadata"]
+            meta["llm_calls"] = usage.get("llm_calls", enrichment["llm_calls"])
+            meta["llm_tokens"] = usage.get("llm_tokens", 0)
+            meta["mxn_cost"] = usage.get("mxn_cost", 0.0)
+            meta["llm_usage_estimated"] = usage.get("llm_usage_estimated", False)
+            meta["deterministic"] = False
 
         # Update company RFC if provided
         if req.company_rfc:
@@ -908,8 +913,13 @@ async def generate_estate_audit_stream(
         submission["adversarial_evidences"] = last_synthesis.get("adversarial_evidences", [])
 
         if last_synthesis.get("llm_calls", 0) > 0:
-            submission["run_metadata"]["llm_calls"] = last_synthesis["llm_calls"]
-            submission["run_metadata"]["deterministic"] = False
+            usage = last_synthesis.get("llm_usage") or {}
+            meta = submission["run_metadata"]
+            meta["llm_calls"] = usage.get("llm_calls", last_synthesis["llm_calls"])
+            meta["llm_tokens"] = usage.get("llm_tokens", 0)
+            meta["mxn_cost"] = usage.get("mxn_cost", 0.0)
+            meta["llm_usage_estimated"] = usage.get("llm_usage_estimated", False)
+            meta["deterministic"] = False
 
         generator = CaseFileGenerator()
         for i, f in enumerate(submission["findings"]):

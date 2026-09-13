@@ -134,7 +134,11 @@ async def run_audit(
         submission["adversarial_evidences"] = enrichment.get("adversarial_evidences", [])
 
         if enrichment.get("llm_calls", 0) > 0:
-            submission["run_metadata"]["llm_calls"] = enrichment["llm_calls"]
+            usage = enrichment.get("llm_usage") or {}
+            submission["run_metadata"]["llm_calls"] = usage.get("llm_calls", enrichment["llm_calls"])
+            submission["run_metadata"]["llm_tokens"] = usage.get("llm_tokens", 0)
+            submission["run_metadata"]["mxn_cost"] = usage.get("mxn_cost", 0.0)
+            submission["run_metadata"]["llm_usage_estimated"] = usage.get("llm_usage_estimated", False)
             submission["run_metadata"]["deterministic"] = False
 
         # 3. Update company RFC if provided

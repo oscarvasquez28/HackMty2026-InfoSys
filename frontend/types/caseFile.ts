@@ -106,6 +106,8 @@ export interface LeadNotPursued {
 
 export interface RunMetadata {
   llm_calls: number | null;
+  llm_tokens: number | null;
+  llm_usage_estimated: boolean | null; // true = values are estimates, not provider metadata
   mxn_cost: number | null;
   wall_clock_seconds: number | null;
   cost_by_role: Record<string, number>; // only finite numeric values kept

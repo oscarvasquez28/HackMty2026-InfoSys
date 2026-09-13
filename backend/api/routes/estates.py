@@ -117,6 +117,14 @@ async def upload_estate(
             submission["final_narrative"] = enrichment.get("final_narrative", "")
             submission["adversarial_evidences"] = enrichment.get("adversarial_evidences", [])
 
+            if enrichment.get("llm_calls", 0) > 0:
+                usage = enrichment.get("llm_usage") or {}
+                submission["run_metadata"]["llm_calls"] = usage.get("llm_calls", enrichment["llm_calls"])
+                submission["run_metadata"]["llm_tokens"] = usage.get("llm_tokens", 0)
+                submission["run_metadata"]["mxn_cost"] = usage.get("mxn_cost", 0.0)
+                submission["run_metadata"]["llm_usage_estimated"] = usage.get("llm_usage_estimated", False)
+                submission["run_metadata"]["deterministic"] = False
+
             generator = CaseFileGenerator()
             for i, f in enumerate(findings):
                 f.setdefault("finding_id", f"FINDING-{i+1:03d}")

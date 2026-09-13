@@ -47,8 +47,10 @@ function buildHeaderSection(view: CaseFileView): string[] {
   const periodCell = period ? `${orNotReported(period.start)} to ${orNotReported(period.end)}` : "Not reported";
   lines.push(`| Audit period | ${periodCell} |`);
   lines.push(`| Estate seed | ${orNotReported(document.seed)} |`);
-  lines.push(`| LLM calls | ${meta.llm_calls === null ? "Not reported" : formatInteger(meta.llm_calls)} |`);
-  lines.push(`| MXN cost | ${meta.mxn_cost === null ? "Not reported" : formatPesos(meta.mxn_cost)} |`);
+  const estSuffix = meta.llm_usage_estimated ? " (est.)" : "";
+  lines.push(`| LLM calls | ${meta.llm_calls === null ? "Not reported" : `${formatInteger(meta.llm_calls)}${estSuffix}`} |`);
+  lines.push(`| LLM tokens | ${meta.llm_tokens === null ? "Not reported" : `${formatInteger(meta.llm_tokens)}${estSuffix}`} |`);
+  lines.push(`| MXN cost | ${meta.mxn_cost === null ? "Not reported" : `${formatPesos(meta.mxn_cost)}${estSuffix}`} |`);
   lines.push(`| Wall-clock seconds | ${meta.wall_clock_seconds === null ? "Not reported" : formatSeconds(meta.wall_clock_seconds)} |`);
   lines.push(`| Deterministic | ${deterministicText(meta.deterministic, document.seed)} |`);
   const roleKeys = Object.keys(meta.cost_by_role).sort();

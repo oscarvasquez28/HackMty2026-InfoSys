@@ -69,8 +69,11 @@ export const TourOpening: React.FC<TourOpeningProps> = ({ document, isSample, ch
         <Metric label="Seed" className="col-span-2" index={3}>
           {seed !== null ? `#${seed}` : <NotReported />}
         </Metric>
-        <Metric label="LLM calls" className="sm:col-span-2" index={4}>
+        <Metric label={`LLM calls${meta.llm_usage_estimated ? " (est.)" : ""}`} className="sm:col-span-2" index={4}>
           {meta.llm_calls !== null ? formatInteger(calls) : <NotReported />}
+        </Metric>
+        <Metric label={`LLM tokens${meta.llm_usage_estimated ? " (est.)" : ""}`} className="sm:col-span-2" index={4}>
+          {meta.llm_tokens !== null ? formatInteger(meta.llm_tokens) : <NotReported />}
         </Metric>
         <Metric label="Wall clock" className="sm:col-span-2" index={5}>
           {meta.wall_clock_seconds !== null ? formatSeconds(seconds) : <NotReported />}

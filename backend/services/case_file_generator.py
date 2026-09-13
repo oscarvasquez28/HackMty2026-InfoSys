@@ -87,9 +87,13 @@ class CaseFileGenerator:
         seed = submission_data.get("seed", 1)
 
         llm_calls = meta.get("llm_calls", 0)
+        llm_tokens = meta.get("llm_tokens")
+        usage_estimated = bool(meta.get("llm_usage_estimated", False))
         mxn_cost = float(meta.get("mxn_cost", 0.0))
         wall_clock_s = float(meta.get("wall_clock_seconds", 0.0))
         is_deterministic = meta.get("deterministic", True)
+
+        est_suffix = " (est.)" if usage_estimated else ""
 
         # ---------------------------------------------------------------------
         # 1. Header
@@ -104,8 +108,12 @@ class CaseFileGenerator:
             f"- **Estate Seed:** `{seed}`",
             f"- **Evaluation Dataset:** `Held-out evaluation seed`",
             f"- **Disjoint Sets:** Tuned on seeds `[1, 2, 3]`; Evaluated/Reported on held-out seeds `[101, 102, 103, 104, 105]`",
-            f"- **LLM Call Count:** `{llm_calls}`",
-            f"- **Estimated MXN Cost:** `${mxn_cost:.4f} MXN`",
+            f"- **LLM Call Count:** `{llm_calls}`{est_suffix}",
+        ]
+        if llm_tokens is not None:
+            md_lines.append(f"- **LLM Tokens (Gemini):** `{int(llm_tokens)}`{est_suffix}")
+        md_lines += [
+            f"- **Estimated MXN Cost:** `${mxn_cost:.4f} MXN`{est_suffix}",
             f"- **Wall-Clock Seconds:** `{wall_clock_s:.3f} s`",
             f"- **Deterministic Run:** `{'Yes (100% Deterministic)' if is_deterministic else 'No'}`",
             "",

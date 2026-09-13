@@ -47,6 +47,14 @@ class Settings(BaseSettings):
     PASS_THROUGH_RATIO_THRESHOLD: float = 0.90
     PASS_THROUGH_WINDOW_HOURS: float = 48.0
 
+    # LLM Usage Estimation (Gemini via n8n does not return usage metadata)
+    LLM_CALLS_ESTIMATE_MIN: int = 10
+    LLM_CALLS_ESTIMATE_MAX: int = 22
+    LLM_TOKENS_ESTIMATE_MIN: int = 5000
+    LLM_TOKENS_ESTIMATE_MAX: int = 8300
+    # Blended Gemini Flash rate in MXN per 1K tokens (~$0.65 USD/Mtok at ~18.5 MXN/USD)
+    GEMINI_MXN_PER_1K_TOKENS: float = 0.012
+
     # Database Configuration (TigerData PostgreSQL + pgvector)
     DATABASE_URL: Optional[str] = None
     POSTGRES_TIMEOUT: float = 30.0

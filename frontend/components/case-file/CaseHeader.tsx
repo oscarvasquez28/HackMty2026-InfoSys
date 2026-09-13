@@ -48,19 +48,31 @@ export const CaseHeader: React.FC<CaseHeaderProps> = ({ document }) => {
         {header?.audit_period ? `${header.audit_period.start || "?"} → ${header.audit_period.end || "?"}` : "not reported"}
       </p>
 
-      <dl className="mt-6 grid grid-cols-2 overflow-hidden rounded-sm border border-paper-ink bg-paper-ink font-mono text-paper sm:grid-cols-5">
+      <dl className="mt-6 grid grid-cols-2 overflow-hidden rounded-sm border border-paper-ink bg-paper-ink font-mono text-paper sm:grid-cols-6">
         <div className="border-paper/15 px-4 py-3 sm:border-l sm:first:border-l-0">
           <dt className="text-[10px] uppercase tracking-[0.16em] text-paper/60">Seed</dt>
           <dd className="mt-1 text-sm font-semibold tabular-nums">{seed !== null ? `#${seed}` : <span className="text-paper/60">Not reported</span>}</dd>
         </div>
         <div className="border-paper/15 px-4 py-3 sm:border-l sm:first:border-l-0">
-          <dt className="text-[10px] uppercase tracking-[0.16em] text-paper/60">LLM calls</dt>
+          <dt className="text-[10px] uppercase tracking-[0.16em] text-paper/60">
+            LLM calls{meta.llm_usage_estimated ? " (est.)" : ""}
+          </dt>
           <dd className="mt-1 text-sm font-semibold tabular-nums">
             {meta.llm_calls !== null ? formatInteger(meta.llm_calls) : <span className="text-paper/60">Not reported</span>}
           </dd>
         </div>
         <div className="border-paper/15 px-4 py-3 sm:border-l sm:first:border-l-0">
-          <dt className="text-[10px] uppercase tracking-[0.16em] text-paper/60">MXN cost</dt>
+          <dt className="text-[10px] uppercase tracking-[0.16em] text-paper/60">
+            LLM tokens{meta.llm_usage_estimated ? " (est.)" : ""}
+          </dt>
+          <dd className="mt-1 text-sm font-semibold tabular-nums">
+            {meta.llm_tokens !== null ? formatInteger(meta.llm_tokens) : <span className="text-paper/60">Not reported</span>}
+          </dd>
+        </div>
+        <div className="border-paper/15 px-4 py-3 sm:border-l sm:first:border-l-0">
+          <dt className="text-[10px] uppercase tracking-[0.16em] text-paper/60">
+            MXN cost{meta.llm_usage_estimated ? " (est.)" : ""}
+          </dt>
           <dd className="mt-1 text-sm font-semibold tabular-nums">
             {meta.mxn_cost !== null ? formatPesos(meta.mxn_cost) : <span className="text-paper/60">Not reported</span>}
           </dd>

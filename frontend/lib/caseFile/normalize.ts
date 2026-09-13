@@ -161,6 +161,8 @@ function normalizeRunMetadata(value: unknown): RunMetadata {
   }
   return {
     llm_calls: asFiniteNumberOrNull(record.llm_calls),
+    llm_tokens: asFiniteNumberOrNull(record.llm_tokens),
+    llm_usage_estimated: typeof record.llm_usage_estimated === "boolean" ? record.llm_usage_estimated : null,
     mxn_cost: asFiniteNumberOrNull(record.mxn_cost),
     wall_clock_seconds: asFiniteNumberOrNull(record.wall_clock_seconds),
     cost_by_role,
