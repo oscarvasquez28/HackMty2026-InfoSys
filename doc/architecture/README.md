@@ -523,7 +523,8 @@ The judged deliverable conforms to [`student-materials/forensic-auditor/submissi
 | `backend/core/database.py` | PostgreSQL async engine, SSL & connection pool | `get_engine()`, `get_db()`, `normalize_database_url()` | `sqlalchemy`, `asyncpg`, `psycopg` |
 | `backend/core/masking.py` | PII masking for sensitive data in transit | `mask_sensitive_payload()`, `mask_sensitive_record()` | Python stdlib |
 | `backend/models/forensic.py` | Core banking & vector knowledge models | `InvestigationCase`, `TransactionRecord`, `LegalArticleVector` | `sqlalchemy`, `pgvector` |
-| `backend/models/estate.py` | Relational models for corporate estate tables | `InvoiceRecord`, `LedgerRecord`, `BankTxnRecord`, `ExhibitRecord` | `sqlalchemy` |
+| `backend/models/estate.py` | Relational models for corporate estate tables, `*_history` run archives & persisted audit reports | `InvoiceRecord`, `LedgerRecord`, `BankTxnRecord`, `ExhibitRecord`, `AuditReportRecord` | `sqlalchemy` |
+| `backend/api/routes/reports.py` | Historic audit report catalog (`GET /reports`, `GET /reports/{run_id}`) | `list_audit_reports()`, `get_audit_report()` | `fastapi`, `sqlalchemy` |
 | `backend/api/routes/investigations.py` | Benchmark upload & estate SSE generators | `upload_investigation_dataset()`, `generate_estate_audit_stream()` | `fastapi`, `httpx` |
 | `backend/api/routes/estates.py` | Estate database upload & audit endpoints | `upload_estate()`, `upload_estate_and_stream()` | `fastapi`, `polars` |
 | `backend/api/routes/database_tools.py` | Schema catalog, table queries & exhibit logging | `list_tables()`, `get_invoices()`, `create_exhibit()` | `fastapi`, `sqlalchemy` |
