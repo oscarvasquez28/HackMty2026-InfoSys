@@ -35,23 +35,6 @@ class N8nEnrichmentService:
     def __init__(self, connector=None) -> None:
         self.connector = connector or estate_connector
 
-    def _get_database_api_endpoints(self) -> Dict[str, Any]:
-        """Returns the database inspection tool endpoints catalog for n8n."""
-        return {
-            "base_url": f"{settings.API_V1_STR}/database",
-            "endpoints": {
-                "vendors": f"{settings.API_V1_STR}/database/vendors",
-                "invoices": f"{settings.API_V1_STR}/database/invoices",
-                "ledger": f"{settings.API_V1_STR}/database/ledger",
-                "bank_txns": f"{settings.API_V1_STR}/database/bank_txns",
-                "purchase_orders": f"{settings.API_V1_STR}/database/purchase_orders",
-                "contracts": f"{settings.API_V1_STR}/database/contracts",
-                "employees": f"{settings.API_V1_STR}/database/employees",
-                "efos_list": f"{settings.API_V1_STR}/database/efos_list",
-                "exhibits": f"{settings.API_V1_STR}/database/exhibits",
-            },
-        }
-
     async def review_single_finding(
         self,
         finding: Dict[str, Any],
@@ -94,7 +77,6 @@ class N8nEnrichmentService:
                 "finding_index": index,
                 "total_findings": total,
                 "finding": f_copy,
-                "database_api": self._get_database_api_endpoints(),
             }
             safe_payload = mask_sensitive_payload(payload)
 
@@ -219,7 +201,6 @@ class N8nEnrichmentService:
                 "lead_index": index,
                 "total_leads": total,
                 "lead": l_copy,
-                "database_api": self._get_database_api_endpoints(),
             }
             safe_payload = mask_sensitive_payload(payload)
 
