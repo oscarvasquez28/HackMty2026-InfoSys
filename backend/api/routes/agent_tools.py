@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from decimal import Decimal
 import logging
 import math
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status

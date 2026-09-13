@@ -37,6 +37,7 @@ class Settings(BaseSettings):
     ELEVENLABS_API_KEY: str = ""
     ELEVENLABS_VOICE_ID: str = "21m00Tcm4TlvDq8ikWAM"  # Default Voice ID (Rachel)
     ELEVENLABS_MODEL_ID: str = "eleven_multilingual_v2"
+    ELEVENLABS_SAFE_MODE: bool = True  # Safety filter: blocks real ElevenLabs API calls to protect credit quotas
     TTS_TIMEOUT: float = 30.0
     TTS_CONNECT_TIMEOUT: float = 5.0
 

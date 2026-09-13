@@ -24,6 +24,17 @@ from backend.core.config import settings
 from backend.api.routes.tts import generate_fallback_silence_mp3, stream_elevenlabs_audio
 
 
+@pytest.fixture(autouse=True)
+def allow_mocked_tts_stream():
+    """Ensures mock tests can exercise stream_elevenlabs_audio with mocked clients."""
+    orig_safe = getattr(settings, "ELEVENLABS_SAFE_MODE", False)
+    settings.ELEVENLABS_SAFE_MODE = False
+    try:
+        yield
+    finally:
+        settings.ELEVENLABS_SAFE_MODE = orig_safe
+
+
 # =============================================================================
 # Helper Instrumented Mocks for Tracking Socket / Client Lifecycle
 # =============================================================================

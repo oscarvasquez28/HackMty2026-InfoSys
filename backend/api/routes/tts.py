@@ -100,18 +100,35 @@ async def stream_elevenlabs_audio(
         yield generate_fallback_silence_mp3()
 
 
+def is_elevenlabs_disabled() -> bool:
+    """
+    Safety filter: returns True if ElevenLabs upstream calls are blocked.
+    Protects character quotas during e2e tests, staging, or local runs.
+    """
+    if getattr(settings, "ELEVENLABS_SAFE_MODE", False):
+        return True
+    key = (settings.ELEVENLABS_API_KEY or "").strip()
+    if not key or key.startswith(("your_", "tu_")) or "aqui" in key.lower():
+        return True
+    return False
+
+
 @router.post("/synthesize")
 async def synthesize_speech(request: SynthesizeRequest):
     """
     Proxy endpoint to synthesize speech via ElevenLabs in streaming mode (audio/mpeg).
     Shields the ELEVENLABS_API_KEY from exposure on the client side.
-    Falls back gracefully to synthetic silent audio when unconfigured or on upstream failure.
+    Falls back gracefully to synthetic silent audio when unconfigured, in safe mode, or on upstream failure.
     """
     voice_id = request.voice_id or settings.ELEVENLABS_VOICE_ID
     model_id = request.model_id or settings.ELEVENLABS_MODEL_ID
 
-    # If no key is provided or placeholder is used, return simulated audio stream
-    if not settings.ELEVENLABS_API_KEY or settings.ELEVENLABS_API_KEY.startswith("your_"):
+    # Safety filter: if safe mode is enabled or key is placeholder, return simulated audio stream
+    if is_elevenlabs_disabled():
+        logger.info(
+            "ElevenLabs safety filter active (SAFE_MODE=%s). Suppressing upstream API call and returning synthetic audio fallback.",
+            getattr(settings, "ELEVENLABS_SAFE_MODE", False),
+        )
         async def fallback_stream():
             yield generate_fallback_silence_mp3()
 
