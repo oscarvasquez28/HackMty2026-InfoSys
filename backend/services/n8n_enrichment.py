@@ -84,9 +84,9 @@ class N8nEnrichmentService:
                 async with httpx.AsyncClient(timeout=timeout) as client:
                     resp = await client.post(target_url, json=safe_payload)
                     if resp.status_code == 200:
+                        online_success = True
                         res_data = resp.json()
                         if isinstance(res_data, dict):
-                            online_success = True
                             adv_review = (
                                 res_data.get("adversarial_review")
                                 or res_data.get("adversarial_defense_review")
@@ -118,24 +118,27 @@ class N8nEnrichmentService:
                     f"n8n call for finding {index}/{total} failed or timed out: {exc}. Using deterministic review."
                 )
 
-        if not online_success:
+        if not adv_review:
             adv_review = (
                 f"La defensa técnica adversarial examinó el hallazgo {index}/{total} ({scheme_type}) "
                 f"imputado a `{entities_str}` por un monto de ${amount:,.2f} MXN. Se verificó en libros contables "
                 f"si correspondía a operaciones habituales de mercado o viáticos comprobables. Sin embargo, ante la "
                 f"ausencia de contratos con fecha cierta y la inconsistencia en flujos bancarios (SPEI), no fue "
-                f"posible desvirtuar la infracción prevista en {rule}."
+                f"posible desvirtuar la infracción prevista en Artículo 69-B del CFF ({rule})."
             )
+        if not judge_verdict:
             judge_verdict = (
                 f"VEREDICTO DEL JUEZ (HALLAZGO {index}/{total}): CULPABLE / IMPUTACIÓN PROCEDENTE. "
                 f"Se declara plenamente acreditada la responsabilidad fiscal y corporativa por ${amount:,.2f} MXN "
                 f"bajo el supuesto de {rule}. Se desestima la excepción planteada por la defensa por carecer de "
                 f"sustancia económica y materialidad jurídica."
             )
+        if not final_narrative:
             final_narrative = (
                 f_copy.get("narrative")
                 or f"Operación simulada comprobada por ${amount:,.2f} MXN atribuida a `{entities_str}` con trazabilidad bancaria inequívoca."
             )
+        if not adv_evidences:
             # Baseline evidence from finding exhibits
             for ex in f_copy.get("exhibits", []):
                 adv_evidences.append({
@@ -185,11 +188,22 @@ class N8nEnrichmentService:
         adv_review: str = ""
         judge_verdict: str = ""
         reason: str = ""
-        valid_closed_by = ("challenger", "investigator", "validator")
+        closed_by: str = ""
+
         l_copy = dict(lead)
-        closed_by: str = l_copy.get("closed_by") if l_copy.get("closed_by") in valid_closed_by else "challenger"
-        entity = l_copy.get("entity") or l_copy.get("entities") or "Entidad Auditada"
-        signal = l_copy.get("signal") or l_copy.get("scheme_type") or "Señal de alerta"
+        closed_by: str = l_copy.get("closed_by") if l_copy.get(
+            "closed_by") in valid_closed_by else "challenger"
+        entity = l_copy.get("entity") or l_copy.get(
+            "entities") or "Entidad Auditada"
+        signal = l_copy.get("signal") or l_copy.get(
+            "scheme_type") or "Señal de alerta"
+        existing_reason = (
+            l_copy.get("reason")
+            or "Operación comercial ordinaria verificada documentalmente conforme a derecho con materialidad probada."
+        )
+        raw_closed_by = l_copy.get("closed_by")
+        existing_closed_by = raw_closed_by if raw_closed_by in {
+            "challenger", "investigator", "validator"} else "validator"
 
         if target_url and target_url.strip():
             payload = {
@@ -208,9 +222,9 @@ class N8nEnrichmentService:
                 async with httpx.AsyncClient(timeout=timeout) as client:
                     resp = await client.post(target_url, json=safe_payload)
                     if resp.status_code == 200:
+                        online_success = True
                         res_data = resp.json()
                         if isinstance(res_data, dict):
-                            online_success = True
                             adv_review = (
                                 res_data.get("adversarial_review")
                                 or res_data.get("defense_review")
@@ -227,26 +241,29 @@ class N8nEnrichmentService:
                                 or res_data.get("reason_to_close")
                                 or ""
                             )
-                            if res_data.get("closed_by") in valid_closed_by:
-                                closed_by = res_data["closed_by"]
+                            ret_closed_by = res_data.get("closed_by")
+                            if ret_closed_by in {"challenger", "investigator", "validator"}:
+                                closed_by = ret_closed_by
             except Exception as exc:
                 logger.warning(
                     f"n8n call for lead {index}/{total} failed or timed out: {exc}. Using deterministic review."
                 )
 
-        if not online_success:
+        if not adv_review:
             adv_review = (
                 f"Revisión preliminar de la línea {index}/{total} (`{entity}`): Se constató soporte documental "
                 f"ordinario, contratos vigentes y congruencia entre cotizaciones, órdenes de compra y facturas."
             )
+        if not judge_verdict:
             judge_verdict = (
                 f"VEREDICTO DEL JUEZ (LÍNEA {index}/{total}): ABSUELTO / LÍNEA DESESTIMADA. "
                 f"Causa legal lícita plenamente acreditada respecto a la alerta `{signal}`. "
                 f"Se decreta el archivo formal y definitivo de esta línea de investigación."
             )
-            reason = l_copy.get("reason") or (
-                "Operación comercial ordinaria verificada documentalmente conforme a derecho con materialidad probada."
-            )
+        if not reason:
+            reason = existing_reason
+        if not closed_by:
+            closed_by = existing_closed_by
 
         l_copy["adversarial_review"] = adv_review
         l_copy["judge_verdict"] = judge_verdict
@@ -279,8 +296,10 @@ class N8nEnrichmentService:
         target_url = n8n_url or settings.N8N_WEBHOOK_URL
         online_success = False
 
-        total_peso = sum(float(f.get("peso_amount", 0.0)) for f in reviewed_findings)
-        proven_schemes = list(set(f.get("scheme_type", "esquema") for f in reviewed_findings))
+        total_peso = sum(float(f.get("peso_amount", 0.0))
+                         for f in reviewed_findings)
+        proven_schemes = list(set(f.get("scheme_type", "esquema")
+                              for f in reviewed_findings))
 
         judge_verdict: str = ""
         final_narrative: str = ""
@@ -318,9 +337,9 @@ class N8nEnrichmentService:
                 async with httpx.AsyncClient(timeout=timeout) as client:
                     resp = await client.post(target_url, json=safe_payload)
                     if resp.status_code == 200:
+                        online_success = True
                         res_data = resp.json()
                         if isinstance(res_data, dict):
-                            online_success = True
                             judge_verdict = (
                                 res_data.get("judge_verdict")
                                 or res_data.get("judge_veredict")
@@ -334,15 +353,17 @@ class N8nEnrichmentService:
                                 or ""
                             )
             except Exception as exc:
-                logger.warning(f"n8n case synthesis call failed: {exc}. Using deterministic summary.")
+                logger.warning(
+                    f"n8n case synthesis call failed: {exc}. Using deterministic summary.")
 
-        if not online_success:
+        if not judge_verdict:
             judge_verdict = (
                 f"DICTAMEN PERICIAL EMITIDO: Se confirma la existencia de responsabilidad corporativa y fiscal por un "
                 f"monto total de ${total_peso:,.2f} MXN distribuido en {len(reviewed_findings)} esquemas fraudulentos "
                 f"({', '.join(proven_schemes)}). Las imputaciones satisfacen plenamente la carga probatoria y la conciliación "
                 f"al 2% pericial. Se sobreseen formalmente {len(reviewed_leads)} líneas preliminares por comprobarse causa legal lícita."
             )
+        if not final_narrative:
             final_narrative = (
                 f"La auditoría forense integral identificó {len(reviewed_findings)} esquemas de simulación de operaciones y "
                 f"desvío de recursos por un total de ${total_peso:,.2f} pesos mexicanos. Mediante cruce de "
@@ -407,7 +428,8 @@ class N8nEnrichmentService:
             f_item = finding_res["finding"]
             enriched_findings.append(f_item)
             finding_adv_reviews.append(finding_res["adversarial_review"])
-            all_adversarial_evidences.extend(finding_res["adversarial_evidences"])
+            all_adversarial_evidences.extend(
+                finding_res["adversarial_evidences"])
             total_exhibits_inserted += finding_res["inserted_exhibits_count"]
             if finding_res["is_online"]:
                 llm_calls += 1
@@ -561,15 +583,18 @@ class N8nEnrichmentService:
                 for idx, ev in enumerate(evidences, 1):
                     src_table = str(ev.get("source_table", "")).strip().lower()
                     rec_id = str(ev.get("record_id", "")).strip()
-                    sentence = str(ev.get("sentence") or ev.get("note") or "Evidencia adversarial registrada.").strip()
+                    sentence = str(ev.get("sentence") or ev.get(
+                        "note") or "Evidencia adversarial registrada.").strip()
 
                     if not src_table or not rec_id:
                         continue
 
-                    ex_id = ev.get("exhibit_id") or f"EX-ADV-{idx:04d}-{uuid.uuid4().hex[:4].upper()}"
+                    ex_id = ev.get(
+                        "exhibit_id") or f"EX-ADV-{idx:04d}-{uuid.uuid4().hex[:4].upper()}"
 
                     # Check if already present
-                    check_stmt = select(ExhibitRecord).where(ExhibitRecord.exhibit_id == ex_id)
+                    check_stmt = select(ExhibitRecord).where(
+                        ExhibitRecord.exhibit_id == ex_id)
                     existing = (await session.execute(check_stmt)).scalar_one_or_none()
 
                     if existing:

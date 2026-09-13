@@ -203,31 +203,30 @@ async def test_n8n_enrichment_offline_fallback():
         ]
 
         service = N8nEnrichmentService(connector=connector)
-        try:
-            result = await service.run_enrichment(
-                findings=sample_findings,
-                leads_not_pursued=[],
-                seed=1,
-                estate_target=db_path,
-                n8n_url=None,
-            )
+        result = await service.run_enrichment(
+            findings=sample_findings,
+            leads_not_pursued=[],
+            seed=1,
+            estate_target=db_path,
+            n8n_url=None,
+        )
 
-            assert "69-B" in result["adversarial_review"]
-            assert "DICTAMEN PERICIAL" in result["judge_verdict"]
-            assert "auditoría forense" in result["final_narrative"]
-            assert len(result["adversarial_evidences"]) >= 1
+        assert "Artículo 69-B" in result["adversarial_review"]
+        assert "DICTAMEN PERICIAL" in result["judge_verdict"]
+        assert "auditoría forense" in result["final_narrative"]
+        assert len(result["adversarial_evidences"]) >= 1
 
-            # Check per-finding judge verdict was populated
-            f0 = result["findings"][0]
-            assert "VEREDICTO DEL JUEZ (HALLAZGO 1/1)" in f0["judge_verdict"]
+        # Check per-finding judge verdict was populated
+        f0 = result["findings"][0]
+        assert "VEREDICTO DEL JUEZ (HALLAZGO 1/1)" in f0["judge_verdict"]
 
-            # Check exhibit inserted in exhibits table
-            async with connector.session_scope(db_path) as session:
-                from sqlalchemy import func, select
-                count = (await session.execute(select(func.count()).select_from(ExhibitRecord))).scalar()
-                assert count >= 1
-        finally:
-            await connector.dispose_all()
+        # Check exhibit inserted in exhibits table
+        async with connector.session_scope(db_path) as session:
+            from sqlalchemy import func, select
+            count = (await session.execute(select(func.count()).select_from(ExhibitRecord))).scalar()
+            assert count >= 1
+
+        await connector.dispose_all()
 
 
 @pytest.mark.asyncio
