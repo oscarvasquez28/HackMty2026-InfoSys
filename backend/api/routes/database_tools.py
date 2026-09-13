@@ -657,21 +657,33 @@ async def _query_table_internal(
         if or_clauses:
             clauses.append(or_(*or_clauses))
 
-    async with estate_connector.session_scope(target) as session:
-        # Total matching records count
-        count_stmt = select(func.count()).select_from(model_cls)
-        if clauses:
-            count_stmt = count_stmt.where(*clauses)
-        total = (await session.execute(count_stmt)).scalar() or 0
+    try:
+        async with estate_connector.session_scope(target) as session:
+            # Total matching records count
+            count_stmt = select(func.count()).select_from(model_cls)
+            if clauses:
+                count_stmt = count_stmt.where(*clauses)
+            total = (await session.execute(count_stmt)).scalar() or 0
 
-        # Query paginated slice
-        query_stmt = select(model_cls)
-        if clauses:
-            query_stmt = query_stmt.where(*clauses)
-        query_stmt = query_stmt.limit(limit).offset(offset)
+            # Query paginated slice
+            query_stmt = select(model_cls)
+            if clauses:
+                query_stmt = query_stmt.where(*clauses)
+            query_stmt = query_stmt.limit(limit).offset(offset)
 
-        rows = (await session.execute(query_stmt)).scalars().all()
-        serialized_records = [serialize_model_instance(r, clean_table) for r in rows]
+            rows = (await session.execute(query_stmt)).scalars().all()
+            serialized_records = [serialize_model_instance(r, clean_table) for r in rows]
+    except Exception as exc:
+        # Historic archive tables only exist in PostgreSQL; querying them against
+        # a SQLite estate target should degrade to an empty result, not a 500.
+        logger.warning(f"Table '{clean_table}' unavailable on target: {exc}")
+        return TableQueryResponse(
+            table=clean_table,
+            total=0,
+            limit=limit,
+            offset=offset,
+            records=[],
+        )
 
     return TableQueryResponse(
         table=clean_table,

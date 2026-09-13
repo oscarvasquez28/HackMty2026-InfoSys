@@ -31,6 +31,21 @@ logger = logging.getLogger("forensic_auditor.n8n_enrichment")
 
 VALID_CLOSED_BY = {"challenger", "investigator", "validator"}
 
+# Sentinel value for n8n_url: when a request passes "offline", every n8n call is
+# skipped and the deterministic local engine runs instead (zero network attempts).
+OFFLINE_MODE_SENTINEL = "offline"
+
+
+def _resolve_n8n_url(n8n_url: Optional[str]) -> str:
+    """
+    Resolves the effective n8n webhook URL for a request.
+    Returns an empty string when the "offline" sentinel is passed, forcing the
+    deterministic fallback path with no outbound connection attempts.
+    """
+    if n8n_url and n8n_url.strip().lower() == OFFLINE_MODE_SENTINEL:
+        return ""
+    return n8n_url or settings.N8N_WEBHOOK_URL
+
 
 class N8nEnrichmentService:
     """Manages sequential online LLM enrichment with n8n and offline deterministic fallback."""
@@ -56,7 +71,7 @@ class N8nEnrichmentService:
         Automatically inserts reviewer evidence into database 'exhibits' table.
         Falls back to local deterministic judicial review if n8n is unreachable.
         """
-        target_url = n8n_url or settings.N8N_WEBHOOK_URL
+        target_url = _resolve_n8n_url(n8n_url)
         eff_timeout = timeout if timeout is not None else settings.N8N_TIMEOUT
         online_success = False
 
@@ -212,7 +227,7 @@ class N8nEnrichmentService:
         Sends a single decoy lead to n8n for nuanced dismissal justification and
         individual acquittal judge verdict.
         """
-        target_url = n8n_url or settings.N8N_WEBHOOK_URL
+        target_url = _resolve_n8n_url(n8n_url)
         eff_timeout = timeout if timeout is not None else settings.N8N_TIMEOUT
         online_success = False
 
@@ -344,7 +359,7 @@ class N8nEnrichmentService:
         Synthesizes the overarching case verdict and executive narrative based on the
         individual finding and lead verdicts.
         """
-        target_url = n8n_url or settings.N8N_WEBHOOK_URL
+        target_url = _resolve_n8n_url(n8n_url)
         eff_timeout = timeout if timeout is not None else settings.N8N_TIMEOUT
         online_success = False
 

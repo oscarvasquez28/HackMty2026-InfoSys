@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.pool import StaticPool
 
 from backend.core.config import settings
-from backend.models.estate import HISTORIC_TABLE_MODELS
+from backend.models.estate import AuditReportRecord, HISTORIC_TABLE_MODELS
 from backend.models.forensic import Base
 
 logger = logging.getLogger("forensic_auditor.database")
@@ -281,13 +281,14 @@ async def provision_estate_schema(
 
     # Ensure historic archive tables exist without dropping existing run history
     historic_tables = [model.__table__ for model in HISTORIC_TABLE_MODELS.values()]
+    historic_tables.append(AuditReportRecord.__table__)
     await conn.run_sync(
         lambda sync_conn: Base.metadata.create_all(
             sync_conn, tables=historic_tables, checkfirst=True
         )
     )
     logger.info(
-        f"Estate operational tables ({sql_file.name}) and 9 historic archive tables successfully provisioned for dialect '{dialect_name}'."
+        f"Estate operational tables ({sql_file.name}), 9 historic archive tables and audit_reports successfully provisioned for dialect '{dialect_name}'."
     )
 
 

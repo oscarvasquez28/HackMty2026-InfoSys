@@ -8,6 +8,7 @@ from backend.models.forensic import (
     seed_legal_knowledge,
 )
 from backend.models.estate import (
+    AuditReportRecord,
     VendorRecord,
     InvoiceRecord,
     LedgerRecord,
@@ -27,6 +28,7 @@ __all__ = [
     "SEED_LEGAL_PRECEDENTS",
     "generate_deterministic_embedding",
     "seed_legal_knowledge",
+    "AuditReportRecord",
     "VendorRecord",
     "InvoiceRecord",
     "LedgerRecord",

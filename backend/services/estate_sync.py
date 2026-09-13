@@ -31,6 +31,7 @@ from backend.models.estate import (
     ETHEREAL_TO_HISTORIC_MODELS,
     ESTATE_TABLE_MODELS,
     HISTORIC_TABLE_MODELS,
+    AuditReportRecord,
     BankTxnHistoryRecord,
     BankTxnRecord,
     ContractHistoryRecord,
@@ -325,6 +326,74 @@ class EstateSyncService:
                 logger.error(f"Failed to persist exhibits to PostgreSQL: {exc}")
 
         return inserted
+
+    async def persist_audit_report(
+        self,
+        submission: Dict[str, Any],
+        case_file_markdown: str,
+        verdict: Optional[Dict[str, Any]] = None,
+        company_name: Optional[str] = None,
+        company_rfc: Optional[str] = None,
+        estate_source: Optional[str] = None,
+    ) -> bool:
+        """
+        Persists a completed forensic audit report into the audit_reports table,
+        keyed by the run_id already assigned to the historic archive tables.
+        No-ops when DATABASE_URL is not configured; never raises.
+
+        Returns:
+            True if the report row was committed to PostgreSQL, False otherwise.
+        """
+        if not settings.DATABASE_URL:
+            return False
+
+        run_metadata = submission.get("run_metadata") or {}
+        run_id = run_metadata.get("run_id") or get_active_run_id()
+        if not run_id:
+            return False
+
+        header = submission.get("header") or {}
+        verdict = verdict or {}
+
+        try:
+            findings = submission.get("findings") or []
+            leads = submission.get("leads_not_pursued") or []
+            raw_amount = verdict.get("total_amount_mxn")
+            total_amount = (
+                Decimal(str(round(float(raw_amount), 2)))
+                if raw_amount is not None
+                else None
+            )
+
+            factory = get_session_factory()
+            async with factory() as session:
+                try:
+                    record = AuditReportRecord(
+                        run_id=str(run_id),
+                        seed=int(submission.get("seed") or 0),
+                        company_name=company_name or header.get("company"),
+                        company_rfc=company_rfc or header.get("company_rfc"),
+                        estate_source=str(estate_source) if estate_source else None,
+                        status="COMPLETED",
+                        risk_level=verdict.get("risk_level"),
+                        total_amount_mxn=total_amount,
+                        findings_count=len(findings),
+                        leads_count=len(leads),
+                        report=submission,
+                        case_file_markdown=case_file_markdown or "",
+                        verdict=verdict or None,
+                    )
+                    await session.merge(record)
+                    await session.commit()
+                    logger.info(f"Persisted audit report for run_id: {run_id}")
+                    return True
+                except Exception as exc:
+                    await session.rollback()
+                    logger.error(f"Failed to persist audit report {run_id}: {exc}")
+                    return False
+        except Exception as exc:
+            logger.warning(f"Could not persist audit report: {exc}")
+            return False
 
 
 estate_sync_service = EstateSyncService()

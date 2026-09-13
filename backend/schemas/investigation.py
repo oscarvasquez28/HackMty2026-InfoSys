@@ -374,3 +374,49 @@ class EstateAuditResponse(BaseModel):
         default=None, description="Method and limits")
     submission: Optional[Dict[str, Any]] = Field(
         default_factory=dict, description="Full submission format")
+
+
+# -----------------------------------------------------------------------------
+# Historic Audit Report Schemas
+# -----------------------------------------------------------------------------
+class AuditReportSummary(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    run_id: str = Field(..., description="Unique pipeline run identifier (RUN-...)")
+    seed: Optional[int] = Field(None, description="Deterministic seed used for the audit")
+    company_name: Optional[str] = Field(None, description="Legal name of the audited company")
+    company_rfc: Optional[str] = Field(None, description="RFC of the audited company")
+    estate_source: Optional[str] = Field(None, description="Source estate path or URI")
+    status: str = Field(default="COMPLETED", description="Report status")
+    risk_level: Optional[str] = Field(None, description="Final risk tier of the verdict")
+    total_amount_mxn: Optional[float] = Field(
+        None, description="Total flagged volume in MXN")
+    findings_count: int = Field(default=0, description="Number of proven findings")
+    leads_count: int = Field(default=0, description="Number of discarded leads")
+    created_at: Union[datetime, str] = Field(
+        ..., description="Report archival timestamp")
+
+
+class AuditReportListResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    total: int = Field(..., ge=0, description="Total matching reports")
+    page: int = Field(..., ge=1, description="Current page number")
+    page_size: int = Field(..., ge=1, description="Items per page")
+    total_pages: int = Field(..., ge=0, description="Total pages available")
+    database_enabled: bool = Field(
+        ..., description="False when DATABASE_URL is not configured (no persistent history)")
+    items: List[AuditReportSummary] = Field(
+        default_factory=list, description="Report summaries on this page")
+
+
+class AuditReportDetailResponse(AuditReportSummary):
+    report: Dict[str, Any] = Field(
+        default_factory=dict, description="Full enriched submission payload renderable by the case file viewer")
+    case_file_markdown: str = Field(
+        default="", description="Rendered Markdown case file with Mermaid diagrams")
+    verdict: Optional[Dict[str, Any]] = Field(
+        None, description="Terminal verdict payload emitted at the end of the run")
+    record_counts: Dict[str, int] = Field(
+        default_factory=dict,
+        description="Archived row counts per historic estate table for this run_id")

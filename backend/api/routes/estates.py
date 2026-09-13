@@ -13,13 +13,14 @@ import time
 from typing import Any, Dict, List, Optional
 import uuid
 
-from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, File, Form, HTTPException, Query, Response, UploadFile, status
 from fastapi.responses import JSONResponse, StreamingResponse
 
 from backend.api.routes.investigations import generate_estate_audit_stream
 from backend.core.config import settings
 from backend.schemas.investigation import EstateAuditRequest, EstateAuditResponse
 from backend.services.case_file_generator import CaseFileGenerator
+from backend.services.dataset_generator import generate_dataset_zip
 from backend.services.deterministic_detectors import ForensicDetectorSuite
 from backend.services.estate_connector import estate_connector
 from backend.services.n8n_enrichment import n8n_enrichment_service
@@ -170,6 +171,25 @@ async def upload_estate(
             meta = submission.get("run_metadata", {})
             meta["wall_clock_seconds"] = round(elapsed, 3)
 
+            # Persist generated report for historical retrieval (non-fatal)
+            try:
+                from backend.services.estate_sync import estate_sync_service
+                await estate_sync_service.persist_audit_report(
+                    submission=submission,
+                    case_file_markdown=case_file_md,
+                    verdict={
+                        "run_id": meta.get("run_id"),
+                        "risk_level": risk_level,
+                        "total_amount_mxn": round(total_volume, 2),
+                        "completed_at": datetime.now(timezone.utc).isoformat(),
+                    },
+                    company_name=company_name,
+                    company_rfc=company_rfc,
+                    estate_source=str(save_path.resolve()),
+                )
+            except Exception as report_err:
+                logger.warning(f"Could not persist audit report: {report_err}")
+
             return EstateAuditResponse(
                 seed=seed,
                 run_id=meta.get("run_id"),
@@ -246,6 +266,40 @@ async def upload_estate_and_stream(
             "Connection": "keep-alive",
             "X-Accel-Buffering": "no",
             "Content-Type": "text/event-stream",
+        },
+    )
+
+
+@router.post("/generate-dataset")
+async def generate_dataset(
+    seed: Optional[int] = Query(default=None, description="Deterministic RNG seed; random when omitted"),
+):
+    """
+    Generates a fresh data estate via the forensic seeder and returns it as a
+    downloadable ZIP archive (estate.db + ground_truth.json + README.txt).
+    The submission.json artifact is intentionally excluded: real submissions are
+    produced by the audit pipeline, not the seeder.
+    """
+    try:
+        zip_bytes, active_seed, filename = await generate_dataset_zip(seed=seed)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
+        ) from exc
+    except Exception as exc:
+        logger.error(f"Dataset generation failed: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Could not generate dataset: {str(exc)}",
+        ) from exc
+
+    return Response(
+        content=zip_bytes,
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "X-Dataset-Seed": str(active_seed),
         },
     )
 

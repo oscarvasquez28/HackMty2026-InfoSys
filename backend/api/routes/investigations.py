@@ -667,8 +667,52 @@ async def audit_estate_endpoint(
                 logger.warning(f"Error checking validate_format: {val_err}")
                 validation_passed = True
 
+        total_volume_flagged = sum(float(f.get("peso_amount", 0.0)) for f in findings)
+        risk_level = "CRITICAL" if findings else "LOW"
+        submission.setdefault("header", {
+            "company": req.company_name,
+            "company_rfc": req.company_rfc or "AUD990101XYZ",
+            "audit_period": {"start": "2025-01-01", "end": "2026-12-31"},
+        })
+        submission.setdefault("executive_summary", {
+            "plain_narrative": enrichment.get("final_narrative") or (
+                f"The forensic audit determined a {risk_level} risk level, identifying {len(findings)} schemes "
+                f"with a proven amount of ${total_volume_flagged:,.2f} MXN and {len(leads)} preliminary leads discarded."
+            )
+        })
+        submission.setdefault("entity_names", {ent: ent for f in findings for ent in f.get("entities", [])})
+        submission.setdefault("method_and_limits", {
+            "architecture_summary": "6-stage deterministic audit engine with NetworkX and 2% accounting reconciliation.",
+            "out_of_scope": ["Transactions outside the audited period", "Unrecorded cash"],
+            "undetectable_fraud_types": ["Informal verbal transactions"],
+            "reproducibility_steps": [
+                f"python -m backend.services.deterministic_detectors --estate {req.estate_path} --seed {req.seed}",
+                "python tmp/validate_format.py --submission submission.json",
+            ],
+        })
+
+        # Persist generated report for historical retrieval (non-fatal)
+        try:
+            from backend.services.estate_sync import estate_sync_service
+            await estate_sync_service.persist_audit_report(
+                submission=submission,
+                case_file_markdown=case_file_md,
+                verdict={
+                    "run_id": meta.get("run_id"),
+                    "risk_level": risk_level,
+                    "total_amount_mxn": round(total_volume_flagged, 2),
+                    "completed_at": datetime.now(timezone.utc).isoformat(),
+                },
+                company_name=req.company_name,
+                company_rfc=req.company_rfc,
+                estate_source=str(req.estate_path),
+            )
+        except Exception as report_err:
+            logger.warning(f"Could not persist audit report: {report_err}")
+
         return EstateAuditResponse(
             seed=req.seed,
+            run_id=meta.get("run_id"),
             findings=findings,
             leads_not_pursued=leads,
             run_metadata=meta,
@@ -680,6 +724,11 @@ async def audit_estate_endpoint(
             judge_verdict=enrichment.get("judge_verdict"),
             final_narrative=enrichment.get("final_narrative"),
             adversarial_evidences=enrichment.get("adversarial_evidences", []),
+            header=submission["header"],
+            executive_summary=submission["executive_summary"],
+            entity_names=submission["entity_names"],
+            method_and_limits=submission["method_and_limits"],
+            submission=submission,
         )
 
     finally:
@@ -701,11 +750,12 @@ async def generate_estate_audit_stream(
     from backend.services.case_file_generator import CaseFileGenerator
     from backend.services.deterministic_detectors import ForensicDetectorSuite
     from backend.services.estate_connector import estate_connector
-    from backend.services.n8n_enrichment import n8n_enrichment_service
+    from backend.services.n8n_enrichment import OFFLINE_MODE_SENTINEL, n8n_enrichment_service
 
     start_time = time.perf_counter()
     p_estate = FilePath(req.estate_path).resolve()
 
+    is_offline_mode = (req.n8n_url or "").strip().lower() == OFFLINE_MODE_SENTINEL
     step_counter = 1
 
     try:
@@ -794,7 +844,7 @@ async def generate_estate_audit_stream(
                     "event_id": str(uuid.uuid4()),
                     "agent_id": "RISK_REVIEW",
                     "action": "started",
-                    "source": "EXTERNAL" if req.n8n_url else "DETERMINISTIC",
+                    "source": "EXTERNAL" if (req.n8n_url and not is_offline_mode) else "DETERMINISTIC",
                 }
                 yield f"event: thought\ndata: {json.dumps(thought_data)}\n\n"
 
@@ -961,6 +1011,21 @@ async def generate_estate_audit_stream(
             "completed_at": datetime.now(timezone.utc).isoformat(),
             "source": "EXTERNAL" if (last_synthesis.get("llm_calls", 0) > 0) else "DETERMINISTIC",
         }
+
+        # Persist generated report for historical retrieval (non-fatal)
+        try:
+            from backend.services.estate_sync import estate_sync_service
+            await estate_sync_service.persist_audit_report(
+                submission=submission,
+                case_file_markdown=case_file_md,
+                verdict=terminal_verdict,
+                company_name=req.company_name,
+                company_rfc=req.company_rfc,
+                estate_source=str(req.estate_path),
+            )
+        except Exception as report_err:
+            logger.warning(f"Could not persist audit report: {report_err}")
+
         yield f"event: verdict\ndata: {json.dumps(terminal_verdict)}\n\n"
 
         # 7. Emit audit_completed with full JSON response
