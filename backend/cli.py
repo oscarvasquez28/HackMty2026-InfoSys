@@ -47,11 +47,14 @@ def print_summary(
     submission_path: Path,
     validation_passed: Optional[bool] = None,
     validation_errors: Optional[list] = None,
+    run_id: Optional[str] = None,
 ):
     print()
     print("+" + "-" * 73 + "+")
     print(f"|  {'AUDIT EXECUTION METRICS':<71}|")
     print("+" + "-" * 73 + "+")
+    if run_id:
+        print(f"|  * Run ID:                    {run_id:<44}|")
     print(f"|  * Seed:                      {seed:<44}|")
     print(f"|  * Proven Fraud Schemes:      {findings_count:<44}|")
     print(f"|  * Cleared Decoys / Leads:    {leads_count:<44}|")
@@ -187,6 +190,7 @@ async def run_audit(
             submission_path=submission_path,
             validation_passed=validation_passed,
             validation_errors=validation_errors,
+            run_id=meta.get("run_id"),
         )
 
         if validation_passed is False:

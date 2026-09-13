@@ -904,6 +904,7 @@ async def generate_estate_audit_stream(
 
         response_obj = EstateAuditResponse(
             seed=req.seed,
+            run_id=meta.get("run_id"),
             findings=submission["findings"],
             leads_not_pursued=submission["leads_not_pursued"],
             run_metadata=meta,
@@ -926,6 +927,7 @@ async def generate_estate_audit_stream(
         # 6. Emit terminal verdict event (matching standard frontend VerdictEvent contract)
         terminal_verdict = {
             "case_id": f"ESTATE-{req.seed}",
+            "run_id": meta.get("run_id"),
             "risk_level": risk_level,
             "fraud_type": ", ".join(proven_schemes) if proven_schemes else "Operación Regular Conforme a Derecho",
             "total_amount_mxn": round(total_volume_flagged, 2),

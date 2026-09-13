@@ -34,6 +34,7 @@ class Settings(BaseSettings):
 
     # External Integrations
     N8N_WEBHOOK_URL: str = ""
+    N8N_TIMEOUT: float = 60.0
     ELEVENLABS_API_KEY: str = ""
     ELEVENLABS_VOICE_ID: str = "21m00Tcm4TlvDq8ikWAM"  # Default Voice ID (Rachel)
     ELEVENLABS_MODEL_ID: str = "eleven_multilingual_v2"

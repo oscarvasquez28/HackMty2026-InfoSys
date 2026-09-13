@@ -11,6 +11,7 @@ import pytest
 from httpx import ASGITransport, AsyncClient, Response
 from unittest.mock import patch
 
+from backend.core.config import settings
 from backend.main import app
 from backend.models.estate import ContractRecord, ExhibitRecord, InvoiceRecord, VendorRecord
 from backend.services.case_file_generator import CaseFileGenerator
@@ -123,110 +124,117 @@ async def test_n8n_enrichment_sequential_mock_online():
                 )
             return Response(status_code=400, json={"error": "unknown action"}, request=None)
 
-        with patch("httpx.AsyncClient.post", side_effect=mock_post_handler):
-            # Test streaming generator steps
-            steps_collected = []
-            async for step in service.stream_enrichment_steps(
-                findings=sample_findings,
-                leads_not_pursued=sample_leads,
-                seed=42,
-                estate_target=db_path,
-                n8n_url="http://mock-n8n:5678/webhook/investigation",
-            ):
-                steps_collected.append(step)
+        try:
+            with patch("httpx.AsyncClient.post", side_effect=mock_post_handler):
+                # Test streaming generator steps
+                steps_collected = []
+                async for step in service.stream_enrichment_steps(
+                    findings=sample_findings,
+                    leads_not_pursued=sample_leads,
+                    seed=42,
+                    estate_target=db_path,
+                    n8n_url="http://mock-n8n:5678/webhook/investigation",
+                ):
+                    steps_collected.append(step)
 
-            step_types = [s["type"] for s in steps_collected]
-            assert "enrichment_started" in step_types
-            assert "finding_reviewed" in step_types
-            assert "lead_reviewed" in step_types
-            assert "verdict_synthesized" in step_types
+                step_types = [s["type"] for s in steps_collected]
+                assert "enrichment_started" in step_types
+                assert "finding_reviewed" in step_types
+                assert "lead_reviewed" in step_types
+                assert "verdict_synthesized" in step_types
 
-            # Verify finding received its individual judge verdict
-            finding_step = next(s for s in steps_collected if s["type"] == "finding_reviewed")
-            assert "CULPABLE" in finding_step["judge_verdict"]
-            assert len(finding_step["adversarial_evidences"]) == 1
+                # Verify finding received its individual judge verdict
+                finding_step = next(s for s in steps_collected if s["type"] == "finding_reviewed")
+                assert "CULPABLE" in finding_step["judge_verdict"]
+                assert len(finding_step["adversarial_evidences"]) == 1
 
-            # Verify lead received its dismissal judge verdict
-            lead_step = next(s for s in steps_collected if s["type"] == "lead_reviewed")
-            assert "ABSUELTO" in lead_step["judge_verdict"]
+                # Verify lead received its dismissal judge verdict
+                lead_step = next(s for s in steps_collected if s["type"] == "lead_reviewed")
+                assert "ABSUELTO" in lead_step["judge_verdict"]
 
-            # 1. Check exhibit records were inserted into the database exhibits table
-            async with connector.session_scope(db_path) as session:
-                from sqlalchemy import select
-                ex1 = (await session.execute(select(ExhibitRecord).where(ExhibitRecord.exhibit_id == "EX-ADV-0001"))).scalar_one_or_none()
-                assert ex1 is not None
-                assert ex1.source_table == "contracts"
-                assert ex1.record_id == "CNT-ADV-001"
+                # 1. Check exhibit records were inserted into the database exhibits table
+                async with connector.session_scope(db_path) as session:
+                    from sqlalchemy import select
+                    ex1 = (await session.execute(select(ExhibitRecord).where(ExhibitRecord.exhibit_id == "EX-ADV-0001"))).scalar_one_or_none()
+                    assert ex1 is not None
+                    assert ex1.source_table == "contracts"
+                    assert ex1.record_id == "CNT-ADV-001"
 
-            # 2. Check CaseFileGenerator incorporates the results into markdown
-            generator = CaseFileGenerator()
-            synthesis_step = next(s for s in steps_collected if s["type"] == "verdict_synthesized")
-            submission_payload = {
-                "seed": 42,
-                "findings": synthesis_step["findings"],
-                "leads_not_pursued": synthesis_step["leads_not_pursued"],
-                "adversarial_review": synthesis_step["adversarial_review"],
-                "judge_verdict": synthesis_step["judge_verdict"],
-                "final_narrative": synthesis_step["final_narrative"],
-                "adversarial_evidences": synthesis_step["adversarial_evidences"],
-                "run_metadata": {"llm_calls": synthesis_step["llm_calls"], "wall_clock_seconds": 1.2, "mxn_cost": 0.0},
-            }
-            case_md = generator.generate_case_file_markdown(submission_payload)
-            assert "DICTAMEN JUDICIAL PERICIAL GLOBAL" in case_md
-            assert "Veredicto Judicial del Hallazgo" in case_md
-            assert "CULPABLE" in case_md
-            assert "EX-ADV-0001" in case_md
-
-        await connector.dispose_all()
+                # 2. Check CaseFileGenerator incorporates the results into markdown
+                generator = CaseFileGenerator()
+                synthesis_step = next(s for s in steps_collected if s["type"] == "verdict_synthesized")
+                submission_payload = {
+                    "seed": 42,
+                    "findings": synthesis_step["findings"],
+                    "leads_not_pursued": synthesis_step["leads_not_pursued"],
+                    "adversarial_review": synthesis_step["adversarial_review"],
+                    "judge_verdict": synthesis_step["judge_verdict"],
+                    "final_narrative": synthesis_step["final_narrative"],
+                    "adversarial_evidences": synthesis_step["adversarial_evidences"],
+                    "run_metadata": {"llm_calls": synthesis_step["llm_calls"], "wall_clock_seconds": 1.2, "mxn_cost": 0.0},
+                }
+                case_md = generator.generate_case_file_markdown(submission_payload)
+                assert "DICTAMEN JUDICIAL PERICIAL GLOBAL" in case_md
+                assert "Veredicto Judicial del Hallazgo" in case_md
+                assert "CULPABLE" in case_md
+                assert "EX-ADV-0001" in case_md
+        finally:
+            await connector.dispose_all()
+            from backend.services.estate_connector import estate_connector
+            await estate_connector.dispose_all()
 
 
 @pytest.mark.asyncio
-async def test_n8n_enrichment_offline_fallback():
+async def test_n8n_enrichment_offline_fallback(monkeypatch):
+    monkeypatch.setattr(settings, "N8N_WEBHOOK_URL", "")
     with tempfile.TemporaryDirectory() as tmpdir:
         db_path = Path(tmpdir) / "test_offline_estate.db"
         connector = EstateConnector()
-        await connector.init_schema(db_path)
+        try:
+            await connector.init_schema(db_path)
 
-        sample_findings = [
-            {
-                "scheme_type": "phantom_vendor",
-                "entities": ["RFC:OFFLINE01"],
-                "narrative": "Hallazgo detectado en modo offline.",
-                "rule_broken": "SAT Articulo 69-B",
-                "peso_amount": 50000.00,
-                "confidence": "proven",
-                "exhibits": [
-                    {"exhibit_id": "EX-OFF-01", "source_table": "invoices", "record_id": "INV-001", "note": "Factura"},
-                ],
-                "money_trail": [],
-            }
-        ]
+            sample_findings = [
+                {
+                    "scheme_type": "phantom_vendor",
+                    "entities": ["RFC:OFFLINE01"],
+                    "narrative": "Hallazgo detectado en modo offline.",
+                    "rule_broken": "SAT Articulo 69-B",
+                    "peso_amount": 50000.00,
+                    "confidence": "proven",
+                    "exhibits": [
+                        {"exhibit_id": "EX-OFF-01", "source_table": "invoices", "record_id": "INV-001", "note": "Factura"},
+                    ],
+                    "money_trail": [],
+                }
+            ]
 
-        service = N8nEnrichmentService(connector=connector)
-        result = await service.run_enrichment(
-            findings=sample_findings,
-            leads_not_pursued=[],
-            seed=1,
-            estate_target=db_path,
-            n8n_url=None,
-        )
+            service = N8nEnrichmentService(connector=connector)
+            result = await service.run_enrichment(
+                findings=sample_findings,
+                leads_not_pursued=[],
+                seed=1,
+                estate_target=db_path,
+                n8n_url=None,
+            )
 
-        assert "Artículo 69-B" in result["adversarial_review"]
-        assert "DICTAMEN PERICIAL" in result["judge_verdict"]
-        assert "auditoría forense" in result["final_narrative"]
-        assert len(result["adversarial_evidences"]) >= 1
+            assert "Artículo 69-B" in result["adversarial_review"]
+            assert "DICTAMEN PERICIAL" in result["judge_verdict"]
+            assert "auditoría forense" in result["final_narrative"]
+            assert len(result["adversarial_evidences"]) >= 1
 
-        # Check per-finding judge verdict was populated
-        f0 = result["findings"][0]
-        assert "VEREDICTO DEL JUEZ (HALLAZGO 1/1)" in f0["judge_verdict"]
+            # Check per-finding judge verdict was populated
+            f0 = result["findings"][0]
+            assert "VEREDICTO DEL JUEZ (HALLAZGO 1/1)" in f0["judge_verdict"]
 
-        # Check exhibit inserted in exhibits table
-        async with connector.session_scope(db_path) as session:
-            from sqlalchemy import func, select
-            count = (await session.execute(select(func.count()).select_from(ExhibitRecord))).scalar()
-            assert count >= 1
-
-        await connector.dispose_all()
+            # Check exhibit inserted in exhibits table
+            async with connector.session_scope(db_path) as session:
+                from sqlalchemy import func, select
+                count = (await session.execute(select(func.count()).select_from(ExhibitRecord))).scalar()
+                assert count >= 1
+        finally:
+            await connector.dispose_all()
+            from backend.services.estate_connector import estate_connector
+            await estate_connector.dispose_all()
 
 
 @pytest.mark.asyncio

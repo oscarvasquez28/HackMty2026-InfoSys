@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import Any, AsyncGenerator, Dict, Optional, Tuple
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
@@ -21,6 +22,7 @@ from backend.models.forensic import (
 logger = logging.getLogger("forensic_auditor.database")
 
 _engine: Optional[AsyncEngine] = None
+_engine_loop: Optional[asyncio.AbstractEventLoop] = None
 _session_factory: Optional[async_sessionmaker[AsyncSession]] = None
 
 
@@ -154,7 +156,16 @@ def create_engine_and_sessionmaker(
 
 def get_engine() -> AsyncEngine:
     """Returns or creates the singleton AsyncEngine instance."""
-    global _engine, _session_factory
+    global _engine, _engine_loop, _session_factory
+    try:
+        current_loop = asyncio.get_running_loop()
+    except RuntimeError:
+        current_loop = None
+
+    if _engine is not None and _engine_loop is not None and current_loop is not None and _engine_loop != current_loop:
+        _engine = None
+        _session_factory = None
+
     if _engine is None:
         if not settings.DATABASE_URL:
             raise RuntimeError(
@@ -165,6 +176,7 @@ def get_engine() -> AsyncEngine:
         safe_url = sanitize_database_url(settings.DATABASE_URL)
         logger.info(f"Initializing AsyncEngine for: {safe_url}")
         _engine, _session_factory = create_engine_and_sessionmaker(settings.DATABASE_URL)
+        _engine_loop = current_loop
     return _engine
 
 
@@ -235,9 +247,10 @@ async def init_db(engine: Optional[AsyncEngine] = None) -> None:
 
 async def close_db() -> None:
     """Disposes of the database engine connection pool."""
-    global _engine, _session_factory
+    global _engine, _engine_loop, _session_factory
     if _engine is not None:
         await _engine.dispose()
         _engine = None
+        _engine_loop = None
         _session_factory = None
         logger.info("Database engine connection pool disposed.")

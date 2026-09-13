@@ -110,6 +110,7 @@ class VerdictPayload(BaseModel):
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
     case_id: Union[uuid.UUID, str] = Field(..., description="Case UUID")
+    run_id: Optional[str] = Field(None, description="Unique execution ID for this audit run")
     risk_level: str = Field(..., description="Risk tier: CRÍTICO, ALTO, MEDIO, BAJO")
     fraud_type: str = Field(..., description="Identified money laundering typology")
     total_amount_mxn: float = Field(..., description="Total flagged volume in MXN")
@@ -271,6 +272,7 @@ class EstateAuditRequest(BaseModel):
 
 class EstateAuditResponse(BaseModel):
     seed: int
+    run_id: Optional[str] = Field(None, description="Unique execution ID for this audit run")
     findings: List[Dict[str, Any]] = Field(default_factory=list)
     leads_not_pursued: List[Dict[str, Any]] = Field(default_factory=list)
     run_metadata: Dict[str, Any] = Field(default_factory=dict)
