@@ -34,6 +34,7 @@ class Settings(BaseSettings):
 
     # External Integrations
     N8N_WEBHOOK_URL: str = ""
+    N8N_TIMEOUT: float = 60.0
     ELEVENLABS_API_KEY: str = ""
     ELEVENLABS_VOICE_ID: str = "21m00Tcm4TlvDq8ikWAM"  # Default Voice ID (Rachel)
     ELEVENLABS_MODEL_ID: str = "eleven_multilingual_v2"
@@ -48,6 +49,7 @@ class Settings(BaseSettings):
 
     # Database Configuration (TigerData PostgreSQL + pgvector)
     DATABASE_URL: Optional[str] = None
+    POSTGRES_TIMEOUT: float = 30.0
     DB_POOL_SIZE: int = 20
     DB_MAX_OVERFLOW: int = 10
     DB_POOL_PRE_PING: bool = True

@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import Any, AsyncGenerator, Dict, Optional, Tuple
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
@@ -21,6 +22,7 @@ from backend.models.forensic import (
 logger = logging.getLogger("forensic_auditor.database")
 
 _engine: Optional[AsyncEngine] = None
+_engine_loop: Optional[asyncio.AbstractEventLoop] = None
 _session_factory: Optional[async_sessionmaker[AsyncSession]] = None
 
 
@@ -85,10 +87,16 @@ def normalize_database_url(raw_url: str) -> Tuple[str, Dict[str, Any]]:
                 connect_args["ssl"] = mode
         elif settings.DB_SSL_REQUIRE:
             connect_args["ssl"] = "require"
+
+        if settings.POSTGRES_TIMEOUT is not None:
+            connect_args.setdefault("command_timeout", float(settings.POSTGRES_TIMEOUT))
+            connect_args.setdefault("timeout", float(settings.POSTGRES_TIMEOUT))
     elif "psycopg" in scheme:
         # psycopg handles sslmode query parameter directly
         if "sslmode" not in query_params and settings.DB_SSL_REQUIRE:
             query_params["sslmode"] = ["require"]
+        if settings.POSTGRES_TIMEOUT is not None:
+            connect_args.setdefault("connect_timeout", int(settings.POSTGRES_TIMEOUT))
 
     new_query = urlencode(query_params, doseq=True)
     normalized_url = urlunparse((
@@ -140,6 +148,7 @@ def create_engine_and_sessionmaker(
             max_overflow=settings.DB_MAX_OVERFLOW,
             pool_pre_ping=settings.DB_POOL_PRE_PING,
             pool_recycle=settings.DB_POOL_RECYCLE,
+            pool_timeout=settings.POSTGRES_TIMEOUT,
             connect_args=connect_args,
         )
 
@@ -154,7 +163,16 @@ def create_engine_and_sessionmaker(
 
 def get_engine() -> AsyncEngine:
     """Returns or creates the singleton AsyncEngine instance."""
-    global _engine, _session_factory
+    global _engine, _engine_loop, _session_factory
+    try:
+        current_loop = asyncio.get_running_loop()
+    except RuntimeError:
+        current_loop = None
+
+    if _engine is not None and _engine_loop is not None and current_loop is not None and _engine_loop != current_loop:
+        _engine = None
+        _session_factory = None
+
     if _engine is None:
         if not settings.DATABASE_URL:
             raise RuntimeError(
@@ -165,6 +183,7 @@ def get_engine() -> AsyncEngine:
         safe_url = sanitize_database_url(settings.DATABASE_URL)
         logger.info(f"Initializing AsyncEngine for: {safe_url}")
         _engine, _session_factory = create_engine_and_sessionmaker(settings.DATABASE_URL)
+        _engine_loop = current_loop
     return _engine
 
 
@@ -235,9 +254,10 @@ async def init_db(engine: Optional[AsyncEngine] = None) -> None:
 
 async def close_db() -> None:
     """Disposes of the database engine connection pool."""
-    global _engine, _session_factory
+    global _engine, _engine_loop, _session_factory
     if _engine is not None:
         await _engine.dispose()
         _engine = None
+        _engine_loop = None
         _session_factory = None
         logger.info("Database engine connection pool disposed.")

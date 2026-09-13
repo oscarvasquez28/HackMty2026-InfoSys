@@ -172,6 +172,7 @@ async def upload_estate(
 
             return EstateAuditResponse(
                 seed=seed,
+                run_id=meta.get("run_id"),
                 findings=findings,
                 leads_not_pursued=leads,
                 run_metadata=meta,

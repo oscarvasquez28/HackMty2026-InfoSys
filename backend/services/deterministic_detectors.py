@@ -733,16 +733,24 @@ class ForensicDetectorSuite:
         estate_target: Optional[Union[str, Path]] = None,
         seed: int = 1,
         company_rfc: Optional[str] = None,
+        run_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Main execution pipeline:
-        1. Loads estate tables into memory.
-        2. Executes the 5 specialized deterministic detectors.
-        3. Validates each candidate finding against the estate (2% peso reconciliation & record check).
-        4. Clears non-validated or benign leads into leads_not_pursued.
-        5. Computes cost & wall-clock metrics and returns valid submission payload.
+        1. Synchronizes incoming estate to PostgreSQL dual tables (resets ethereal, records historic).
+        2. Loads estate tables into memory.
+        3. Executes the 5 specialized deterministic detectors.
+        4. Validates each candidate finding against the estate (2% peso reconciliation & record check).
+        5. Clears non-validated or benign leads into leads_not_pursued.
+        6. Computes cost & wall-clock metrics and returns valid submission payload.
         """
         start_time = time.perf_counter()
+
+        from backend.services.estate_sync import estate_sync_service
+        assigned_run_id = await estate_sync_service.sync_estate_to_postgres(
+            estate_target=estate_target or "default",
+            run_id=run_id,
+        )
 
         dfs = await self._load_estate_dataframes(estate_target)
 
@@ -804,9 +812,13 @@ class ForensicDetectorSuite:
                 finding["reconciliation_formula"] = recon_res.formula_text
                 verified_findings.append(finding)
 
-                # 3. Persist verified exhibits into the estate's 'exhibits' table
+                # 3. Persist verified exhibits into both SQLite and dual PostgreSQL tables
                 try:
-                    await builder.persist_exhibits_to_estate(finding["exhibits"], estate_target=estate_target)
+                    await estate_sync_service.persist_exhibits_dual(
+                        finding["exhibits"],
+                        run_id=assigned_run_id,
+                        estate_target=estate_target,
+                    )
                 except Exception as ex_err:
                     logger.warning(f"Could not persist exhibits for finding {finding['scheme_type']}: {ex_err}")
             else:
@@ -828,6 +840,7 @@ class ForensicDetectorSuite:
             "findings": verified_findings,
             "leads_not_pursued": all_leads,
             "run_metadata": {
+                "run_id": assigned_run_id,
                 "llm_calls": 0,
                 "mxn_cost": 0.0,
                 "wall_clock_seconds": round(duration, 3),

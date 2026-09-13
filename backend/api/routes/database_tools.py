@@ -22,6 +22,7 @@ from backend.models.estate import (
     EfosRecord,
     EmployeeRecord,
     ExhibitRecord,
+    HISTORIC_TABLE_MODELS,
     InvoiceRecord,
     LedgerRecord,
     PurchaseOrderRecord,
@@ -44,9 +45,10 @@ logger = logging.getLogger("forensic_auditor.database_tools")
 
 router = APIRouter(prefix="/database", tags=["database-tools"])
 
-# Union of all supported database models (estate + core banking)
+# Union of all supported database models (estate ethereal + historic + core banking)
 ALL_DATABASE_MODELS: Dict[str, Any] = {
     **ESTATE_TABLE_MODELS,
+    **HISTORIC_TABLE_MODELS,
     "accounts": AccountRecord,
     "account_mappings": AccountMappingRecord,
     "parties": PartyRecord,
@@ -55,6 +57,7 @@ ALL_DATABASE_MODELS: Dict[str, Any] = {
 
 TABLE_PRIMARY_KEYS: Dict[str, str] = {
     **ESTATE_ID_COLUMNS,
+    **{k: "history_id" for k in HISTORIC_TABLE_MODELS},
     "accounts": "acct_id",
     "account_mappings": "cust_acct_mapping_id",
     "parties": "party_id",
@@ -62,15 +65,16 @@ TABLE_PRIMARY_KEYS: Dict[str, str] = {
 }
 
 TABLE_METADATA: Dict[str, str] = {
-    "vendors": "Corporate suppliers and moral persons registered in the data estate.",
-    "invoices": "CFDI 4.0 electronic invoices emitted or received with tax and monetary subtotals.",
-    "ledger": "General ledger journal entries and accounting debit/credit records.",
-    "bank_txns": "Interbank SPEI and wire transfers across source and destination CLABEs.",
-    "purchase_orders": "Corporate requisitions, procurement approvals, and purchase orders.",
-    "contracts": "Commercial contracts and master service agreements with scopes of work.",
-    "employees": "Company personnel, procurement officers, and account signatories.",
-    "efos_list": "SAT Articulo 69-B blacklisted simulated operation vendors (empresas fantasma).",
-    "exhibits": "Catalog of formal evidentiary exhibits registered by auditors and reviewers.",
+    "vendors": "Corporate suppliers and moral persons registered in the active ethereal estate.",
+    "invoices": "CFDI 4.0 electronic invoices emitted or received with tax and monetary subtotals in the active ethereal estate.",
+    "ledger": "General ledger journal entries and accounting debit/credit records in the active ethereal estate.",
+    "bank_txns": "Interbank SPEI and wire transfers across source and destination CLABEs in the active ethereal estate.",
+    "purchase_orders": "Corporate requisitions, procurement approvals, and purchase orders in the active ethereal estate.",
+    "contracts": "Commercial contracts and master service agreements with scopes of work in the active ethereal estate.",
+    "employees": "Company personnel, procurement officers, and account signatories in the active ethereal estate.",
+    "efos_list": "SAT Articulo 69-B blacklisted simulated operation vendors (empresas fantasma) in the active ethereal estate.",
+    "exhibits": "Catalog of formal evidentiary exhibits registered by auditors and reviewers in the active ethereal estate.",
+    **{k: f"Historical archive table for {k.replace('_history', '')} tagged with pipeline run_id." for k in HISTORIC_TABLE_MODELS},
     "accounts": "Internal bank accounts with status, currency, and KYC customer linkage.",
     "account_mappings": "Mappings linking accounts to customer/party records.",
     "parties": "Customer, individual, and organizational profiles.",
@@ -480,6 +484,21 @@ async def create_exhibit(req: ExhibitCreateRequest):
                 sentence=req.sentence,
             )
             session.add(new_ex)
+
+    # Dual persist into PostgreSQL history table
+    try:
+        from backend.services.estate_sync import estate_sync_service
+        await estate_sync_service.persist_exhibits_dual(
+            [{
+                "exhibit_id": ex_id,
+                "source_table": req.source_table,
+                "record_id": str(req.record_id),
+                "sentence": req.sentence,
+            }],
+            estate_target=target if target != "default" else None,
+        )
+    except Exception as sync_err:
+        logger.warning(f"Could not dual sync exhibit {ex_id}: {sync_err}")
 
     return ExhibitCreateResponse(
         status="INSERTED",

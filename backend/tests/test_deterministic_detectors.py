@@ -332,4 +332,6 @@ async def test_all_five_fraud_typologies_and_decoys():
             assert meta["mxn_cost"] == 0.0
         finally:
             await connector.dispose_all()
+            from backend.services.estate_connector import estate_connector
+            await estate_connector.dispose_all()
 
