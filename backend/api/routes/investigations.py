@@ -510,7 +510,7 @@ async def generate_investigation_stream(
         raise
 
 
-@router.get("/{case_id}/stream")
+@router.get("/{case_id:uuid}/stream")
 async def stream_investigation_thoughts(
     case_id: uuid.UUID = Path(..., description="UUID of the investigation case to stream"),
     db: Optional[AsyncSession] = Depends(get_optional_db),
