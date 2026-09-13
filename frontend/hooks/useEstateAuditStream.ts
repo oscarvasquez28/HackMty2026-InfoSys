@@ -1,13 +1,27 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import type { ThoughtEvent, VerdictEvent, AgentStatuses, AgentId, AuditMode } from "@/types/investigation";
+import type {
+  ThoughtEvent,
+  VerdictEvent,
+  AgentStatuses,
+  AgentId,
+  AuditMode,
+  AuditFeedItem,
+  AuditProgress,
+  FindingReviewedEvent,
+  LeadReviewedEvent,
+} from "@/types/investigation";
 
 export interface EstateAuditStreamState {
   isStreaming: boolean;
   thoughts: ThoughtEvent[];
-  findingsReviewed: any[];
-  leadsReviewed: any[];
+  findingsReviewed: FindingReviewedEvent[];
+  leadsReviewed: LeadReviewedEvent[];
+  feed: AuditFeedItem[];
+  progress: AuditProgress;
+  streamStartedAt: number | null;
+  lastEventAt: number | null;
   verdict: VerdictEvent | null;
   completedAudit: any | null;
   error: string | null;
@@ -31,12 +45,15 @@ const INITIAL_AGENT_STATUSES: AgentStatuses = {
 export function useEstateAuditStream(): EstateAuditStreamState {
   const [isStreaming, setIsStreaming] = useState(false);
   const [thoughts, setThoughts] = useState<ThoughtEvent[]>([]);
-  const [findingsReviewed, setFindingsReviewed] = useState<any[]>([]);
-  const [leadsReviewed, setLeadsReviewed] = useState<any[]>([]);
+  const [findingsReviewed, setFindingsReviewed] = useState<FindingReviewedEvent[]>([]);
+  const [leadsReviewed, setLeadsReviewed] = useState<LeadReviewedEvent[]>([]);
+  const [feed, setFeed] = useState<AuditFeedItem[]>([]);
   const [verdict, setVerdict] = useState<VerdictEvent | null>(null);
   const [completedAudit, setCompletedAudit] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [currentPhase, setCurrentPhase] = useState<string>("Starting...");
+  const [streamStartedAt, setStreamStartedAt] = useState<number | null>(null);
+  const [lastEventAt, setLastEventAt] = useState<number | null>(null);
 
   const eventSourceRef = useRef<EventSource | null>(null);
 
@@ -49,10 +66,13 @@ export function useEstateAuditStream(): EstateAuditStreamState {
     setThoughts([]);
     setFindingsReviewed([]);
     setLeadsReviewed([]);
+    setFeed([]);
     setVerdict(null);
     setCompletedAudit(null);
     setError(null);
     setCurrentPhase("Starting...");
+    setStreamStartedAt(null);
+    setLastEventAt(null);
   }, []);
 
   const startAuditWithPath = useCallback(
@@ -68,6 +88,9 @@ export function useEstateAuditStream(): EstateAuditStreamState {
         url += "&n8n_url=offline";
       }
 
+      setStreamStartedAt(Date.now());
+      setLastEventAt(null);
+
       const es = new EventSource(url);
       eventSourceRef.current = es;
 
@@ -75,6 +98,8 @@ export function useEstateAuditStream(): EstateAuditStreamState {
         try {
           const data: ThoughtEvent = JSON.parse(event.data);
           setThoughts((prev) => [...prev, data]);
+          setFeed((prev) => [...prev, { kind: "thought", receivedAt: Date.now(), data }]);
+          setLastEventAt(Date.now());
           if (data.phase) {
             setCurrentPhase(data.phase);
           }
@@ -85,8 +110,10 @@ export function useEstateAuditStream(): EstateAuditStreamState {
 
       es.addEventListener("finding_reviewed", (event: MessageEvent) => {
         try {
-          const data = JSON.parse(event.data);
+          const data: FindingReviewedEvent = JSON.parse(event.data);
           setFindingsReviewed((prev) => [...prev, data]);
+          setFeed((prev) => [...prev, { kind: "finding", receivedAt: Date.now(), data }]);
+          setLastEventAt(Date.now());
         } catch (e) {
           console.error("Error parsing finding_reviewed event:", e);
         }
@@ -94,8 +121,10 @@ export function useEstateAuditStream(): EstateAuditStreamState {
 
       es.addEventListener("lead_reviewed", (event: MessageEvent) => {
         try {
-          const data = JSON.parse(event.data);
+          const data: LeadReviewedEvent = JSON.parse(event.data);
           setLeadsReviewed((prev) => [...prev, data]);
+          setFeed((prev) => [...prev, { kind: "lead", receivedAt: Date.now(), data }]);
+          setLastEventAt(Date.now());
         } catch (e) {
           console.error("Error parsing lead_reviewed event:", e);
         }
@@ -221,11 +250,26 @@ export function useEstateAuditStream(): EstateAuditStreamState {
     return statuses;
   }, [thoughts, verdict, error]);
 
+  const progress = useMemo<AuditProgress>(() => {
+    const lastFinding = findingsReviewed[findingsReviewed.length - 1];
+    const lastLead = leadsReviewed[leadsReviewed.length - 1];
+    return {
+      findingsDone: findingsReviewed.length,
+      findingsTotal: lastFinding?.total ?? 0,
+      leadsDone: leadsReviewed.length,
+      leadsTotal: lastLead?.total ?? 0,
+    };
+  }, [findingsReviewed, leadsReviewed]);
+
   return {
     isStreaming,
     thoughts,
     findingsReviewed,
     leadsReviewed,
+    feed,
+    progress,
+    streamStartedAt,
+    lastEventAt,
     verdict,
     completedAudit,
     error,

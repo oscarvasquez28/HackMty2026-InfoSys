@@ -121,6 +121,70 @@ export type ReviewAction = "started" | "delegated" | "tool" | "finding" | "retur
 export type AgentStatus = "waiting" | "available" | "reviewing" | "returned" | "interrupted" | "complete";
 export type AgentStatuses = Record<AgentId, AgentStatus>;
 
+// Estate audit stream payloads (SSE `finding_reviewed` / `lead_reviewed` events).
+// Field names mirror the backend JSON exactly — see generate_estate_audit_stream.
+export interface AdversarialEvidence {
+  exhibit_id?: string;
+  source_table?: string;
+  record_id?: string;
+  sentence?: string;
+}
+
+export interface FindingReviewedEvent {
+  index: number;
+  total: number;
+  finding: {
+    scheme_type?: string;
+    peso_amount?: number;
+    entities?: string[];
+    narrative?: string;
+    rule_broken?: string;
+    adversarial_review?: string;
+    judge_verdict?: string;
+    adversarial_evidences?: AdversarialEvidence[];
+    [key: string]: unknown;
+  };
+  adversarial_review: string;
+  judge_verdict: string;
+  adversarial_evidences: AdversarialEvidence[];
+  inserted_exhibits_count: number;
+  is_online: boolean;
+  message: string;
+}
+
+export interface LeadReviewedEvent {
+  index: number;
+  total: number;
+  lead: {
+    entity?: string;
+    signal?: string;
+    reason?: string;
+    closed_by?: string;
+    [key: string]: unknown;
+  };
+  adversarial_review: string;
+  judge_verdict: string;
+  reason: string;
+  closed_by: string;
+  is_online: boolean;
+  message: string;
+}
+
+// Chronological feed item for the live-audit chain-of-thought UI. `receivedAt` is a
+// client-side timestamp recorded on arrival — the backend emits a `thought` right
+// before its finding/lead detail event, so arrival order matches logical order.
+export type AuditFeedItem =
+  | { kind: "thought"; receivedAt: number; data: ThoughtEvent }
+  | { kind: "finding"; receivedAt: number; data: FindingReviewedEvent }
+  | { kind: "lead"; receivedAt: number; data: LeadReviewedEvent };
+
+export interface AuditProgress {
+  findingsDone: number;
+  findingsTotal: number;
+  leadsDone: number;
+  leadsTotal: number;
+}
+
 export type InvestigationStage = "ingestion" | "discovery" | "synthesis" | "verdict";
 
 export interface AgentDecision {
