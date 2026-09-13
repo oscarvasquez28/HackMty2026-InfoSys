@@ -183,6 +183,7 @@ sequenceDiagram
 | `backend/api/routes/estates.py` | `backend.api.routes.estates` | Estate file ingestion (`.db`, `.csv`), immediate/deferred audit execution, and SSE upload-streaming. | `upload_estate()`, `upload_estate_and_stream()`, `get_estate_audit_stream()` |
 | `backend/api/routes/agent_tools.py` | `backend.api.routes.agent_tools` | 11 specialized agent tools for n8n ReAct agents and dynamic AST query execution. | `query_transactions()`, `profile_entities()`, `query_patterns()`, `query_legal_precedents()`, `dynamic_query()`, `find_related_entities()`, `detect_circular_flow()` |
 | `backend/api/routes/database_tools.py` | `backend.api.routes.database_tools` | Data estate inspection, catalog of 13 tables, individual table queries, exhibit creation, and sensitive field masking. | `list_tables()`, `get_vendors()`, `get_invoices()`, `get_ledger()`, `create_exhibit()`, `query_any_table()` |
+| `backend/api/routes/reports.py` | `backend.api.routes.reports` | Historic audit report registry: paginated listing and per-`run_id` retrieval of persisted case files (submission JSON, Markdown, verdict) with archived row counts. | `list_audit_reports()`, `get_audit_report()` |
 | `backend/api/routes/tts.py` | `backend.api.routes.tts` | ElevenLabs text-to-speech audio proxy, key shielding, safe mode quota protection, and silent MPEG fallback generator. | `synthesize_speech()`, `stream_elevenlabs_audio()`, `generate_fallback_silence_mp3()`, `is_elevenlabs_disabled()` |
 
 ---
@@ -271,7 +272,19 @@ Prefix: `/api/v1/database` and `/api/v1/tools/database` | Tag: `database-tools`
 
 ---
 
-### 4.6 TTS Audio Router (`/api/v1/tts`)
+### 4.6 Reports Router (`/api/v1/reports`)
+Prefix: `/api/v1/reports` | Tag: `reports`
+
+Audit reports are persisted automatically at the end of every estate audit (`generate_estate_audit_stream`, `audit_estate_endpoint`, `upload_estate` with `audit=True`) via `EstateSyncService.persist_audit_report()` into the `audit_reports` table, keyed by the same `run_id` that tags the nine `*_history` archive tables. Without `DATABASE_URL` the list endpoint degrades to an empty catalog with `database_enabled: false`.
+
+| HTTP Method | Route Path | Request Parameters | Response Schema | Status Codes | Description |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `GET` | `` (root) | Query: `page` (int, def 1), `page_size` (int, def 20), `risk_level` (opt), `q` (opt, searches run_id/company/RFC) | `AuditReportListResponse` (`items`, `total`, `total_pages`, `database_enabled`) | `200 OK`<br/>`503 Unavailable` | Paginated catalog of persisted audit reports, newest first. |
+| `GET` | `/{run_id}` | Path: `run_id` | `AuditReportDetailResponse` (`report`, `case_file_markdown`, `verdict`, `record_counts` per `*_history` table) | `200 OK`<br/>`404 Not Found`<br/>`503 Unavailable` | Full report payload; `report` is the enriched submission renderable by the frontend Case File Viewer. |
+
+---
+
+### 4.7 TTS Audio Router (`/api/v1/tts`)
 Prefix: `/api/v1/tts` | Tag: `tts`
 
 | HTTP Method | Route Path | Request Schema | Response Schema | Status Codes | Description |

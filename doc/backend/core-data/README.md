@@ -440,6 +440,14 @@ Implements the forensic financial estate data model, mirroring Mexican CFDI 4.0 
 | `EfosRecord` | `efos_list` | `rfc` (`String(13)`) | `legal_name`, `status` (Presunto/Definitivo), `publication_date` | SAT Article 69-B blacklisted simulated invoice companies. |
 | `ExhibitRecord` | `exhibits` | `exhibit_id` (`String(32)`) | `source_table`, `record_id`, `sentence` | Extracted audit exhibits and cross-evidence statements. |
 
+#### Historic Archive Layer & Audit Reports
+
+Every estate table has a `*_history` mirror (`vendors_history`, `invoices_history`, `ledger_history`, `bank_txns_history`, `purchase_orders_history`, `contracts_history`, `employees_history`, `efos_list_history`, `exhibits_history`) sharing the source columns plus `history_id` (autoincrement PK — `BigInteger().with_variant(Integer, "sqlite")` so it generates values on both dialects), `run_id` (indexed), and `archived_at`. `EstateSyncService.sync_estate_to_postgres()` wipes the ethereal tables and bulk-inserts the incoming estate into both layers per pipeline run.
+
+| Model | Table | Primary Key | Key Fields | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `AuditReportRecord` | `audit_reports` | `run_id` (`String(64)`) | `seed`, `company_name`, `company_rfc`, `risk_level`, `total_amount_mxn`, `findings_count`, `leads_count`, `report` (JSONB submission), `case_file_markdown`, `verdict` | Persisted forensic report per pipeline run, powering `GET /api/v1/reports` and the frontend `/investigate/history` screen. |
+
 ---
 
 ### 3.6 Investigation API Schemas (`backend/schemas/investigation.py`)
