@@ -1,4 +1,5 @@
 # Backend Architecture & Service Specification
+# Backend Architecture & Service Hub
 
 [← Back to Master Documentation](../README.md) | [Agent Routing Index](../index.md)
 
@@ -7,6 +8,7 @@
 ## 1. Overview
 
 The **Forensic Auditor AML Engine** backend is an asynchronous, high-performance microservice built on **FastAPI**. It is designed to detect, prune, and explain complex money laundering topographies (such as smurfing, circular layering, and rapid pass-through mule networks) across massive financial transaction datasets.
+The **Polar Forensic Auditor Backend** is a high-performance, asynchronous forensic engine built on **FastAPI**, **Polars**, **NetworkX**, and **SQLAlchemy 2.0**. It serves dual forensic processing modalities:
 
 ### Core Architectural Pillars
 - **High-Throughput Columnar Ingestion**: Employs **Polars** (`polars.DataFrame`) for sub-second ingestion, canonical alias normalization, and memory-efficient filtering of banking transaction ledgers.
@@ -20,6 +22,8 @@ The **Forensic Auditor AML Engine** backend is an asynchronous, high-performance
 - **Scalable Query Interface & Dynamic Agent Tool Registry**: Dedicated tool endpoints and a composable Abstract Syntax Tree (AST) query builder for external **n8n** ReAct agents with strict column whitelisting, parameterized SQL generation, and mandatory `case_id` isolation.
 - **Real-Time Forensic Agent Reasoning (SSE)**: Streams turn-by-turn investigative thoughts and legal verdicts via Server-Sent Events (`text/event-stream`), natively integrating with an external **n8n** webhook orchestrator with built-in high-fidelity fallback simulation.
 - **Shielded ElevenLabs Audio Proxy**: Direct audio streaming proxy for verdict narration via ElevenLabs API, featuring a synthetic silent MP3 generator fallback for zero-downtime offline demonstrations.
+1. **Transaction Graph Pruning (AMLSim Benchmark)**: Ingests raw banking ledgers, extracts directed multigraphs, and executes mathematical pruning to isolate closed cycles and high-velocity mule conduits with 85–98% noise reduction.
+2. **Corporate Data Estate Auditing (Forensic Challenge Pipeline)**: Ingests 8-table relational financial estates (SQLite/CSV/XML), executes 5 deterministic fraud scheme detectors, bridges with sequential n8n LLM adversarial enrichment and judicial review, and synthesizes competition-compliant case files with 2% per-table arithmetic peso reconciliation.
 
 ```
 +----------------------------------------------------------------------------------------------------+
@@ -52,10 +56,20 @@ The **Forensic Auditor AML Engine** backend is an asynchronous, high-performance
 ---
 
 ## 2. Architecture & Design
+## 2. Sub-Category Documentation Index
 
 ### Request Flow 1: Dataset Upload & Deterministic Pruning Pipeline
+The backend architecture is partitioned into 6 specialized child modules:
 
 When a financial investigator uploads an AML transaction file (CSV), the ingestion and deterministic filter services execute synchronously to produce topological metrics, isolate the suspicious subgraph, and persist records to TigerData PostgreSQL.
+| Child Sub-Category | Directory | Description & Scope |
+| :--- | :--- | :--- |
+| [**API & Routing**](./api/README.md) | `doc/backend/api/` | FastAPI lifecycle, REST/SSE routes (`/investigations`, `/estates`, `/tools`, `/tts`), ElevenLabs streaming proxy, CLI commands. |
+| [**Graph Pruning & Detectors**](./graph-pruning/README.md) | `doc/backend/graph-pruning/` | Polars CSV ingestion, NetworkX DiGraph topology, elementary cycle extraction ($k \le 5$), pass-through mule filtering, and the 5 deterministic scheme detectors. |
+| [**Estate Connector & Exhibits**](./estate-exhibits/README.md) | `doc/backend/estate-exhibits/` | SQLite Data Estate querying, exhibit builder, 2% per-table peso reconciliation, `submission_schema.json` output, and Markdown case file generation. |
+| [**Orchestration & Tools**](./orchestration-tools/README.md) | `doc/backend/orchestration-tools/` | Dynamic agent tool registry, AST-safe SQL queries, column whitelisting, sequential n8n LLM adversarial review, and judicial verdict loops. |
+| [**Core & Data Persistence**](./core-data/README.md) | `doc/backend/core-data/` | Pydantic v2 schemas, SQLAlchemy 2.0 ORM models, TigerData PostgreSQL connection pooling, pgvector HNSW legal embeddings, config, and PII masking. |
+| [**Testing & Verification**](./tests/README.md) | `doc/backend/tests/` | 160 automated tests across 24 test suites, covering unit tests, challenge milestones (M2–M5), mock strategies, and full e2e lifecycle verification. |
 
 ```mermaid
 sequenceDiagram
@@ -66,6 +80,7 @@ sequenceDiagram
     participant Filter as services/deterministic_filter.py (NetworkX)
     participant DB as core/database.py (SQLAlchemy AsyncSession)
     participant PG as TigerData PostgreSQL + pgvector
+---
 
     Client->>Route: POST /api/v1/investigations/upload (multipart/form-data)
     Route->>Ingest: read_amlsim_csv(content)
@@ -79,6 +94,7 @@ sequenceDiagram
     PG-->>DB: Commit OK
     Route-->>Client: 201 Created (case_id, metrics, subgraph, patterns)
 ```
+## 3. Subsystem Interaction Architecture
 
 ### Request Flow 2: Agent Tools & Dynamic Query Execution (n8n Integration)
 
@@ -92,6 +108,15 @@ sequenceDiagram
     participant Registry as services/tool_registry.py
     participant DB as core/database.py (AsyncSession)
     participant PG as TigerData PostgreSQL + pgvector
+flowchart TD
+    subgraph Ingress ["1. Ingress & Routing (doc/backend/api/)"]
+        Main["FastAPI App (main.py)"]
+        CLI["CLI Entrypoints (cli.py / run_audit.py)"]
+        R_Inv["/api/v1/investigations/*"]
+        R_Est["/api/v1/estates/*"]
+        R_Tool["/api/v1/tools/*"]
+        R_TTS["/api/v1/tts/*"]
+    end
 
     Agent->>ToolRoute: POST /api/v1/tools/legal-precedents {"query_text": "simulacion operaciones 69-B"}
     ToolRoute->>DB: Cosine similarity query on legal_knowledge_vectors (<=> operator)
@@ -99,6 +124,11 @@ sequenceDiagram
     PG-->>DB: Matched jurisprudence precedents
     DB-->>ToolRoute: LegalArticleVector rows
     ToolRoute-->>Agent: 200 OK (precedents, similarity_score, articles)
+    subgraph PruningTier ["2. Graph Analytics (doc/backend/graph-pruning/)"]
+        PolarsIngest["Polars Fast Ingestion<br/>(ingestion.py)"]
+        NetXFilter["NetworkX Topology Pruning<br/>(deterministic_filter.py)"]
+        Detectors["5 Deterministic Detectors<br/>(deterministic_detectors.py)"]
+    end
 
     Agent->>ToolRoute: POST /api/v1/tools/query (Dynamic AST Request)
     ToolRoute->>Registry: execute_query(target="transactions", criteria)
@@ -109,6 +139,11 @@ sequenceDiagram
     Registry-->>ToolRoute: Structured records + telemetry
     ToolRoute-->>Agent: 200 OK (target, count, total_records, data)
 ```
+    subgraph EstateTier ["3. Estate & Exhibits (doc/backend/estate-exhibits/)"]
+        EstConn["Data Estate Connector<br/>(estate_connector.py)"]
+        ExhBuilder["Exhibit Builder & Reconciler<br/>(exhibit_builder.py)"]
+        CaseGen["Case File Generator<br/>(case_file_generator.py)"]
+    end
 
 ### Request Flow 3: SSE Thought Streaming & Forensic Verdict Persistence
 
@@ -136,6 +171,9 @@ sequenceDiagram
         end
         Note over Route: Calculate final risk score & legal verdict
         Route-->>Client: event: verdict\ndata: {"risk_level": "...", "fraud_type": "...", ...}\n\n
+    subgraph AgentTier ["4. Agent Orchestration (doc/backend/orchestration-tools/)"]
+        ToolReg["Dynamic Tool Registry & AST Query<br/>(tool_registry.py)"]
+        N8NLoop["Sequential Adversarial Review<br/>(n8n_enrichment.py)"]
     end
     Route->>DB: UPDATE investigation_cases SET status='COMPLETED', verdict=:verdict
     DB->>PG: UPDATE commit
@@ -161,14 +199,26 @@ sequenceDiagram
     else Missing or Placeholder API Key
         Note over Route: generate_fallback_silence_mp3()<br/>Emits valid minimal MPEG-1 Layer 3 frames
         Route-->>Client: StreamingResponse (audio/mpeg, X-Audio-Source: synthetic-fallback-mode)
+    subgraph StorageTier ["5. Core & Persistence (doc/backend/core-data/)"]
+        Settings["Centralized Settings (core/config.py)"]
+        DBPool["SQLAlchemy Async Engine (core/database.py)"]
+        TigerData[("TigerData PostgreSQL + pgvector")]
+        SQLiteEst[("Runtime SQLite Data Estate")]
     end
 ```
 
 ---
+    %% Wiring
+    Main --> R_Inv & R_Est & R_Tool & R_TTS
+    CLI --> EstConn & Detectors
 
 ## 3. Key Components & File Breakdown
+    R_Inv --> PolarsIngest --> NetXFilter
+    R_Est --> EstConn --> Detectors
 
 The backend codebase follows a clean, modular structure organized by domain concerns:
+    Detectors --> ExhBuilder
+    EstConn <--> SQLiteEst
 
 ```
 backend/
@@ -215,8 +265,14 @@ backend/
     ├── test_pipeline.py
     └── test_tts.py
 ```
+    ExhBuilder --> N8NLoop
+    N8NLoop <--> ToolReg
+    ToolReg <--> DBPool
+    ToolReg <--> EstConn
 
 ### Component Responsibility Matrix
+    N8NLoop --> CaseGen
+    ExhBuilder --> CaseGen
 
 | File / Module | Responsibility | Key Symbols / Classes | External Dependencies |
 | :--- | :--- | :--- | :--- |
@@ -310,6 +366,9 @@ class LegalArticleVector(Base):
             postgresql_ops={"embedding": "vector_cosine_ops"},
         ),
     )
+    R_Inv & R_Tool --> DBPool
+    DBPool <--> TigerData
+    Settings -.-> Main & DBPool & NetXFilter
 ```
 
 ### 4.3 Agent Tool Registry & Dynamic Query Builder (`backend/services/tool_registry.py`)
@@ -338,6 +397,7 @@ The route `POST /api/v1/tts/synthesize` provides speech synthesis for the final 
 ---
 
 ## 5. Public API Specifications
+## 4. Key Workflows & Pipelines
 
 ### 5.1 Ingest Dataset & Apply Filter
 - **Method**: `POST`
@@ -349,6 +409,11 @@ The route `POST /api/v1/tts/synthesize` provides speech synthesis for the final 
   - Filename must end with `.csv`.
   - Must include columns mapping to origin, destination, amount, and optionally timestamp.
   - Amount must be strictly greater than zero.
+### Pipeline A: Tabular Transaction Graph Pruning (AMLSim)
+1. **Upload**: Client sends multipart CSV to `POST /api/v1/investigations/upload`.
+2. **Ingestion**: `ingestion.py` normalizes columns using alias resolution with Polars, casting amounts and timestamps.
+3. **Pruning**: `deterministic_filter.py` builds a directed NetworkX graph, computes edge aggregation, extracts closed cycles of length $\le 5$, and identifies pass-through mule nodes (turnover $\ge 90\%$ within 48h). Legitimate noise is deterministically pruned.
+4. **Streaming**: Client opens `GET /api/v1/investigations/{case_id}/stream`. Backend streams turn-by-turn reasoning thoughts and terminal verdict.
 
 #### Response: `201 Created`
 ```json
@@ -419,6 +484,12 @@ The route `POST /api/v1/tts/synthesize` provides speech synthesis for the final 
   }
 }
 ```
+### Pipeline B: Full Forensic Estate Audit (Challenge Evaluation)
+1. **Estate Binding**: SQLite database (`.db`) or zip archive uploaded via `POST /api/v1/estates/upload` or accessed via CLI (`python run_audit.py --estate <path>`).
+2. **Deterministic Detection**: `deterministic_detectors.py` runs rules for all 5 scheme types (`phantom_vendor`, `kickback`, `round_tripping`, `threshold_splitting`, `revenue_inflation`) alongside decoy filtering.
+3. **Exhibit Compilation**: `exhibit_builder.py` queries transactions, invoices, transfers, payroll, and logs; binds exhibits to findings; and enforces the **2% per-table peso arithmetic reconciliation constraint**.
+4. **Adversarial Enrichment**: `n8n_enrichment.py` coordinates sequential LLM adversarial challenges and judicial reviews with live SSE updates (`POST /api/v1/estates/audit/stream`).
+5. **Output Generation**: `case_file_generator.py` outputs schema-compliant `submission.json` and Markdown `case_file.md` with rendered Mermaid diagrams.
 
 ---
 
@@ -426,6 +497,7 @@ The route `POST /api/v1/tts/synthesize` provides speech synthesis for the final 
 - **Method & Path**: `GET /api/v1/investigations`
 - **Query Parameters**: `page` (int, default 1), `page_size` (int, default 20), `status` (optional string)
 - **Response**: `200 OK`
+## 5. Technology Stack & Key Libraries
 
 ```json
 {
@@ -446,6 +518,12 @@ The route `POST /api/v1/tts/synthesize` provides speech synthesis for the final 
   ]
 }
 ```
+- **Framework**: FastAPI 0.115+ (ASGI, AsyncIO)
+- **Data & Graph**: Polars 1.12+, NetworkX 3.4+, NumPy 2.1+
+- **Persistence**: SQLAlchemy 2.0 (asyncio), asyncpg, pgvector, aiosqlite, SQLite3
+- **Validation**: Pydantic v2 Settings & BaseModel
+- **External Services**: ElevenLabs TTS API (eleven_multilingual_v2), n8n ReAct Webhooks, TigerData PostgreSQL
+- **Testing**: pytest 9.1+, pytest-asyncio, httpx, Faker
 
 ### 5.3 Get Case Detail & Subgraph
 - **Method & Path**: `GET /api/v1/investigations/{case_id}`
@@ -555,8 +633,10 @@ The route `POST /api/v1/tts/synthesize` provides speech synthesis for the final 
 ---
 
 ## 6. Algorithmic Deep-Dive: Deterministic Pruning Engine
+## 6. Verification and Diagnostics
 
 The deterministic filter is located in `backend/services/deterministic_filter.py`. It is engineered to mathematically strip benign transaction noise while preserving suspicious clusters.
+To run the backend test suite:
 
 ### 6.1 Column Alias Resolution & Polars Ingestion
 To handle varying banking formats without manual schema remodeling, `services/ingestion.py` maps column variations using alias lookup tables:
@@ -616,12 +696,18 @@ Execute from the project root using the virtual environment:
 ```bash
 # Full test suite
 .\.venv\Scripts\python.exe -m pytest backend/tests/ -v
+# Run pipeline smoke test
+python -m pytest backend/tests/test_pipeline.py -v
 
 # Targeted E2E lifecycle test
 .\.venv\Scripts\python.exe -m pytest backend/tests/test_e2e_full_lifecycle.py -v
+# Run full test suite (excluding estate seeder standalone script)
+python -m pytest backend/tests --ignore=backend/tests/test_estate_seeder.py -q
 
 # Base pipeline test
 .\.venv\Scripts\python.exe -m pytest backend/tests/test_pipeline.py -v
+# Run end-to-end full lifecycle integration test
+python -m pytest backend/tests/test_e2e_full_lifecycle.py -v
 ```
 
 ---
@@ -682,3 +768,4 @@ All settings can be specified via environment variables or a `.env` file loaded 
 | `MAX_CYCLE_LENGTH` | integer | `5` | Upper limit on path length for cycle detection |
 | `PASS_THROUGH_RATIO_THRESHOLD` | float | `0.90` | Minimum turnover ratio for mule account detection |
 | `PASS_THROUGH_WINDOW_HOURS` | float | `48.0` | Maximum time window in hours for pass-through analysis |
+For comprehensive details on each component, refer to the child module documentation in the table above.
