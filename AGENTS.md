@@ -215,8 +215,9 @@ Health probe: `GET /health`. Sample dataset for manual runs: `data/sample_amlsim
 - **`/investigate` is the Case File Viewer**: loads a case file JSON — conforming to
   [`student-materials/forensic-auditor/submission_schema.json`](../student-materials/forensic-auditor/submission_schema.json)
   — from a bundled sample, a local file, the Data Estate page, or the backend's proposed (not yet
-  implemented) `/case-file` endpoint, and renders the full judged case-file document with a
-  Print/HTML/Markdown/JSON export toolbar. See `doc/frontend/README.md` §10 for the pipeline and
+  implemented) `/case-file` endpoint, and presents it as an animated, chapter-by-chapter guided tour
+  (the full vertical document stays mounted but hidden as the source for Print/HTML) with a
+  Print/HTML/Markdown/JSON export toolbar. See `doc/frontend/README.md` §10 (§10.6 for the tour) for the pipeline and
   `doc/architecture/README.md` §4.6 for the JSON contract.
 - **`/investigate/data` is the Data Estate page**: loads SQLite `.db`, CSV, CFDI 4.0 XML, or JSON
   entirely in the browser (`sql.js` WASM), validates it against `estate_schema.sql`, and lets the Case

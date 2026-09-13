@@ -473,7 +473,20 @@ python -X utf8 student-materials/forensic-auditor/validate_format.py --submissio
 | Markdown | `lib/caseFile/toMarkdown.ts::buildCaseFileMarkdown` | Deterministic string builder (not a DOM clone); embeds each finding's actual rendered Mermoid source in a ` ```mermaid ` fence. |
 | JSON | — | The original loaded `raw` object, pretty-printed — a no-op round trip so a judge always has the exact machine-checked file alongside the human-readable ones. |
 
-All four buttons are `disabled` until `CaseFileUiContext.diagramsSettled` is true, so an export never fires while a Mermaid diagram is still attempting to render. In development, `window.__caseFileDebug` (`{ buildMarkdown, buildHtml, issues }`) is set on every render so these exporters can be exercised from the browser console without clicking through the UI.
+All four buttons are `disabled` until `CaseFileUiContext.diagramsSettled` is true, so an export never fires while a Mermaid diagram is still attempting to render. In development, `window.__caseFileDebug` (`{ buildMarkdown, buildHtml, issues }`) is set on every render so these exporters can be exercised from the browser console without clicking through the UI. The export actions live in `hooks/useCaseFileExports.ts`, shared by the toolbar and the tour's closing screen.
+
+Print and HTML are built from `CaseFileDocument`, which `CaseFileWorkspace` keeps mounted but hidden on screen (`hidden print:block`) — the screen shows the guided tour (§10.6) instead. Its diagrams are the ones that report to `diagramsSettled`.
+
+### 10.6 Guided Tour (`components/case-file/tour/*`)
+
+On screen the case file is a chapter-by-chapter tour: Case opening → Executive summary → one chapter per finding → Leads investigated and closed → Method and limits → Review route. The reader advances only with the **Continue** button (nothing auto-advances); the sticky progress rail jumps to any chapter; Review route lets the reader reopen any part or **Conclude report**, which shows a closing screen with the four exports.
+
+- **Chapters** — `lib/caseFile/tour.ts::buildTourChapters(view, layout)`. `layout` is `"single"` (default: a finding is one screen with a scrollspy block index and blocks revealed on scroll) or `"steps"` (each finding splits into accusation / what happened / evidence / adversarial review). The choice is a toggle in the rail, persisted in `localStorage` (`polar.caseTour.findingLayout`); chapters share a layout-independent `baseKey` so switching keeps the position.
+- **Navigation** — `hooks/useTourNavigation.ts` tracks the active chapter by identity, keeps the outgoing chapter mounted for its 220 ms exit animation, and records visited parts. After each change `CaseFileTour` scrolls the stage into view, focuses the chapter heading, and announces the position through an `aria-live` region.
+- **Theming** — `paper.*`/`evidence.*` Tailwind colors resolve through `--case-*` CSS variables (`app/globals.css`): `.case-paper` (the printable document) uses a neutral light palette, `.case-tour` maps the same tokens to the portal's dark palette, so the document's section components are reused inside the tour unchanged. Use `bg-paper-sheet` / `text-evidence-on` instead of `bg-white` / `text-white` in those components.
+- **Diagrams** — `MermaidDiagram variant="tour"` renders a dark-themed SVG (`renderMermaidSvg(id, source, "dark")`, cached per theme/source), does not report to `CaseFileUiContext`, and tags edges with `pathLength="1"` so CSS draws the trail in once its block is revealed.
+- **Motion** — CSS keyframes only (`tour-*` in `globals.css`), animating `transform`/`opacity`; counters use `hooks/useCountUp.ts`. `prefers-reduced-motion` removes delays and loops and shows final values immediately.
+- **Exhibit chips** in a money-trail timeline are intercepted inside the tour: in step-by-step mode they open the finding's Evidence chapter, then scroll to and highlight the row.
 
 ---
 
