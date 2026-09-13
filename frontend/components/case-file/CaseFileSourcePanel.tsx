@@ -129,6 +129,11 @@ export const CaseFileSourcePanel: React.FC<CaseFileSourcePanelProps> = ({
     [caseFile]
   );
 
+  const handleCancelAudit = useCallback(() => {
+    stream.resetAudit();
+    setModalOpen(false);
+  }, [stream]);
+
   return (
     <>
       <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6">
@@ -325,6 +330,7 @@ export const CaseFileSourcePanel: React.FC<CaseFileSourcePanelProps> = ({
         error={stream.error}
         agentStatuses={stream.agentStatuses}
         onClose={() => setModalOpen(false)}
+        onCancel={handleCancelAudit}
         onOpenCaseFile={handleOpenCaseFile}
       />
     </>

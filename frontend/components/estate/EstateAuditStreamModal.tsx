@@ -43,6 +43,7 @@ interface EstateAuditStreamModalProps {
   error: string | null;
   agentStatuses: AgentStatuses;
   onClose: () => void;
+  onCancel?: () => void;
   onOpenCaseFile: (auditData: any) => void;
 }
 
@@ -164,7 +165,12 @@ const FindingCard: React.FC<DetailCardProps & { item: FindingReviewedEvent }> = 
   onToggle,
   receivedAt,
 }) => {
-  const tone = verdictTone(item.judge_verdict || "");
+  const tone =
+    item.verdict_outcome === "acquitted"
+      ? "acquitted"
+      : item.verdict_outcome === "upheld"
+      ? "guilty"
+      : verdictTone(item.judge_verdict || "");
   const scheme = String(item.finding?.scheme_type ?? "scheme").replace(/_/g, " ");
   const amount = Number(item.finding?.peso_amount ?? 0);
   return (
@@ -191,6 +197,11 @@ const FindingCard: React.FC<DetailCardProps & { item: FindingReviewedEvent }> = 
           <span className={cn("rounded border px-1.5 py-0.5 text-[10px] font-semibold", TONE_STYLES[tone])}>
             {TONE_LABELS[tone]}
           </span>
+          {item.reclassified_to_lead && (
+            <span className="rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-300">
+              → dismissed lead
+            </span>
+          )}
           <OnlineChip online={item.is_online} />
         </div>
         <div className="flex items-center gap-2">
@@ -328,6 +339,7 @@ export const EstateAuditStreamModal: React.FC<EstateAuditStreamModalProps> = ({
   error,
   agentStatuses,
   onClose,
+  onCancel,
   onOpenCaseFile,
 }) => {
   const streamEndRef = useRef<HTMLDivElement>(null);
@@ -391,6 +403,16 @@ export const EstateAuditStreamModal: React.FC<EstateAuditStreamModalProps> = ({
   const expectedTotal = progress.findingsTotal + progress.leadsTotal;
   const progressPct = expectedTotal > 0 ? Math.round((reviewedTotal / expectedTotal) * 100) : 0;
 
+  // Closing mid-stream must also abort the backend pipeline: hiding the modal
+  // alone would leave the SSE connection and the n8n/LLM calls running.
+  const handleDismiss = () => {
+    if (isStreaming && onCancel) {
+      onCancel();
+    } else {
+      onClose();
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -439,7 +461,8 @@ export const EstateAuditStreamModal: React.FC<EstateAuditStreamModalProps> = ({
             )}
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleDismiss}
+              aria-label={isStreaming ? "Cancel audit" : "Close"}
               className="rounded-lg p-1.5 text-muted hover:bg-surface-raised hover:text-foreground"
             >
               <X className="h-5 w-5" />
@@ -643,13 +666,23 @@ export const EstateAuditStreamModal: React.FC<EstateAuditStreamModalProps> = ({
           </div>
 
           <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="app-button text-xs"
-            >
-              Close
-            </button>
+            {isStreaming && onCancel ? (
+              <button
+                type="button"
+                onClick={onCancel}
+                className="rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-300 transition-colors hover:bg-rose-500/20"
+              >
+                Cancel audit
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={onClose}
+                className="app-button text-xs"
+              >
+                Close
+              </button>
+            )}
 
             {completedAudit && (
               <button

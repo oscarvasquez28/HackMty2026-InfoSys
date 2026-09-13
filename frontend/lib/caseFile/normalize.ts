@@ -109,6 +109,14 @@ function normalizeReconciliation(value: unknown): Reconciliation | null {
 }
 
 function normalizeAdversarialReview(value: unknown): AdversarialReview | null {
+  // Older runs persisted the review as a plain string; newer runs emit the
+  // structured {challenger_argument, why_finding_held, reviewer_agent_role}
+  // object. Both must render — a string maps onto the challenger panel.
+  if (typeof value === "string") {
+    const text = value.trim();
+    if (!text) return null;
+    return { challenger_argument: text, why_finding_held: "", reviewer_agent_role: "challenger" };
+  }
   if (!isRecord(value)) return null;
   return {
     challenger_argument: asString(value.challenger_argument),

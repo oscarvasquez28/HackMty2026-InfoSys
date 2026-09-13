@@ -130,6 +130,8 @@ export interface AdversarialEvidence {
   sentence?: string;
 }
 
+export type VerdictOutcome = "upheld" | "acquitted" | "evaluated";
+
 export interface FindingReviewedEvent {
   index: number;
   total: number;
@@ -139,13 +141,22 @@ export interface FindingReviewedEvent {
     entities?: string[];
     narrative?: string;
     rule_broken?: string;
-    adversarial_review?: string;
+    adversarial_review?:
+      | string
+      | {
+          challenger_argument?: string;
+          why_finding_held?: string;
+          reviewer_agent_role?: string;
+        };
     judge_verdict?: string;
+    verdict_outcome?: VerdictOutcome;
     adversarial_evidences?: AdversarialEvidence[];
     [key: string]: unknown;
   };
   adversarial_review: string;
   judge_verdict: string;
+  verdict_outcome?: VerdictOutcome;
+  reclassified_to_lead?: boolean;
   adversarial_evidences: AdversarialEvidence[];
   inserted_exhibits_count: number;
   is_online: boolean;

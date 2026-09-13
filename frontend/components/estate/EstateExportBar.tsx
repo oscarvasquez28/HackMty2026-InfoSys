@@ -52,6 +52,11 @@ export const EstateExportBar: React.FC<EstateExportBarProps> = ({
     router.push("/investigate");
   };
 
+  const handleCancelAudit = () => {
+    stream.resetAudit();
+    setModalOpen(false);
+  };
+
   return (
     <>
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -109,6 +114,7 @@ export const EstateExportBar: React.FC<EstateExportBarProps> = ({
         error={stream.error}
         agentStatuses={stream.agentStatuses}
         onClose={() => setModalOpen(false)}
+        onCancel={handleCancelAudit}
         onOpenCaseFile={handleOpenCaseFile}
       />
     </>

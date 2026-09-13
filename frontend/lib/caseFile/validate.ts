@@ -348,6 +348,10 @@ export function collectWarnings(view: CaseFileView): ValidationIssue[] {
       issues.push(warn(`${p}.reconciliation`, "W_RECONCILIATION_FAILED", `${p}: peso_amount does not reconcile to cited exhibits within 2%.`));
     }
 
+    if (finding.adversarial_review === null) {
+      issues.push(warn(`${p}.adversarial_review`, "W_ADVERSARIAL_MISSING", `${p}: no structured adversarial review was recorded for this finding.`));
+    }
+
     if (reconciliation.origin === "backend" && finding.peso_amount !== null) {
       const derivedPerTable = computePerTableSubtotals(finding);
       const derivedBest = pickBestMatch(finding.peso_amount, derivedPerTable);
