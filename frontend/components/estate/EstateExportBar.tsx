@@ -47,7 +47,7 @@ export const EstateExportBar: React.FC<EstateExportBarProps> = ({
     setModalOpen(false);
     caseFile.loadRaw(auditData, {
       kind: "api",
-      label: `Auditoría en Vivo (Seed ${auditData?.seed ?? 1})`,
+      label: `Live Audit (Seed ${auditData?.seed ?? 1})`,
     });
     router.push("/investigate");
   };
@@ -63,7 +63,7 @@ export const EstateExportBar: React.FC<EstateExportBarProps> = ({
             className="app-primary flex items-center gap-2 text-xs font-semibold py-2 px-3.5 shadow-md shadow-brand-500/20 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Play className="h-3.5 w-3.5 fill-current" />
-            Ejecutar Auditoría Forense (Live Stream)
+            Run Forensic Audit (Live Stream)
           </button>
 
           <button

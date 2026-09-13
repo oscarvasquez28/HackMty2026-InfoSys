@@ -82,7 +82,7 @@ async def run_audit(
     estate_path: str,
     seed: int = 1,
     company_rfc: Optional[str] = None,
-    company_name: str = "Empresa Auditada S.A. de C.V.",
+    company_name: str = "Audited Company S.A. de C.V.",
     output_dir: str = ".",
     file_prefix: str = "",
     validate: bool = True,
@@ -230,7 +230,7 @@ def main():
     )
     parser.add_argument(
         "--company-name",
-        default="Empresa Auditada S.A. de C.V.",
+        default="Audited Company S.A. de C.V.",
         help="Legal name of the audited company",
     )
     parser.add_argument(

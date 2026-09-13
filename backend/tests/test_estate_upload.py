@@ -55,7 +55,7 @@ async def test_estate_upload_and_audit():
         async with AsyncClient(transport=transport, base_url="http://test") as ac:
             # 1. Upload without immediate audit
             files = {"file": ("estate.db", db_bytes, "application/vnd.sqlite3")}
-            data = {"seed": "1", "company_name": "Empresa Auditada Test", "audit": "false"}
+            data = {"seed": "1", "company_name": "Audited Company Test", "audit": "false"}
             resp = await ac.post("/api/v1/estates/upload", files=files, data=data)
             assert resp.status_code == 200, f"Upload failed: {resp.text}"
             res_json = resp.json()
@@ -64,7 +64,7 @@ async def test_estate_upload_and_audit():
 
             # 2. Upload with immediate audit
             files2 = {"file": ("estate.db", db_bytes, "application/vnd.sqlite3")}
-            data2 = {"seed": "1", "company_name": "Empresa Auditada Test", "audit": "true"}
+            data2 = {"seed": "1", "company_name": "Audited Company Test", "audit": "true"}
             resp2 = await ac.post("/api/v1/estates/upload", files=files2, data=data2)
             assert resp2.status_code == 200, f"Audit failed: {resp2.text}"
             audit_json = resp2.json()

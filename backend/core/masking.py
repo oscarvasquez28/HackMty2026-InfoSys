@@ -54,7 +54,7 @@ def mask_address(addr: Any) -> str:
         return ""
     val = str(addr).strip()
     # Keep country or city if discernible, mask street numbers and interior info
-    return "[DIRECCIÓN PROTEGIDA / REDACTED ADDRESS]"
+    return "[REDACTED ADDRESS]"
 
 
 def mask_ssn(ssn: Any) -> str:

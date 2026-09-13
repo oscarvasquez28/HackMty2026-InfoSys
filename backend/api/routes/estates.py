@@ -36,7 +36,7 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 async def upload_estate(
     file: UploadFile = File(..., description="SQLite .db file or estate data archive"),
     seed: int = Form(default=1, description="Random seed for deterministic audit execution"),
-    company_name: str = Form(default="Empresa Auditada S.A. de C.V.", description="Legal name of the audited company"),
+    company_name: str = Form(default="Audited Company S.A. de C.V.", description="Legal name of the audited company"),
     company_rfc: Optional[str] = Form(default=None, description="RFC of the audited company"),
     audit: bool = Form(default=False, description="Whether to immediately execute forensic audit"),
 ):
@@ -125,7 +125,7 @@ async def upload_estate(
                     "code": "CFF-69B" if "phantom" in str(f.get("scheme_type", "")) else "CFF-GEN",
                     "authority": "SAT / UIF / CNBV",
                     "article": "Código Fiscal de la Federación / Ley de Instituciones de Crédito",
-                    "legal_text_citation": "Tipología de operaciones con recursos de procedencia ilícita y simulación de actos jurídicos.",
+                    "legal_text_citation": "Typology of transactions involving funds of illicit origin and simulation of legal acts.",
                 })
                 amt = float(f.get("peso_amount", 0.0))
                 f.setdefault("reconciliation", {
@@ -137,7 +137,7 @@ async def upload_estate(
                 })
 
             total_volume = sum(float(f.get("peso_amount", 0.0)) for f in findings)
-            risk_level = "CRÍTICO" if findings else "BAJO"
+            risk_level = "CRITICAL" if findings else "LOW"
 
             submission["header"] = {
                 "company": company_name,
@@ -146,15 +146,15 @@ async def upload_estate(
             }
             submission["executive_summary"] = {
                 "plain_narrative": enrichment.get("final_narrative") or (
-                    f"Auditoría forense determinó un nivel de riesgo {risk_level} identificando {len(findings)} esquemas "
-                    f"con un importe comprobado de ${total_volume:,.2f} MXN y {len(leads)} líneas preliminares descartadas."
+                    f"The forensic audit determined a {risk_level} risk level, identifying {len(findings)} schemes "
+                    f"with a proven amount of ${total_volume:,.2f} MXN and {len(leads)} preliminary leads discarded."
                 )
             }
             submission["entity_names"] = {ent: ent for f in findings for ent in f.get("entities", [])}
             submission["method_and_limits"] = {
-                "architecture_summary": "Motor de auditoría determinista de 6 etapas con NetworkX y conciliación contable al 2%.",
-                "out_of_scope": ["Transacciones fuera del periodo auditado", "Efectivo no registrado"],
-                "undetectable_fraud_types": ["Operaciones informales verbales"],
+                "architecture_summary": "6-stage deterministic audit engine with NetworkX and 2% accounting reconciliation.",
+                "out_of_scope": ["Transactions outside the audited period", "Unrecorded cash"],
+                "undetectable_fraud_types": ["Informal verbal transactions"],
                 "reproducibility_steps": [
                     f"python -m backend.services.deterministic_detectors --estate {save_path.resolve()} --seed {seed}",
                     "python tmp/validate_format.py --submission submission.json",
@@ -205,7 +205,7 @@ async def upload_estate(
 async def upload_estate_and_stream(
     file: UploadFile = File(..., description="SQLite .db file or estate data archive"),
     seed: int = Form(default=1, description="Random seed for deterministic audit execution"),
-    company_name: str = Form(default="Empresa Auditada S.A. de C.V.", description="Legal name of the audited company"),
+    company_name: str = Form(default="Audited Company S.A. de C.V.", description="Legal name of the audited company"),
     company_rfc: Optional[str] = Form(default=None, description="RFC of the audited company"),
 ):
     """
@@ -254,7 +254,7 @@ async def get_estate_audit_stream(
     estate_path: str = Query(..., description="Absolute path or URI to the financial estate database"),
     seed: int = Query(default=1, description="Random seed for deterministic audit execution"),
     company_rfc: Optional[str] = Query(default=None, description="RFC of the company being audited"),
-    company_name: str = Query(default="Empresa Auditada S.A. de C.V.", description="Legal name of audited company"),
+    company_name: str = Query(default="Audited Company S.A. de C.V.", description="Legal name of audited company"),
     n8n_url: Optional[str] = Query(default=None, description="Optional n8n webhook URL"),
 ):
     """

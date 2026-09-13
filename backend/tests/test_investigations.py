@@ -199,7 +199,7 @@ async def test_paginated_listing_with_database():
                     metrics={"total_nodes_analyzed": 5 + i},
                     subgraph={"nodes": [], "edges": []},
                     patterns={"cycles": []},
-                    verdict={"risk_level": "CRÍTICO"} if case_status == "COMPLETED" else None,
+                    verdict={"risk_level": "CRITICAL"} if case_status == "COMPLETED" else None,
                 )
                 session.add(case)
             await session.commit()
@@ -285,7 +285,7 @@ async def test_paginated_listing_in_memory_fallback():
                 "status": "COMPLETED" if i == 0 else "PROCESSING",
                 "created_at": "2026-09-12T08:00:00Z",
                 "metrics": {"total_nodes_analyzed": 4},
-                "verdict": {"risk_level": "ALTO"} if i == 0 else None,
+                "verdict": {"risk_level": "HIGH"} if i == 0 else None,
             }
 
         transport = httpx.ASGITransport(app=app)
@@ -402,7 +402,7 @@ async def test_sse_streaming_and_database_verdict_persistence():
 
             final_verdict = verdict_events[0]["data"]
             assert final_verdict["case_id"] == case_id_str
-            assert final_verdict["risk_level"] in ("CRÍTICO", "ALTO")
+            assert final_verdict["risk_level"] in ("CRITICAL", "HIGH")
             assert "confidence_score" in final_verdict
             assert "patterns_summary" in final_verdict
             assert "legal_recommendation" in final_verdict

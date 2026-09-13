@@ -36,7 +36,7 @@ export function useEstateAuditStream(): EstateAuditStreamState {
   const [verdict, setVerdict] = useState<VerdictEvent | null>(null);
   const [completedAudit, setCompletedAudit] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [currentPhase, setCurrentPhase] = useState<string>("Iniciando...");
+  const [currentPhase, setCurrentPhase] = useState<string>("Starting...");
 
   const eventSourceRef = useRef<EventSource | null>(null);
 
@@ -52,14 +52,14 @@ export function useEstateAuditStream(): EstateAuditStreamState {
     setVerdict(null);
     setCompletedAudit(null);
     setError(null);
-    setCurrentPhase("Iniciando...");
+    setCurrentPhase("Starting...");
   }, []);
 
   const startAuditWithPath = useCallback(
-    (estatePath: string, seed: number = 1, companyName: string = "Empresa Auditada S.A. de C.V.") => {
+    (estatePath: string, seed: number = 1, companyName: string = "Audited Company S.A. de C.V.") => {
       resetAudit();
       setIsStreaming(true);
-      setCurrentPhase("Conectando al motor determinista...");
+      setCurrentPhase("Connecting to deterministic engine...");
 
       const url = `${API_BASE}/api/v1/estates/stream?estate_path=${encodeURIComponent(
         estatePath
@@ -112,7 +112,7 @@ export function useEstateAuditStream(): EstateAuditStreamState {
           const data = JSON.parse(event.data);
           setCompletedAudit(data);
           setIsStreaming(false);
-          setCurrentPhase("Auditoría Finalizada con Éxito");
+          setCurrentPhase("Audit Completed Successfully");
           es.close();
           eventSourceRef.current = null;
         } catch (e) {
@@ -124,7 +124,7 @@ export function useEstateAuditStream(): EstateAuditStreamState {
       es.addEventListener("error", (event: MessageEvent) => {
         try {
           const data = JSON.parse(event.data);
-          setError(data.error || "Error en el pipeline de auditoría");
+          setError(data.error || "Error in the audit pipeline");
         } catch {
           // If connection closed normally or failed
           if (es.readyState === EventSource.CLOSED) {
@@ -137,7 +137,7 @@ export function useEstateAuditStream(): EstateAuditStreamState {
         // Only set error if not completed
         setCompletedAudit((curr: any) => {
           if (!curr) {
-            setError("Conexión con el servidor interrumpida o terminada.");
+            setError("Connection to the server was interrupted or terminated.");
             setIsStreaming(false);
           }
           return curr;
@@ -150,10 +150,10 @@ export function useEstateAuditStream(): EstateAuditStreamState {
   );
 
   const startAuditWithBlob = useCallback(
-    async (blob: Blob, seed: number = 1, companyName: string = "Empresa Auditada S.A. de C.V.") => {
+    async (blob: Blob, seed: number = 1, companyName: string = "Audited Company S.A. de C.V.") => {
       resetAudit();
       setIsStreaming(true);
-      setCurrentPhase("Preparando y subiendo base de datos...");
+      setCurrentPhase("Preparing and uploading database...");
 
       try {
         const form = new FormData();
@@ -168,19 +168,19 @@ export function useEstateAuditStream(): EstateAuditStreamState {
         });
 
         if (!uploadRes.ok) {
-          throw new Error(`Error en subida (HTTP ${uploadRes.status})`);
+          throw new Error(`Upload error (HTTP ${uploadRes.status})`);
         }
 
         const uploadData = await uploadRes.json();
         const path = uploadData.estate_path;
         if (!path) {
-          throw new Error("El backend no retornó la ruta de la base de datos.");
+          throw new Error("The backend did not return the database path.");
         }
 
         startAuditWithPath(path, seed, companyName);
       } catch (err: any) {
         setIsStreaming(false);
-        setError(err?.message || "No se pudo conectar con el servidor.");
+        setError(err?.message || "Could not connect to the server.");
       }
     },
     [resetAudit, startAuditWithPath]

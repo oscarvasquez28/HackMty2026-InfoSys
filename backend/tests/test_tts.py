@@ -186,7 +186,7 @@ async def test_tts_proxy_success_default_voice_and_model():
     try:
         async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
             with patch("backend.api.routes.tts.httpx.AsyncClient", return_value=mock_client):
-                payload = {"text": "Se identificó ciclo de lavado de dinero entre Cuenta A y Cuenta B."}
+                payload = {"text": "A money laundering cycle was identified between Account A and Account B."}
                 resp = await client.post("/api/v1/tts/synthesize", json=payload)
 
                 assert resp.status_code == 200

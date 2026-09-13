@@ -77,8 +77,8 @@ async def test_complete_forensic_pipeline():
 
         final_verdict = verdict_events[0]["data"]
         assert final_verdict["case_id"] == case_id
-        assert final_verdict["risk_level"] in ["CRÍTICO", "ALTO"]
-        assert "Estructuración" in final_verdict["fraud_type"]
+        assert final_verdict["risk_level"] in ["CRITICAL", "HIGH"]
+        assert "Structuring" in final_verdict["fraud_type"]
         assert final_verdict["total_amount_mxn"] > 0
         assert len(final_verdict["entities_involved"]) >= 3
 
@@ -91,7 +91,7 @@ async def test_tts_synthesize_proxy():
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
         payload = {
-            "text": "Dictamen pericial forense completado con éxito.",
+            "text": "Forensic expert verdict completed successfully.",
         }
         tts_resp = await client.post("/api/v1/tts/synthesize", json=payload)
         assert tts_resp.status_code == 200

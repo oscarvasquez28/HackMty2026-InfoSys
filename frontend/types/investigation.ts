@@ -28,7 +28,7 @@ export interface VerdictPatternsSummary {
 
 export interface VerdictEvent {
   case_id: string;
-  risk_level: "CRÍTICO" | "ALTO" | "MEDIO" | "BAJO";
+  risk_level: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
   fraud_type: string;
   total_amount_mxn: number;
   confidence_score: number | null;
@@ -176,7 +176,7 @@ export function isThoughtEvent(value: unknown): value is ThoughtEvent {
 
 export function isVerdictEvent(value: unknown): value is VerdictEvent {
   if (!isRecord(value) || !isRecord(value.patterns_summary)) return false;
-  return typeof value.case_id === "string" && ["CRÍTICO", "ALTO", "MEDIO", "BAJO"].includes(value.risk_level as string)
+  return typeof value.case_id === "string" && ["CRITICAL", "HIGH", "MEDIUM", "LOW"].includes(value.risk_level as string)
     && ["fraud_type", "legal_recommendation", "audit_summary_text"].every(key => typeof value[key] === "string")
     && hasNumbers(value, ["total_amount_mxn", "pruned_leads_count"])
     && (value.confidence_score === null || (isNumber(value.confidence_score) && value.confidence_score >= 0 && value.confidence_score <= 1))

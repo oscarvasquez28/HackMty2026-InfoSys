@@ -41,7 +41,7 @@ class N8nEnrichmentService:
         index: int,
         total: int,
         seed: int,
-        company_name: str = "Empresa Auditada S.A. de C.V.",
+        company_name: str = "Audited Company S.A. de C.V.",
         company_rfc: Optional[str] = None,
         estate_target: Optional[Union[str, Path]] = None,
         n8n_url: Optional[str] = None,
@@ -62,9 +62,9 @@ class N8nEnrichmentService:
         adv_evidences: List[Dict[str, Any]] = []
 
         f_copy = dict(finding)
-        scheme_type = f_copy.get("scheme_type", "esquema")
+        scheme_type = f_copy.get("scheme_type", "scheme")
         amount = float(f_copy.get("peso_amount", 0.0))
-        rule = f_copy.get("rule_broken", "Artículo 69-B del CFF / NIF A-2")
+        rule = f_copy.get("rule_broken", "Article 69-B of the CFF / NIF A-2")
         entities_str = ", ".join(f_copy.get("entities", []))
 
         if target_url and target_url.strip():
@@ -120,23 +120,23 @@ class N8nEnrichmentService:
 
         if not adv_review:
             adv_review = (
-                f"La defensa técnica adversarial examinó el hallazgo {index}/{total} ({scheme_type}) "
-                f"imputado a `{entities_str}` por un monto de ${amount:,.2f} MXN. Se verificó en libros contables "
-                f"si correspondía a operaciones habituales de mercado o viáticos comprobables. Sin embargo, ante la "
-                f"ausencia de contratos con fecha cierta y la inconsistencia en flujos bancarios (SPEI), no fue "
-                f"posible desvirtuar la infracción prevista en Artículo 69-B del CFF ({rule})."
+                f"The adversarial technical defense examined finding {index}/{total} ({scheme_type}) "
+                f"imputed to `{entities_str}` for an amount of ${amount:,.2f} MXN. Accounting books were checked "
+                f"to determine whether it corresponded to routine market operations or verifiable travel expenses. However, given the "
+                f"absence of contracts with a certain date and the inconsistency in bank flows (SPEI), it was not "
+                f"possible to disprove the infraction under Article 69-B of the CFF ({rule})."
             )
         if not judge_verdict:
             judge_verdict = (
-                f"VEREDICTO DEL JUEZ (HALLAZGO {index}/{total}): CULPABLE / IMPUTACIÓN PROCEDENTE. "
-                f"Se declara plenamente acreditada la responsabilidad fiscal y corporativa por ${amount:,.2f} MXN "
-                f"bajo el supuesto de {rule}. Se desestima la excepción planteada por la defensa por carecer de "
-                f"sustancia económica y materialidad jurídica."
+                f"JUDGE'S VERDICT (FINDING {index}/{total}): GUILTY / CHARGE UPHELD. "
+                f"Fiscal and corporate liability for ${amount:,.2f} MXN is declared fully substantiated "
+                f"under the assumption of {rule}. The exception raised by the defense is dismissed for lacking "
+                f"economic substance and legal materiality."
             )
         if not final_narrative:
             final_narrative = (
                 f_copy.get("narrative")
-                or f"Operación simulada comprobada por ${amount:,.2f} MXN atribuida a `{entities_str}` con trazabilidad bancaria inequívoca."
+                or f"Simulated transaction proven for ${amount:,.2f} MXN attributed to `{entities_str}` with unequivocal banking traceability."
             )
         if not adv_evidences:
             # Baseline evidence from finding exhibits
@@ -144,7 +144,7 @@ class N8nEnrichmentService:
                 adv_evidences.append({
                     "source_table": ex.get("source_table", "invoices"),
                     "record_id": ex.get("record_id", ""),
-                    "sentence": f"Evidencia cotejada en revisión pericial: {ex.get('note', '')}",
+                    "sentence": f"Evidence verified during expert review: {ex.get('note', '')}",
                 })
 
         # Persist exhibits to database
@@ -172,7 +172,7 @@ class N8nEnrichmentService:
         index: int,
         total: int,
         seed: int,
-        company_name: str = "Empresa Auditada S.A. de C.V.",
+        company_name: str = "Audited Company S.A. de C.V.",
         company_rfc: Optional[str] = None,
         estate_target: Optional[Union[str, Path]] = None,
         n8n_url: Optional[str] = None,
@@ -191,15 +191,16 @@ class N8nEnrichmentService:
         closed_by: str = ""
 
         l_copy = dict(lead)
+        valid_closed_by = {"challenger", "investigator", "validator"}
         closed_by: str = l_copy.get("closed_by") if l_copy.get(
             "closed_by") in valid_closed_by else "challenger"
         entity = l_copy.get("entity") or l_copy.get(
-            "entities") or "Entidad Auditada"
+            "entities") or "Audited Entity"
         signal = l_copy.get("signal") or l_copy.get(
-            "scheme_type") or "Señal de alerta"
+            "scheme_type") or "Alert signal"
         existing_reason = (
             l_copy.get("reason")
-            or "Operación comercial ordinaria verificada documentalmente conforme a derecho con materialidad probada."
+            or "Ordinary business transaction, documentarily verified in accordance with the law with proven materiality."
         )
         raw_closed_by = l_copy.get("closed_by")
         existing_closed_by = raw_closed_by if raw_closed_by in {
@@ -251,14 +252,14 @@ class N8nEnrichmentService:
 
         if not adv_review:
             adv_review = (
-                f"Revisión preliminar de la línea {index}/{total} (`{entity}`): Se constató soporte documental "
-                f"ordinario, contratos vigentes y congruencia entre cotizaciones, órdenes de compra y facturas."
+                f"Preliminary review of lead {index}/{total} (`{entity}`): Ordinary documentary support "
+                f"was confirmed, along with active contracts and consistency between quotes, purchase orders, and invoices."
             )
         if not judge_verdict:
             judge_verdict = (
-                f"VEREDICTO DEL JUEZ (LÍNEA {index}/{total}): ABSUELTO / LÍNEA DESESTIMADA. "
-                f"Causa legal lícita plenamente acreditada respecto a la alerta `{signal}`. "
-                f"Se decreta el archivo formal y definitivo de esta línea de investigación."
+                f"JUDGE'S VERDICT (LEAD {index}/{total}): ACQUITTED / LEAD DISMISSED. "
+                f"A lawful legal basis is fully substantiated with respect to the `{signal}` alert. "
+                f"This line of investigation is formally and permanently closed."
             )
         if not reason:
             reason = existing_reason
@@ -284,7 +285,7 @@ class N8nEnrichmentService:
         reviewed_findings: List[Dict[str, Any]],
         reviewed_leads: List[Dict[str, Any]],
         seed: int,
-        company_name: str = "Empresa Auditada S.A. de C.V.",
+        company_name: str = "Audited Company S.A. de C.V.",
         company_rfc: Optional[str] = None,
         n8n_url: Optional[str] = None,
         timeout: float = 12.0,
@@ -298,7 +299,7 @@ class N8nEnrichmentService:
 
         total_peso = sum(float(f.get("peso_amount", 0.0))
                          for f in reviewed_findings)
-        proven_schemes = list(set(f.get("scheme_type", "esquema")
+        proven_schemes = list(set(f.get("scheme_type", "scheme")
                               for f in reviewed_findings))
 
         judge_verdict: str = ""
@@ -358,17 +359,17 @@ class N8nEnrichmentService:
 
         if not judge_verdict:
             judge_verdict = (
-                f"DICTAMEN PERICIAL EMITIDO: Se confirma la existencia de responsabilidad corporativa y fiscal por un "
-                f"monto total de ${total_peso:,.2f} MXN distribuido en {len(reviewed_findings)} esquemas fraudulentos "
-                f"({', '.join(proven_schemes)}). Las imputaciones satisfacen plenamente la carga probatoria y la conciliación "
-                f"al 2% pericial. Se sobreseen formalmente {len(reviewed_leads)} líneas preliminares por comprobarse causa legal lícita."
+                f"EXPERT VERDICT ISSUED: Corporate and fiscal liability is confirmed for a "
+                f"total amount of ${total_peso:,.2f} MXN spread across {len(reviewed_findings)} fraudulent schemes "
+                f"({', '.join(proven_schemes)}). The charges fully satisfy the burden of proof and the 2% expert "
+                f"reconciliation. {len(reviewed_leads)} preliminary leads are formally dismissed as a lawful basis was confirmed."
             )
         if not final_narrative:
             final_narrative = (
-                f"La auditoría forense integral identificó {len(reviewed_findings)} esquemas de simulación de operaciones y "
-                f"desvío de recursos por un total de ${total_peso:,.2f} pesos mexicanos. Mediante cruce de "
-                f"facturación electrónica CFDI 4.0, transferencias interbancarias y órdenes de compra, se comprobó "
-                f"la trazabilidad inequívoca de los fondos hacia las entidades señaladas, descartando operaciones legítimas."
+                f"The comprehensive forensic audit identified {len(reviewed_findings)} schemes of simulated transactions and "
+                f"diversion of funds totaling ${total_peso:,.2f} Mexican pesos. By cross-referencing "
+                f"CFDI 4.0 electronic invoicing, interbank transfers, and purchase orders, the unequivocal "
+                f"traceability of funds to the flagged entities was confirmed, ruling out legitimate operations."
             )
 
         return {
@@ -382,7 +383,7 @@ class N8nEnrichmentService:
         findings: List[Dict[str, Any]],
         leads_not_pursued: List[Dict[str, Any]],
         seed: int,
-        company_name: str = "Empresa Auditada S.A. de C.V.",
+        company_name: str = "Audited Company S.A. de C.V.",
         company_rfc: Optional[str] = None,
         estate_target: Optional[Union[str, Path]] = None,
         n8n_url: Optional[str] = None,
@@ -403,7 +404,7 @@ class N8nEnrichmentService:
             "type": "enrichment_started",
             "total_findings": total_findings,
             "total_leads": total_leads,
-            "message": f"Iniciando revisión adversarial de {total_findings} hallazgos y {total_leads} líneas preliminares...",
+            "message": f"Starting adversarial review of {total_findings} findings and {total_leads} preliminary leads...",
         }
 
         enriched_findings: List[Dict[str, Any]] = []
@@ -445,9 +446,9 @@ class N8nEnrichmentService:
                 "inserted_exhibits_count": finding_res["inserted_exhibits_count"],
                 "is_online": finding_res["is_online"],
                 "message": (
-                    f"Hallazgo {idx}/{total_findings} ({f_item.get('scheme_type')}): "
-                    f"Veredicto judicial emitido ({'Culpable' if 'CULPABLE' in finding_res['judge_verdict'] else 'Evaluado'}). "
-                    f"{len(finding_res['adversarial_evidences'])} evidencias registradas."
+                    f"Finding {idx}/{total_findings} ({f_item.get('scheme_type')}): "
+                    f"Judicial verdict issued ({'Guilty' if 'GUILTY' in finding_res['judge_verdict'] else 'Evaluated'}). "
+                    f"{len(finding_res['adversarial_evidences'])} pieces of evidence recorded."
                 ),
             }
 
@@ -480,7 +481,7 @@ class N8nEnrichmentService:
                 "reason": lead_res["reason"],
                 "closed_by": lead_res["closed_by"],
                 "is_online": lead_res["is_online"],
-                "message": f"Línea preliminar {idx}/{total_leads} descartada legítimamente por `{lead_res['closed_by']}`.",
+                "message": f"Preliminary lead {idx}/{total_leads} legitimately dismissed by `{lead_res['closed_by']}`.",
             }
 
         # 3. Synthesize overarching case verdict
@@ -499,7 +500,7 @@ class N8nEnrichmentService:
         consolidated_adv_review = (
             "\n\n".join(finding_adv_reviews)
             if finding_adv_reviews
-            else "Revisión adversarial completada satisfactoriamente para todas las imputaciones."
+            else "Adversarial review completed successfully for all charges."
         )
 
         yield {
@@ -512,7 +513,7 @@ class N8nEnrichmentService:
             "leads_not_pursued": enriched_leads,
             "llm_calls": llm_calls,
             "inserted_exhibits_count": total_exhibits_inserted,
-            "message": "Dictamen pericial formal y narrativa judicial sintetizada con éxito.",
+            "message": "Formal expert verdict and judicial narrative successfully synthesized.",
         }
 
     async def run_enrichment(
@@ -520,7 +521,7 @@ class N8nEnrichmentService:
         findings: List[Dict[str, Any]],
         leads_not_pursued: List[Dict[str, Any]],
         seed: int,
-        company_name: str = "Empresa Auditada S.A. de C.V.",
+        company_name: str = "Audited Company S.A. de C.V.",
         company_rfc: Optional[str] = None,
         estate_target: Optional[Union[str, Path]] = None,
         n8n_url: Optional[str] = None,
@@ -584,7 +585,7 @@ class N8nEnrichmentService:
                     src_table = str(ev.get("source_table", "")).strip().lower()
                     rec_id = str(ev.get("record_id", "")).strip()
                     sentence = str(ev.get("sentence") or ev.get(
-                        "note") or "Evidencia adversarial registrada.").strip()
+                        "note") or "Adversarial evidence recorded.").strip()
 
                     if not src_table or not rec_id:
                         continue

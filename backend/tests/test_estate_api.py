@@ -56,7 +56,7 @@ async def test_audit_estate_endpoint():
             payload = {
                 "estate_path": str(db_path),
                 "seed": 42,
-                "company_name": "Empresa Auditada Test",
+                "company_name": "Audited Company Test",
             }
             resp = await ac.post("/api/v1/investigations/audit-estate", json=payload)
             assert resp.status_code == 200, f"API failed: {resp.text}"

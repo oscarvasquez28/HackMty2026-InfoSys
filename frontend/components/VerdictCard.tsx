@@ -11,7 +11,7 @@ interface VerdictCardProps {
   onEvidence: (ref: EvidenceRef) => void;
 }
 
-const riskLabels = { "CRÍTICO": "Critical", "ALTO": "High", "MEDIO": "Medium", "BAJO": "Low" };
+const riskLabels = { CRITICAL: "Critical", HIGH: "High", MEDIUM: "Medium", LOW: "Low" };
 
 export const VerdictCard: React.FC<VerdictCardProps> = ({ verdict, onEvidence }) => {
   const [showEntities, setShowEntities] = useState(false);

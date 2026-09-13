@@ -14,9 +14,10 @@ import type { CaseFileDocument, ValidationIssue } from "@/types/caseFile";
 import sampleFixture from "@/fixtures/case-file.sample.json";
 import noFindingsFixture from "@/fixtures/case-file.no-findings.json";
 import edgeCasesFixture from "@/fixtures/case-file.edge-cases.json";
+import denseTrailFixture from "@/fixtures/case-file.dense-trail.json";
 
 export type CaseFileSourceKind = "sample" | "file" | "estate-page" | "api";
-export type FixtureId = "sample" | "no-findings" | "edge-cases";
+export type FixtureId = "sample" | "no-findings" | "edge-cases" | "dense-trail";
 
 export interface CaseFileSource {
   kind: CaseFileSourceKind;
@@ -46,6 +47,7 @@ const FIXTURES: Record<FixtureId, { data: unknown; label: string }> = {
   sample: { data: sampleFixture, label: "Sample case (illustrative)" },
   "no-findings": { data: noFindingsFixture, label: "Sample: no findings (illustrative)" },
   "edge-cases": { data: edgeCasesFixture, label: "Sample: edge cases (invalid on purpose)" },
+  "dense-trail": { data: denseTrailFixture, label: "Sample: dense money trails (diagram regression)" },
 };
 
 const ESTATE_EXTENSION_RE = /\.(db|sqlite|sqlite3|csv|xml)$/i;

@@ -138,7 +138,7 @@ class ForensicDetectorSuite:
                 leads.append({
                     "entity": format_entity(efos_rfc, "RFC"),
                     "signal": "sat_efos_art_69b_screening",
-                    "reason": f"Entidad listada en EFOS Art. 69-B ({efos_status}) investigada preventivamente; se comprobo inexistencia de facturas emitidas ni transacciones bancarias en el periodo auditado.",
+                    "reason": f"Entity listed in EFOS Art. 69-B ({efos_status}) investigated preventively; no invoices issued or bank transactions were found in the audited period.",
                     "tool_calls_made": ["search_transactions", "check_efos_list"],
                     "closed_by": "investigator",
                 })
@@ -151,7 +151,7 @@ class ForensicDetectorSuite:
                 leads.append({
                     "entity": format_entity(rfc, "RFC"),
                     "signal": "high_value_procurement_screening",
-                    "reason": f"Proveedor {rfc} con contratos/ordenes de compra de alto valor examinado; cuenta con licitacion formal y firmas de autorizacion ejecutiva compliant.",
+                    "reason": f"Vendor {rfc} with high-value contracts/purchase orders examined; has a formal bidding process and compliant executive authorization signatures.",
                     "tool_calls_made": ["search_contracts", "verify_approvers"],
                     "closed_by": "investigator",
                 })
@@ -167,7 +167,7 @@ class ForensicDetectorSuite:
                 leads.append({
                     "entity": format_entity(vendor_rfc, "RFC"),
                     "signal": "high_volume_invoice_screening",
-                    "reason": f"Proveedor verificado con contrato y ordenes de compra validas. Facturado ${total_invoiced:,.2f} MXN con sustancia economica comprobable.",
+                    "reason": f"Verified vendor with valid contract and purchase orders. Invoiced ${total_invoiced:,.2f} MXN with demonstrable economic substance.",
                     "tool_calls_made": ["search_transactions", "compare_entities"],
                     "closed_by": "investigator",
                 })
@@ -193,7 +193,7 @@ class ForensicDetectorSuite:
                         "exhibit_id": ex_id,
                         "source_table": "invoices",
                         "record_id": uuid_val,
-                        "note": f"Factura CFDI {uuid_val} emitida por ${inv_total:,.2f} MXN sin evidencia de entrega material.",
+                        "note": f"CFDI invoice {uuid_val} issued for ${inv_total:,.2f} MXN with no evidence of material delivery.",
                     })
                     money_trail.append({
                         "from": format_entity(rec_rfc, "RFC"),
@@ -211,7 +211,7 @@ class ForensicDetectorSuite:
                             "exhibit_id": f"EX-PV-VND-{len(exhibits)+1}",
                             "source_table": "vendors",
                             "record_id": vendor_rfc,
-                            "note": f"Registro fiscal de {vendor_rfc} sin infraestructura ni empleados declarados.",
+                            "note": f"Tax registration for {vendor_rfc} with no declared infrastructure or employees.",
                         })
 
                 # Exhibit 4: EFOS list if present
@@ -220,7 +220,7 @@ class ForensicDetectorSuite:
                         "exhibit_id": f"EX-PV-EFOS-{len(exhibits)+1}",
                         "source_table": "efos_list",
                         "record_id": vendor_rfc,
-                        "note": f"Inclusion en listado SAT Articulo 69-B con estatus {efos_rfcs[vendor_rfc]}.",
+                        "note": f"Inclusion in SAT Article 69-B list with status {efos_rfcs[vendor_rfc]}.",
                     })
 
                 # Ensure minimum 3 exhibits
@@ -229,15 +229,15 @@ class ForensicDetectorSuite:
                         "exhibit_id": f"EX-PV-BNK-{len(exhibits)+1}",
                         "source_table": "bank_txns",
                         "record_id": str(bank_df["txn_id"][0]),
-                        "note": "Transferencia bancaria de liquidacion hacia cuenta del proveedor simulado.",
+                        "note": "Settlement bank transfer to the simulated vendor's account.",
                     })
 
-                rule = "SAT Articulo 69-B" if is_efos else "CFF Articulo 69-B y NIF A-2 (Falta de Materialidad)"
+                rule = "SAT Article 69-B" if is_efos else "CFF Article 69-B and NIF A-2 (Lack of Materiality)"
                 narrative = (
-                    f"Se identifico que el proveedor {vendor_rfc} opero como empresa fantasma emitiendo "
-                    f"{len(inv_list)} comprobantes fiscales por un total de ${total_invoiced:,.2f} MXN. "
-                    f"La entidad figura en el listado definitivo de operaciones inexistentes del SAT (Art. 69-B) "
-                    f"y carece de contratos u ordenes de compra que amparen la ejecucion material de los servicios."
+                    f"It was determined that vendor {vendor_rfc} operated as a phantom company, issuing "
+                    f"{len(inv_list)} tax receipts for a total of ${total_invoiced:,.2f} MXN. "
+                    f"The entity appears on the SAT's definitive list of non-existent transactions (Art. 69-B) "
+                    f"and lacks contracts or purchase orders substantiating the material delivery of services."
                 )
 
                 findings.append({
@@ -298,7 +298,7 @@ class ForensicDetectorSuite:
             if to_clabe in emp_clabes:
                 emp = emp_clabes[to_clabe]
                 emp_id = str(emp.get("emp_id"))
-                emp_name = str(emp.get("name", "Empleado"))
+                emp_name = str(emp.get("name", "Employee"))
 
                 # Check if from_clabe belongs to a vendor or non-payroll account
                 if from_clabe in vendor_clabes:
@@ -318,19 +318,19 @@ class ForensicDetectorSuite:
                             "exhibit_id": "EX-KB-BNK-1",
                             "source_table": "bank_txns",
                             "record_id": txn_id,
-                            "note": f"Transferencia bancaria ilicita de ${amt:,.2f} MXN desde cuenta del proveedor a CLABE del empleado.",
+                            "note": f"Illicit bank transfer of ${amt:,.2f} MXN from the vendor's account to the employee's CLABE.",
                         },
                         {
                             "exhibit_id": "EX-KB-EMP-2",
                             "source_table": "employees",
                             "record_id": emp_id,
-                            "note": f"Ficha de empleado {emp_name} ({emp_id}) titular de la CLABE receptora {to_clabe}.",
+                            "note": f"Employee record for {emp_name} ({emp_id}), holder of the receiving CLABE {to_clabe}.",
                         },
                         {
                             "exhibit_id": "EX-KB-VND-3",
                             "source_table": "vendors",
                             "record_id": vendor_rfc,
-                            "note": f"Registro del proveedor emisor {vendor_rfc} emisor del soborno.",
+                            "note": f"Record of vendor {vendor_rfc}, the issuer of the bribe.",
                         },
                     ]
 
@@ -344,7 +344,7 @@ class ForensicDetectorSuite:
                             "exhibit_id": "EX-KB-PO-4",
                             "source_table": "purchase_orders",
                             "record_id": po_id,
-                            "note": f"Orden de compra {po_id} adjudicada a {vendor_rfc} vinculada al esquema de soborno.",
+                            "note": f"Purchase order {po_id} awarded to {vendor_rfc}, linked to the bribery scheme.",
                         })
 
                     # Money trail from vendor to employee
@@ -359,16 +359,16 @@ class ForensicDetectorSuite:
                     ]
 
                     narrative = (
-                        f"Se descubrio un esquema de cohecho (kickback) entre el proveedor {vendor_rfc} "
-                        f"y el empleado {emp_name} ({emp_id}). El proveedor transfirio ${amt:,.2f} MXN "
-                        f"directamente a la cuenta CLABE personal del empleado tras la adjudicacion de ordenes "
-                        f"de compra comerciales, violando las politicas anticorrupcion corporativas."
+                        f"A kickback scheme was uncovered between vendor {vendor_rfc} "
+                        f"and employee {emp_name} ({emp_id}). The vendor transferred ${amt:,.2f} MXN "
+                        f"directly to the employee's personal CLABE account following the award of commercial "
+                        f"purchase orders, violating corporate anti-corruption policies."
                     )
 
                     findings.append({
                         "scheme_type": "kickback",
                         "entities": [format_entity(vendor_rfc, "RFC"), format_entity(emp_id, "EMP")],
-                        "rule_broken": "Codigo Penal Federal Articulo 222 (Delito de Cohecho y Corrupcion)",
+                        "rule_broken": "Código Penal Federal Article 222 (Bribery and Corruption Offense)",
                         "narrative": narrative.strip(),
                         "peso_amount": round(amt, 2),
                         "confidence": "proven",
@@ -380,7 +380,7 @@ class ForensicDetectorSuite:
                     leads.append({
                         "entity": format_entity(emp_id, "EMP"),
                         "signal": "employee_inflow_screening",
-                        "reason": f"Dispersión rutinaria de nómina o viáticos corporativos por ${amt:,.2f} MXN sin vínculo con proveedores externos.",
+                        "reason": f"Routine payroll or corporate travel expense disbursement of ${amt:,.2f} MXN with no link to external vendors.",
                         "tool_calls_made": ["search_transactions", "get_cashout"],
                         "closed_by": "investigator",
                     })
@@ -458,7 +458,7 @@ class ForensicDetectorSuite:
                         "exhibit_id": ex_id,
                         "source_table": "bank_txns",
                         "record_id": t_id,
-                        "note": f"Transferencia interbancaria {t_id} en circuito cerrado por ${t_amt:,.2f} MXN.",
+                        "note": f"Interbank transfer {t_id} within a closed circuit for ${t_amt:,.2f} MXN.",
                     })
 
                     u_ent = clabe_to_rfc.get(u, u)
@@ -480,20 +480,20 @@ class ForensicDetectorSuite:
                         "exhibit_id": f"EX-RT-VND-{len(exhibits)+1}",
                         "source_table": "vendors",
                         "record_id": list(clabe_to_rfc.values())[0] if clabe_to_rfc else "AAAA010101AA1",
-                        "note": "Registro mercantil del proveedor participante en el circuito de triangulación.",
+                        "note": "Corporate registration of the vendor participating in the layering circuit.",
                     })
 
                 narrative = (
-                    f"Se identifico un esquema de triangulacion circular de fondos (round-tripping) "
-                    f"que involucra {len(cycle)} cuentas y transferencias por ${cycle_amount:,.2f} MXN. "
-                    f"El flujo monetario retorno a su origen tras circular por intermediarios sin "
-                    f"generar valor comercial real, tipica conducta de estratificacion de lavado de dinero."
+                    f"A circular fund layering (round-tripping) scheme was identified "
+                    f"involving {len(cycle)} accounts and transfers totaling ${cycle_amount:,.2f} MXN. "
+                    f"The monetary flow returned to its origin after circulating through intermediaries without "
+                    f"generating real commercial value, a typical money-laundering layering pattern."
                 )
 
                 findings.append({
                     "scheme_type": "round_tripping",
                     "entities": sorted(list(involved_entities)),
-                    "rule_broken": "Disposiciones UIF / LFPIORPI Articulo 17 (Estratificacion Circular y Retorno de Fondos)",
+                    "rule_broken": "UIF Provisions / LFPIORPI Article 17 (Circular Layering and Return of Funds)",
                     "narrative": narrative.strip(),
                     "peso_amount": round(cycle_amount, 2),
                     "confidence": "proven",
@@ -540,7 +540,7 @@ class ForensicDetectorSuite:
                             leads.append({
                                 "entity": format_entity(vendor_rfc, "RFC"),
                                 "signal": "procurement_threshold_screening",
-                                "reason": f"Orden de compra {po.get('po_id')} por ${amt:,.2f} MXN cercana al umbral de ${threshold:,.2f} MXN examinada; operacion aislada sin recurrencia consecutiva.",
+                                "reason": f"Purchase order {po.get('po_id')} for ${amt:,.2f} MXN near the ${threshold:,.2f} MXN threshold examined; isolated transaction with no consecutive recurrence.",
                                 "tool_calls_made": ["search_purchase_orders", "analyze_payment_patterns"],
                                 "closed_by": "investigator",
                             })
@@ -558,7 +558,7 @@ class ForensicDetectorSuite:
 
                 if len(split_pos) >= 2:
                     total_split_amount = sum(float(po.get("amount") or 0.0) for po in split_pos)
-                    approver = str(split_pos[0].get("approver", "GERENCIA"))
+                    approver = str(split_pos[0].get("approver", "MANAGEMENT"))
 
                     exhibits: List[Dict[str, Any]] = []
                     money_trail: List[Dict[str, Any]] = []
@@ -574,7 +574,7 @@ class ForensicDetectorSuite:
                             "exhibit_id": ex_id,
                             "source_table": "purchase_orders",
                             "record_id": po_id,
-                            "note": f"Orden de compra fraccionada {po_id} por ${amt:,.2f} MXN, justo debajo del umbral de ${threshold:,.2f} MXN.",
+                            "note": f"Split purchase order {po_id} for ${amt:,.2f} MXN, just below the ${threshold:,.2f} MXN threshold.",
                         })
                         money_trail.append({
                             "from": format_entity(company_rfc or "EMPRESA_AUDITADA", "RFC"),
@@ -592,20 +592,20 @@ class ForensicDetectorSuite:
                                 "exhibit_id": f"EX-TS-VND-{len(exhibits)+1}",
                                 "source_table": "vendors",
                                 "record_id": vendor_rfc,
-                                "note": f"Proveedor beneficiario {vendor_rfc} de las contrataciones fragmentadas.",
+                                "note": f"Beneficiary vendor {vendor_rfc} of the fragmented procurement contracts.",
                             })
 
                     narrative = (
-                        f"Se detecto fraccionamiento deliberado de contrataciones con el proveedor {vendor_rfc}. "
-                        f"Se emitieron {len(split_pos)} ordenes de compra estructuradas entre ${lower_bound:,.2f} "
-                        f"y ${upper_bound:,.2f} MXN para evadir el umbral de autorizacion ejecutiva de ${threshold:,.2f} MXN, "
-                        f"acumulando un monto total de ${total_split_amount:,.2f} MXN sin licitacion previa."
+                        f"Deliberate splitting of procurement contracts with vendor {vendor_rfc} was detected. "
+                        f"{len(split_pos)} purchase orders were issued structured between ${lower_bound:,.2f} "
+                        f"and ${upper_bound:,.2f} MXN to evade the ${threshold:,.2f} MXN executive authorization threshold, "
+                        f"accumulating a total amount of ${total_split_amount:,.2f} MXN without a prior bidding process."
                     )
 
                     findings.append({
                         "scheme_type": "threshold_splitting",
                         "entities": [format_entity(vendor_rfc, "RFC")],
-                        "rule_broken": f"Politica de Control Interno y Manual de Adquisiciones (Fraccionamiento de Umbral ${threshold:,.2f} MXN)",
+                        "rule_broken": f"Internal Control Policy and Procurement Manual (Threshold Splitting ${threshold:,.2f} MXN)",
                         "narrative": narrative.strip(),
                         "peso_amount": round(total_split_amount, 2),
                         "confidence": "proven",
@@ -672,13 +672,13 @@ class ForensicDetectorSuite:
                         "exhibit_id": "EX-RI-INV-1",
                         "source_table": "invoices",
                         "record_id": inv_uuid,
-                        "note": f"Factura CFDI {inv_uuid} cancelada ante el SAT por ${inv_total:,.2f} MXN.",
+                        "note": f"CFDI invoice {inv_uuid} cancelled with the SAT for ${inv_total:,.2f} MXN.",
                     },
                     {
                         "exhibit_id": "EX-RI-LDG-2",
                         "source_table": "ledger",
                         "record_id": str(entries[0]["entry_id"]),
-                        "note": f"Poliza contable {entries[0]['entry_id']} reconociendo ingreso acreditado indebidamente.",
+                        "note": f"Accounting entry {entries[0]['entry_id']} improperly recognizing credited income.",
                     },
                 ]
 
@@ -688,14 +688,14 @@ class ForensicDetectorSuite:
                         "exhibit_id": "EX-RI-LDG-3",
                         "source_table": "ledger",
                         "record_id": str(entries[1]["entry_id"]),
-                        "note": f"Poliza de mayor {entries[1]['entry_id']} vinculada a la factura cancelada.",
+                        "note": f"General ledger entry {entries[1]['entry_id']} linked to the cancelled invoice.",
                     })
                 elif not vendors_df.is_empty():
                     exhibits.append({
                         "exhibit_id": "EX-RI-VND-3",
                         "source_table": "vendors",
                         "record_id": issuer or "AAAA010101AA1",
-                        "note": "Contraparte receptora/emisora en el registro contable simulado.",
+                        "note": "Receiving/issuing counterparty in the simulated accounting record.",
                     })
 
                 money_trail = [
@@ -709,16 +709,16 @@ class ForensicDetectorSuite:
                 ]
 
                 narrative = (
-                    f"Se descubrio inflacion artificial de ingresos mediante el registro contable de la "
-                    f"factura cancelada {inv_uuid} por ${inv_total:,.2f} MXN. Dicho comprobante fue formalmente "
-                    f"cancelado en el SAT pero continua computado como credito en el libro mayor sin poliza de "
-                    f"cancelacion que revierta el efecto economico, distorsionando los estados financieros."
+                    f"Artificial revenue inflation was uncovered through the accounting record of "
+                    f"cancelled invoice {inv_uuid} for ${inv_total:,.2f} MXN. This receipt was formally "
+                    f"cancelled with the SAT but remains recognized as a credit in the general ledger with no "
+                    f"reversal entry to offset the economic effect, distorting the financial statements."
                 )
 
                 findings.append({
                     "scheme_type": "revenue_inflation",
                     "entities": [format_entity(issuer or receiver, "RFC")],
-                    "rule_broken": "NIF A-2 (Sustancia Economica) y CFF Articulo 109 (Defraudacion por Ingresos Inexistentes)",
+                    "rule_broken": "NIF A-2 (Economic Substance) and CFF Article 109 (Fraud through Non-Existent Income)",
                     "narrative": narrative.strip(),
                     "peso_amount": round(inv_total, 2),
                     "confidence": "proven",
@@ -816,7 +816,7 @@ class ForensicDetectorSuite:
                 all_leads.append({
                     "entity": ent_str,
                     "signal": f"{finding['scheme_type']}_pre_validation",
-                    "reason": f"Investigado y cerrado por el validador contable: {err_detail}",
+                    "reason": f"Investigated and closed by the accounting validator: {err_detail}",
                     "tool_calls_made": ["verify_exhibits", "reconcile_per_table"],
                     "closed_by": "validator",
                 })

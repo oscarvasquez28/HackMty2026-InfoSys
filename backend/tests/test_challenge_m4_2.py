@@ -298,7 +298,7 @@ async def test_challenge_headers_in_fallback_mode():
     transport = httpx.ASGITransport(app=app)
     try:
         async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
-            resp = await client.post("/api/v1/tts/synthesize", json={"text": "Verificación de dictamen"})
+            resp = await client.post("/api/v1/tts/synthesize", json={"text": "Verdict verification"})
             assert resp.status_code == 200
             assert "audio/mpeg" in resp.headers.get("content-type", "")
             assert resp.headers.get("x-audio-source") == "synthetic-fallback-mode"

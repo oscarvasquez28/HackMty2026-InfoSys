@@ -388,7 +388,7 @@ async def test_challenge_upstream_midstream_network_partition():
     try:
         async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
             with patch("backend.api.routes.tts.httpx.AsyncClient", return_value=mock_client):
-                resp = await client.post("/api/v1/tts/synthesize", json={"text": "Conclusión pericial."})
+                resp = await client.post("/api/v1/tts/synthesize", json={"text": "Expert conclusion."})
                 assert resp.status_code == 200
                 # Content begins with INITIAL_AUDIO_CHUNK_1 and ends with fallback silence
                 assert resp.content.startswith(b"INITIAL_AUDIO_CHUNK_1")
@@ -419,7 +419,7 @@ async def test_challenge_upstream_midstream_connection_reset():
     try:
         async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
             with patch("backend.api.routes.tts.httpx.AsyncClient", return_value=mock_client):
-                resp = await client.post("/api/v1/tts/synthesize", json={"text": "Conclusión pericial."})
+                resp = await client.post("/api/v1/tts/synthesize", json={"text": "Expert conclusion."})
                 assert resp.status_code == 200
                 assert resp.content == b"PARTIAL_HEADER_CHUNK" + generate_fallback_silence_mp3()
     finally:

@@ -33,7 +33,7 @@ class CaseFileGenerator:
         Every edge displays the transferred amount, date, and cited exhibit_id.
         """
         if not money_trail:
-            return "```mermaid\nflowchart LR\n    Start[\"Inicio\"] --> End[\"Sin flujo monetario directo\"]\n```"
+            return "```mermaid\nflowchart LR\n    Start[\"Start\"] --> End[\"No direct money flow\"]\n```"
 
         lines = ["```mermaid", "flowchart LR"]
         node_ids: Dict[str, str] = {}
@@ -48,8 +48,8 @@ class CaseFileGenerator:
             return node_ids[entity_str]
 
         for i, step in enumerate(money_trail):
-            src_node = get_clean_node_id(str(step.get("from", "Origen")))
-            dst_node = get_clean_node_id(str(step.get("to", "Destino")))
+            src_node = get_clean_node_id(str(step.get("from", "Origin")))
+            dst_node = get_clean_node_id(str(step.get("to", "Destination")))
             amt = float(step.get("amount", 0.0))
             dt = str(step.get("date", ""))
             ex_id = str(step.get("exhibit_id", ""))
@@ -69,8 +69,8 @@ class CaseFileGenerator:
     def generate_case_file_markdown(
         self,
         submission_data: Dict[str, Any],
-        company_name: str = "Empresa Auditada S.A. de C.V.",
-        audit_period: str = "Enero 2025 - Diciembre 2026",
+        company_name: str = "Audited Company S.A. de C.V.",
+        audit_period: str = "January 2025 - December 2026",
     ) -> str:
         """
         Generates the complete case file markdown adhering strictly to the required 5 sections
@@ -153,7 +153,7 @@ class CaseFileGenerator:
 
         if judge_verdict:
             md_lines.extend([
-                "### Veredicto del Juez Forense / Dictamen Formal",
+                "### Forensic Judge Verdict / Formal Ruling",
                 f"> **{judge_verdict}**",
                 "",
             ])
@@ -177,57 +177,57 @@ class CaseFileGenerator:
 
         if not findings:
             md_lines.extend([
-                "> **Nota:** No se detectaron anomalías concluyentes en este conjunto de datos. "
-                "Todas las líneas analizadas fueron desestimadas conforme a derecho.",
+                "> **Note:** No conclusive anomalies were detected in this dataset. "
+                "All analyzed leads were dismissed in accordance with the law.",
                 "",
             ])
         else:
             for idx, f in enumerate(findings, 1):
-                scheme_type = f.get("scheme_type", "Esquema")
+                scheme_type = f.get("scheme_type", "Scheme")
                 entities_str = ", ".join(f.get("entities", []))
-                rule = f.get("rule_broken", "Normativa no especificada")
+                rule = f.get("rule_broken", "Regulation not specified")
                 amount = float(f.get("peso_amount", 0.0))
                 confidence = f.get("confidence", "probable")
                 narrative = f.get("narrative", "")
                 trail = f.get("money_trail", [])
                 exhibits = f.get("exhibits", [])
                 recon_formula = f.get("reconciliation_formula") or (
-                    f"${amount:,.2f} MXN reclamados == sumatoria de cédulas probatorias citadas."
+                    f"${amount:,.2f} MXN claimed == sum of cited evidentiary exhibits."
                 )
 
                 # Format human readable scheme title
                 scheme_title_map = {
-                    "phantom_vendor": "Empresa Fantasma / Operaciones Simuladas (EFOS)",
-                    "kickback": "Cohecho / Soborno en Contrataciones",
-                    "round_tripping": "Estratificación Circular de Fondos (Round-Tripping)",
-                    "threshold_splitting": "Fraccionamiento de Adquisiciones (Pitufeo)",
-                    "revenue_inflation": "Inflación Artificial de Ingresos",
+                    "phantom_vendor": "Phantom Vendor / Simulated Operations (EFOS)",
+                    "kickback": "Bribery / Kickback in Procurement",
+                    "round_tripping": "Circular Layering of Funds (Round-Tripping)",
+                    "threshold_splitting": "Procurement Splitting (Smurfing)",
+                    "revenue_inflation": "Artificial Revenue Inflation",
                 }
                 scheme_title = scheme_title_map.get(scheme_type, scheme_type.replace("_", " ").title())
 
                 finding_adv_review = f.get("adversarial_review") or adversarial_review or (
-                    f"El evaluador adversarial analizó si la operativa de `{entities_str}` correspondía a "
-                    "operaciones ordinarias de mercado o dispersiones de nómina. La imputación se mantuvo "
-                    f"firme debido a la coincidencia directa de transferencias, ausencia de entregables "
-                    f"fehacientes en el archivo corporativo y fundamentación en el artículo **{rule}**."
+                    f"The adversarial reviewer analyzed whether the activity of `{entities_str}` corresponded to "
+                    "ordinary market operations or payroll disbursements. The imputation held "
+                    f"firm due to the direct match of transfers, the absence of verifiable deliverables "
+                    f"in the corporate file, and grounding in article **{rule}**."
                 )
 
                 md_lines.extend([
-                    f"### Hallazgo {idx}: {entities_str} — {scheme_title} (`{scheme_type}`)",
+                    f"### Finding {idx}: {entities_str} — {scheme_title} (`{scheme_type}`)",
                     "",
-                    f"- **Entidades Involucradas:** `{entities_str}`",
-                    f"- **Infracción Legal / Artículo Violado:** **{rule}**",
-                    f"- **Monto y Nivel de Confianza:** **${amount:,.2f} MXN** — Confianza: `{confidence.upper()}`",
+                    f"- **Entities Involved:** `{entities_str}`",
+                    f"- **Legal Infraction / Article Violated:** **{rule}**",
+                    f"- **Amount and Confidence Level:** **${amount:,.2f} MXN** — Confidence: `{confidence.upper()}`",
                     "",
-                    "#### Qué Sucedió (Narrativa Pericial)",
+                    "#### What Happened (Expert Narrative)",
                     f"{narrative}",
                     "",
-                    "#### Trazabilidad Financiera (Money Trail)",
+                    "#### Financial Traceability (Money Trail)",
                     self.render_money_trail_mermaid(trail, exhibits),
                     "",
-                    "#### Cédula de Evidencias Documentales (Exhibits Table)",
+                    "#### Documentary Evidence Record (Exhibits Table)",
                     "",
-                    "| Cédula (Exhibit ID) | Tabla Fuente | Registro (ID) | Hecho Probatorio |",
+                    "| Exhibit ID | Source Table | Record (ID) | Evidentiary Fact |",
                     "|---|---|---|---|",
                 ])
 
@@ -242,21 +242,21 @@ class CaseFileGenerator:
 
                 md_lines.extend([
                     "",
-                    "#### Conciliación Aritmética Pericial",
-                    f"- **Cálculo de Conciliación:** {recon_formula}",
-                    f"- **Tolerancia:** Varianza $\\le 2.0\\%$ satisfecha contra registros fuente.",
+                    "#### Expert Arithmetic Reconciliation",
+                    f"- **Reconciliation Calculation:** {recon_formula}",
+                    f"- **Tolerance:** Variance $\\le 2.0\\%$ satisfied against source records.",
                     "",
                 ])
 
                 if finding_judge_verdict:
                     md_lines.extend([
-                        "#### Veredicto Judicial del Hallazgo",
+                        "#### Judicial Verdict on the Finding",
                         f"> **{finding_judge_verdict}**",
                         "",
                     ])
 
                 md_lines.extend([
-                    "#### Revisión Adversarial / Control de Calidad",
+                    "#### Adversarial Review / Quality Control",
                     f"{finding_adv_review}",
                     "",
                 ])
@@ -264,9 +264,9 @@ class CaseFileGenerator:
                 # Include adversarial evidence table if present
                 if adversarial_evidences:
                     md_lines.extend([
-                        "##### Evidencias Verificadas por la Defensa Adversarial",
+                        "##### Evidence Verified by the Adversarial Defense",
                         "",
-                        "| Cédula (Exhibit ID) | Tabla Fuente | Registro (ID) | Hecho Probatorio Cotejado |",
+                        "| Exhibit ID | Source Table | Record (ID) | Verified Evidentiary Fact |",
                         "|---|---|---|---|",
                     ])
                     for adv_ex in adversarial_evidences:
@@ -358,8 +358,8 @@ class CaseFileGenerator:
         submission_data: Dict[str, Any],
         output_dir: Union[str, Path] = "tmp",
         file_prefix: str = "audit_result",
-        company_name: str = "Empresa Auditada S.A. de C.V.",
-        audit_period: str = "Enero 2025 - Diciembre 2026",
+        company_name: str = "Audited Company S.A. de C.V.",
+        audit_period: str = "January 2025 - December 2026",
     ) -> Tuple[Path, Path]:
         """
         Exports both case_file.md and submission.json to the specified directory.

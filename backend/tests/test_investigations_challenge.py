@@ -260,7 +260,7 @@ async def test_challenge_pagination_boundaries_and_fuzzing():
                     metrics={"total_nodes_analyzed": 5},
                     subgraph={"nodes": [], "edges": []},
                     patterns={"cycles": []},
-                    verdict={"risk_level": "ALTO"} if st == "COMPLETED" else None,
+                    verdict={"risk_level": "HIGH"} if st == "COMPLETED" else None,
                 )
                 session.add(c)
             await session.commit()

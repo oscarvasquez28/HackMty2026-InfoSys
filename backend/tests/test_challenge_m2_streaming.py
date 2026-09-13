@@ -112,12 +112,12 @@ async def test_challenge_sse_all_six_phases_and_verdict_schema():
 
             # Expected 6 phases in strict order
             expected_phases = [
-                (1, "Ingesta y Validación de Topología"),
-                (2, "Construcción de Grafo Dirigido"),
-                (3, "Extracción de Ciclos Dirigidos"),
-                (4, "Análisis de Velocidad y Cuentas Puente"),
-                (5, "Poda Matemática Determinista"),
-                (6, "Evaluación Pericial Regulatoria"),
+                (1, "Ingestion and Topology Validation"),
+                (2, "Directed Graph Construction"),
+                (3, "Directed Cycle Extraction"),
+                (4, "Velocity and Passthrough Account Analysis"),
+                (5, "Deterministic Mathematical Pruning"),
+                (6, "Regulatory Expert Evaluation"),
             ]
 
             for i, (exp_step, exp_phase) in enumerate(expected_phases):
@@ -134,8 +134,8 @@ async def test_challenge_sse_all_six_phases_and_verdict_schema():
             # Verify terminal verdict schema and evidence items
             verdict_payload = verdicts[0]["data"]
             assert verdict_payload["case_id"] == case_id
-            assert verdict_payload["risk_level"] in ("CRÍTICO", "ALTO")
-            assert verdict_payload["fraud_type"] == "Estructuración Circular (Smurfing) y Cuentas Mula de Paso Rápido"
+            assert verdict_payload["risk_level"] in ("CRITICAL", "HIGH")
+            assert verdict_payload["fraud_type"] == "Circular Structuring (Smurfing) and Fast-Passthrough Mule Accounts"
             assert isinstance(verdict_payload["total_amount_mxn"], (int, float))
             assert verdict_payload["total_amount_mxn"] > 0
             assert 0.0 <= verdict_payload["confidence_score"] <= 1.0
@@ -478,7 +478,7 @@ async def test_challenge_empty_subgraph_and_benign_dataset():
     and zero passthrough accounts.
     Verifies:
     - Stream completes normally with 6 thought phases + verdict
-    - Verdict risk_level is 'ALTO' (instead of 'CRÍTICO' since cycles=0)
+    - Verdict risk_level is 'HIGH' (instead of 'CRITICAL' since cycles=0)
     - Confidence score is 0.88
     - Status is updated to COMPLETED in database
     """
@@ -512,7 +512,7 @@ ACC_5,ACC_6,150.0,3.0
 
             assert len(thoughts) == 6
             assert verdict_payload is not None
-            assert verdict_payload["risk_level"] == "ALTO"
+            assert verdict_payload["risk_level"] == "HIGH"
             assert verdict_payload["confidence_score"] == 0.88
             assert verdict_payload["patterns_summary"]["closed_cycles"] == 0
             assert verdict_payload["patterns_summary"]["passthrough_accounts"] == 0
@@ -523,5 +523,5 @@ ACC_5,ACC_6,150.0,3.0
                 stmt = select(InvestigationCase).where(InvestigationCase.id == uuid.UUID(case_id))
                 c = (await session.execute(stmt)).scalar_one()
                 assert c.status == "COMPLETED"
-                assert c.verdict["risk_level"] == "ALTO"
+                assert c.verdict["risk_level"] == "HIGH"
                 assert c.verdict["confidence_score"] == 0.88

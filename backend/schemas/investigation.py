@@ -110,7 +110,7 @@ class VerdictPayload(BaseModel):
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
     case_id: Union[uuid.UUID, str] = Field(..., description="Case UUID")
-    risk_level: str = Field(..., description="Risk tier: CRÍTICO, ALTO, MEDIO, BAJO")
+    risk_level: str = Field(..., description="Risk tier: CRITICAL, HIGH, MEDIUM, LOW")
     fraud_type: str = Field(..., description="Identified money laundering typology")
     total_amount_mxn: float = Field(..., description="Total flagged volume in MXN")
     confidence_score: float = Field(..., ge=0.0, le=1.0, description="Model confidence score [0.0 - 1.0]")
@@ -265,7 +265,7 @@ class EstateAuditRequest(BaseModel):
     estate_path: str = Field(..., description="Absolute path or URI to the financial estate database (.db or postgres://)")
     seed: int = Field(default=1, description="Random seed for deterministic audit execution")
     company_rfc: Optional[str] = Field(None, description="RFC of the company being audited")
-    company_name: str = Field(default="Empresa Auditada S.A. de C.V.", description="Legal name of the audited company")
+    company_name: str = Field(default="Audited Company S.A. de C.V.", description="Legal name of the audited company")
     n8n_url: Optional[str] = Field(None, description="Optional n8n webhook URL for narrative generation")
 
 

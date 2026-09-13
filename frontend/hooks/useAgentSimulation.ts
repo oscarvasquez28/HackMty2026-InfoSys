@@ -810,7 +810,7 @@ function makeVerdict(currentCase: UploadResponse): VerdictEvent {
     source: "SIMULATION",
     assessment_method: "FRONTEND_DEMO",
     assessment_status: "SUSPICIOUS_PATTERNS_DETECTED",
-    risk_level: "ALTO",
+    risk_level: "HIGH",
     fraud_type: "Simulated circular flow and pass-through indicators",
     total_amount_mxn: currentCase.metrics.suspicious_volume_mxn,
     confidence_score: null,
@@ -964,7 +964,7 @@ export function useAgentSimulation(): UseAgentSimulationReturn {
               nextCase.metrics.suspicious_volume_mxn
             )} in flagged operations.`,
             advances: [
-              { label: "Risk Assessment", value: "ALTO (High Risk)", isAlert: true },
+              { label: "Risk Assessment", value: "High Risk", isAlert: true },
               {
                 label: "Flagged Volume",
                 value: formatCurrencyMXN(nextCase.metrics.suspicious_volume_mxn),

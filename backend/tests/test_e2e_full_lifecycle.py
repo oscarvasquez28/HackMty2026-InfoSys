@@ -406,8 +406,8 @@ async def test_e2e_full_10_step_lifecycle():
 
             terminal_verdict = verdict_events[0]["data"]
             assert terminal_verdict["case_id"] == case_id_str
-            assert terminal_verdict["risk_level"] in ("CRÍTICO", "ALTO")
-            assert "Estructuración" in terminal_verdict["fraud_type"] or "Lavado" in terminal_verdict["fraud_type"]
+            assert terminal_verdict["risk_level"] in ("CRITICAL", "HIGH")
+            assert "Structuring" in terminal_verdict["fraud_type"] or "Laundering" in terminal_verdict["fraud_type"]
             assert terminal_verdict["total_amount_mxn"] > 1400000.0
             assert len(terminal_verdict["entities_involved"]) >= 3
             assert "legal_recommendation" in terminal_verdict

@@ -232,7 +232,7 @@ class ExhibitBuilder:
             )
         clean_note = note.strip()
         if not clean_note:
-            clean_note = f"Constancia documental probatoria del registro {record_id} en tabla {source_table}."
+            clean_note = f"Documentary evidentiary record for {record_id} in table {source_table}."
 
         eid = exhibit_id or f"{prefix}-{index:02d}"
         return ExhibitItem(
@@ -287,7 +287,7 @@ class ExhibitBuilder:
                         ex_item = self.build_exhibit(
                             source_table="vendors",
                             record_id=rfc,
-                            note=f"Ficha corporativa y registro fiscal del proveedor {rfc}.",
+                            note=f"Corporate profile and tax registration for vendor {rfc}.",
                             exhibit_id=eid,
                         )
                         current_exhibits.append(ex_item.to_dict())
@@ -309,7 +309,7 @@ class ExhibitBuilder:
                             ex_item = self.build_exhibit(
                                 source_table="ledger",
                                 record_id=entry_id,
-                                note=f"Póliza contable en libro mayor vinculada a la factura {inv_uuid}.",
+                                note=f"General ledger accounting entry linked to invoice {inv_uuid}.",
                                 exhibit_id=eid,
                             )
                             current_exhibits.append(ex_item.to_dict())
@@ -327,7 +327,7 @@ class ExhibitBuilder:
                     ex_item = self.build_exhibit(
                         source_table="bank_txns",
                         record_id=t_str,
-                        note=f"Comprobante de dispersión bancaria interbancaria {t_str}.",
+                        note=f"Interbank transfer receipt {t_str}.",
                         exhibit_id=eid,
                     )
                     current_exhibits.append(ex_item.to_dict())

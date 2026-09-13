@@ -418,38 +418,38 @@ async def generate_investigation_stream(
     thought_steps = [
         {
             "step": 1,
-            "phase": "Ingesta y Validación de Topología",
-            "message": f"Normalización con Polars completada: {total_nodes} entidades bancarias y {total_edges} transferencias identificadas.",
+            "phase": "Ingestion and Topology Validation",
+            "message": f"Normalization with Polars completed: {total_nodes} bank entities and {total_edges} transfers identified.",
             "duration_ms": 350,
         },
         {
             "step": 2,
-            "phase": "Construcción de Grafo Dirigido",
-            "message": "Construyendo multígrafo con pesos y marcas temporales en NetworkX para modelado topológico.",
+            "phase": "Directed Graph Construction",
+            "message": "Building weighted, timestamped multigraph in NetworkX for topological modeling.",
             "duration_ms": 400,
         },
         {
             "step": 3,
-            "phase": "Extracción de Ciclos Dirigidos",
-            "message": f"Detección de patrones circulares: {cycles_count} ciclos cerrados detectados (evidencia de tipología de pitufeo / smurfing).",
+            "phase": "Directed Cycle Extraction",
+            "message": f"Circular pattern detection: {cycles_count} closed cycles detected (evidence of smurfing typology).",
             "duration_ms": 500,
         },
         {
             "step": 4,
-            "phase": "Análisis de Velocidad y Cuentas Puente",
-            "message": f"Evaluando ventana temporal <= 48h: {pt_count} cuentas superan el umbral de retención > 90% (cuentas mula de estratificación rápida).",
+            "phase": "Velocity and Passthrough Account Analysis",
+            "message": f"Evaluating <= 48h time window: {pt_count} accounts exceed the > 90% retention threshold (fast-layering mule accounts).",
             "duration_ms": 450,
         },
         {
             "step": 5,
-            "phase": "Poda Matemática Determinista",
-            "message": f"Descartadas {pruned_count} transacciones legítimas ({pruning_pct}% de reducción de ruido). Subgrafo crítico aislado con {suspicious_nodes} nodos.",
+            "phase": "Deterministic Mathematical Pruning",
+            "message": f"Discarded {pruned_count} legitimate transactions ({pruning_pct}% noise reduction). Critical subgraph isolated with {suspicious_nodes} nodes.",
             "duration_ms": 400,
         },
         {
             "step": 6,
-            "phase": "Evaluación Pericial Regulatoria",
-            "message": f"Contraste de tipologías GAFI/UIF: Volumen de riesgo calculado en ${volume_mxn:,.2f} MXN con alta probabilidad de dolo.",
+            "phase": "Regulatory Expert Evaluation",
+            "message": f"FATF/UIF typology comparison: Risk volume calculated at ${volume_mxn:,.2f} MXN with high probability of intent.",
             "duration_ms": 450,
         },
     ]
@@ -468,7 +468,7 @@ async def generate_investigation_stream(
         await asyncio.sleep(0.4)
 
         # Compile Final Forensic Verdict
-        risk_level = "CRÍTICO" if (cycles_count > 0 or volume_mxn > 500000) else "ALTO"
+        risk_level = "CRITICAL" if (cycles_count > 0 or volume_mxn > 500000) else "HIGH"
         suspicious_node_ids = [
             n["id"] if isinstance(n, dict) else getattr(n, "id", str(n))
             for n in subgraph.get("nodes", [])
@@ -477,7 +477,7 @@ async def generate_investigation_stream(
         verdict_payload = {
             "case_id": str(case_id),
             "risk_level": risk_level,
-            "fraud_type": "Estructuración Circular (Smurfing) y Cuentas Mula de Paso Rápido",
+            "fraud_type": "Circular Structuring (Smurfing) and Fast-Passthrough Mule Accounts",
             "total_amount_mxn": float(volume_mxn),
             "confidence_score": 0.94 if cycles_count > 0 else 0.88,
             "entities_involved": suspicious_node_ids,
@@ -488,15 +488,15 @@ async def generate_investigation_stream(
                 "pruning_efficiency_pct": pruning_pct,
             },
             "legal_recommendation": (
-                "Presentar de forma urgente un Reporte de Operación Inusual (ROI) ante la UIF "
-                "y proceder con la congelación cautelar de los fondos remanentes en las cuentas puente."
+                "Urgently file an Unusual Operation Report (ROI) with the UIF "
+                "and proceed with the precautionary freezing of remaining funds in the passthrough accounts."
             ),
             "audit_summary_text": (
-                f"Dictamen Pericial Forense para el caso {str(case_id)[:8]}. Se identificó una red estructurada "
-                f"de lavado de dinero por un monto total de ${volume_mxn:,.2f} pesos mexicanos. "
-                f"El análisis topológico determinó {cycles_count} ciclos dirigidos de triangulación de fondos "
-                f"y {pt_count} cuentas mula con dispersión superior al 90% en ventanas menores a 48 horas. "
-                f"Se descartaron exitosamente {pruned_count} transferencias no vinculadas mediante poda determinista."
+                f"Forensic Expert Verdict for case {str(case_id)[:8]}. A structured money-laundering "
+                f"network was identified for a total amount of ${volume_mxn:,.2f} Mexican pesos. "
+                f"The topological analysis determined {cycles_count} directed fund triangulation cycles "
+                f"and {pt_count} mule accounts with dispersion above 90% within windows of less than 48 hours. "
+                f"{pruned_count} unrelated transfers were successfully discarded through deterministic pruning."
             ),
             "completed_at": datetime.now(timezone.utc).isoformat(),
         }
@@ -712,8 +712,8 @@ async def generate_estate_audit_stream(
         # 1. Emission: Starting Audit
         init_thought = {
             "step": step_counter,
-            "phase": "Iniciando Auditoría Forense",
-            "message": f"Conectando a base de datos de {req.company_name} (Seed: {req.seed})...",
+            "phase": "Starting Forensic Audit",
+            "message": f"Connecting to database for {req.company_name} (Seed: {req.seed})...",
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "event_id": str(uuid.uuid4()),
             "agent_id": "ORCHESTRATOR",
@@ -723,7 +723,7 @@ async def generate_estate_audit_stream(
         yield f"event: thought\ndata: {json.dumps(init_thought)}\n\n"
 
         if not p_estate.exists() and not req.estate_path.startswith("postgresql"):
-            error_msg = f"Base de datos no encontrada en: {req.estate_path}"
+            error_msg = f"Database not found at: {req.estate_path}"
             yield f"event: error\ndata: {json.dumps({'error': error_msg})}\n\n"
             return
 
@@ -741,10 +741,10 @@ async def generate_estate_audit_stream(
 
         det_thought = {
             "step": step_counter,
-            "phase": "Detección Determinista y Conciliación",
+            "phase": "Deterministic Detection and Reconciliation",
             "message": (
-                f"Análisis matemático completado: {len(findings)} esquemas sospechosos identificados "
-                f"y {len(leads)} líneas preliminares descartadas con conciliación al 2%."
+                f"Mathematical analysis completed: {len(findings)} suspicious schemes identified "
+                f"and {len(leads)} preliminary leads discarded with 2% reconciliation."
             ),
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "event_id": str(uuid.uuid4()),
@@ -774,8 +774,8 @@ async def generate_estate_audit_stream(
                 step_counter += 1
                 thought_data = {
                     "step": step_counter,
-                    "phase": "Revisión Adversarial Deep Intelligence",
-                    "message": step_item.get("message", "Iniciando revisión adversarial individual..."),
+                    "phase": "Deep Intelligence Adversarial Review",
+                    "message": step_item.get("message", "Starting individual adversarial review..."),
                     "timestamp": datetime.now(timezone.utc).isoformat(),
                     "event_id": str(uuid.uuid4()),
                     "agent_id": "RISK_REVIEW",
@@ -791,8 +791,8 @@ async def generate_estate_audit_stream(
 
                 thought_data = {
                     "step": step_counter,
-                    "phase": "Revisión Adversarial de Hallazgo",
-                    "message": step_item.get("message", "Hallazgo examinado."),
+                    "phase": "Finding Adversarial Review",
+                    "message": step_item.get("message", "Finding examined."),
                     "timestamp": datetime.now(timezone.utc).isoformat(),
                     "event_id": str(uuid.uuid4()),
                     "agent_id": "RISK_REVIEW",
@@ -809,8 +809,8 @@ async def generate_estate_audit_stream(
 
                 thought_data = {
                     "step": step_counter,
-                    "phase": "Descarte de Línea Preliminar",
-                    "message": step_item.get("message", "Línea descartada."),
+                    "phase": "Preliminary Lead Dismissal",
+                    "message": step_item.get("message", "Lead dismissed."),
                     "timestamp": datetime.now(timezone.utc).isoformat(),
                     "event_id": str(uuid.uuid4()),
                     "agent_id": "RISK_REVIEW",
@@ -825,8 +825,8 @@ async def generate_estate_audit_stream(
                 step_counter += 1
                 thought_data = {
                     "step": step_counter,
-                    "phase": "Dictamen Judicial Pericial",
-                    "message": step_item.get("message", "Dictamen pericial formal emitido."),
+                    "phase": "Expert Judicial Verdict",
+                    "message": step_item.get("message", "Formal expert verdict issued."),
                     "timestamp": datetime.now(timezone.utc).isoformat(),
                     "event_id": str(uuid.uuid4()),
                     "agent_id": "ORCHESTRATOR",
@@ -856,7 +856,7 @@ async def generate_estate_audit_stream(
                 "code": "CFF-69B" if "phantom" in str(f.get("scheme_type", "")) else "CFF-GEN",
                 "authority": "SAT / UIF / CNBV",
                 "article": "Código Fiscal de la Federación / Ley de Instituciones de Crédito",
-                "legal_text_citation": "Tipología de operaciones con recursos de procedencia ilícita y simulación de actos jurídicos.",
+                "legal_text_citation": "Typology of transactions involving funds of illicit origin and simulation of legal acts.",
             })
             amt = float(f.get("peso_amount", 0.0))
             f.setdefault("reconciliation", {
@@ -868,8 +868,8 @@ async def generate_estate_audit_stream(
             })
 
         total_volume_flagged = sum(float(f.get("peso_amount", 0.0)) for f in submission["findings"])
-        proven_schemes = list(set(f.get("scheme_type", "Fraude") for f in submission["findings"]))
-        risk_level = "CRÍTICO" if submission["findings"] else "BAJO"
+        proven_schemes = list(set(f.get("scheme_type", "Fraud") for f in submission["findings"]))
+        risk_level = "CRITICAL" if submission["findings"] else "LOW"
 
         submission["header"] = {
             "company": req.company_name,
@@ -878,15 +878,15 @@ async def generate_estate_audit_stream(
         }
         submission["executive_summary"] = {
             "plain_narrative": last_synthesis.get("final_narrative") or (
-                f"Auditoría forense determinó un nivel de riesgo {risk_level} identificando {len(submission['findings'])} esquemas "
-                f"con un importe comprobado de ${total_volume_flagged:,.2f} MXN y {len(submission['leads_not_pursued'])} líneas preliminares descartadas."
+                f"The forensic audit determined a {risk_level} risk level, identifying {len(submission['findings'])} schemes "
+                f"with a proven amount of ${total_volume_flagged:,.2f} MXN and {len(submission['leads_not_pursued'])} preliminary leads discarded."
             )
         }
         submission["entity_names"] = {ent: ent for f in submission["findings"] for ent in f.get("entities", [])}
         submission["method_and_limits"] = {
-            "architecture_summary": "Motor de auditoría determinista de 6 etapas con NetworkX y conciliación contable al 2%.",
-            "out_of_scope": ["Transacciones fuera del periodo auditado", "Efectivo no registrado"],
-            "undetectable_fraud_types": ["Operaciones informales verbales"],
+            "architecture_summary": "6-stage deterministic audit engine with NetworkX and 2% accounting reconciliation.",
+            "out_of_scope": ["Transactions outside the audited period", "Unrecorded cash"],
+            "undetectable_fraud_types": ["Informal verbal transactions"],
             "reproducibility_steps": [
                 f"python -m backend.services.deterministic_detectors --estate {req.estate_path} --seed {req.seed}",
                 "python tmp/validate_format.py --submission submission.json",
@@ -927,7 +927,7 @@ async def generate_estate_audit_stream(
         terminal_verdict = {
             "case_id": f"ESTATE-{req.seed}",
             "risk_level": risk_level,
-            "fraud_type": ", ".join(proven_schemes) if proven_schemes else "Operación Regular Conforme a Derecho",
+            "fraud_type": ", ".join(proven_schemes) if proven_schemes else "Regular Operation in Accordance with the Law",
             "total_amount_mxn": round(total_volume_flagged, 2),
             "confidence_score": 0.96 if submission["findings"] else 0.90,
             "entities_involved": [ent for f in submission["findings"] for ent in f.get("entities", [])],
@@ -938,10 +938,10 @@ async def generate_estate_audit_stream(
                 "pruning_efficiency_pct": 94.5,
             },
             "legal_recommendation": (
-                "Presentar denuncia formal por simulación de operaciones y promover acción resarcitoria ante la UIF."
-                if submission["findings"] else "Se ratifica la procedencia del sobreseimiento sin responsabilidad."
+                "File a formal complaint for simulated transactions and pursue a restitution action with the UIF."
+                if submission["findings"] else "The dismissal without liability is ratified as appropriate."
             ),
-            "audit_summary_text": last_synthesis.get("final_narrative") or last_synthesis.get("judge_verdict") or "Auditoría pericial completada.",
+            "audit_summary_text": last_synthesis.get("final_narrative") or last_synthesis.get("judge_verdict") or "Expert audit completed.",
             "completed_at": datetime.now(timezone.utc).isoformat(),
             "source": "EXTERNAL" if (last_synthesis.get("llm_calls", 0) > 0) else "DETERMINISTIC",
         }
@@ -981,7 +981,7 @@ async def audit_estate_stream_get(
     estate_path: str = Query(..., description="Absolute path or URI to the financial estate database"),
     seed: int = Query(default=1, description="Random seed for deterministic audit execution"),
     company_rfc: Optional[str] = Query(default=None, description="RFC of the company being audited"),
-    company_name: str = Query(default="Empresa Auditada S.A. de C.V.", description="Legal name of audited company"),
+    company_name: str = Query(default="Audited Company S.A. de C.V.", description="Legal name of audited company"),
     n8n_url: Optional[str] = Query(default=None, description="Optional n8n webhook URL for narrative generation"),
 ):
     """

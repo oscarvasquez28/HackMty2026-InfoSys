@@ -29,16 +29,16 @@ async def test_n8n_enrichment_sequential_mock_online():
         async with connector.session_scope(db_path) as session:
             session.add(VendorRecord(
                 rfc="PHANTOM999",
-                legal_name="Operaciones Fantasma SA",
+                legal_name="Phantom Operations SA",
                 bank_clabe="123456789012345678",
-                category="Consultoria",
+                category="Consulting",
             ))
             session.add(ContractRecord(
                 contract_id="CNT-ADV-001",
                 vendor_rfc="PHANTOM999",
                 start_date="2025-01-01",
                 value=Decimal("80000.00"),
-                scope_text="Contrato formal sin entregables materiales",
+                scope_text="Formal contract with no material deliverables",
             ))
             session.add(InvoiceRecord(
                 uuid="INV-ADV-001",
@@ -56,12 +56,12 @@ async def test_n8n_enrichment_sequential_mock_online():
             {
                 "scheme_type": "phantom_vendor",
                 "entities": ["RFC:PHANTOM999"],
-                "narrative": "Presunta empresa fantasma detectada.",
-                "rule_broken": "SAT Articulo 69-B",
+                "narrative": "Suspected phantom company detected.",
+                "rule_broken": "SAT Article 69-B",
                 "peso_amount": 92800.00,
                 "confidence": "proven",
                 "exhibits": [
-                    {"exhibit_id": "EX-001", "source_table": "invoices", "record_id": "INV-ADV-001", "note": "Factura simulada"},
+                    {"exhibit_id": "EX-001", "source_table": "invoices", "record_id": "INV-ADV-001", "note": "Simulated invoice"},
                 ],
                 "money_trail": [
                     {"from": "RFC:AUDITED_COMPANY", "to": "RFC:PHANTOM999", "amount": 92800.00, "date": "2025-01-10", "exhibit_id": "EX-001"}
@@ -87,15 +87,15 @@ async def test_n8n_enrichment_sequential_mock_online():
                 return Response(
                     status_code=200,
                     json={
-                        "adversarial_review": "La defensa examinó el contrato CNT-ADV-001 pero no acreditó entregables.",
-                        "judge_verdict": "VEREDICTO DEL JUEZ (HALLAZGO 1): CULPABLE / IMPUTACIÓN PROCEDENTE. Se confirma defraudación.",
-                        "final_narrative": "Operación simulada con EFOS por $92,800.00 MXN comprobada plenamente.",
+                        "adversarial_review": "The defense examined contract CNT-ADV-001 but could not substantiate deliverables.",
+                        "judge_verdict": "JUDGE'S VERDICT (FINDING 1): GUILTY / CHARGE UPHELD. Fraud is confirmed.",
+                        "final_narrative": "Simulated transaction with EFOS for $92,800.00 MXN fully proven.",
                         "adversarial_evidences": [
                             {
                                 "exhibit_id": "EX-ADV-0001",
                                 "source_table": "contracts",
                                 "record_id": "CNT-ADV-001",
-                                "sentence": "Contrato mercantil desvirtuado por ausencia de entregables materiales.",
+                                "sentence": "Commercial contract disproven due to the absence of material deliverables.",
                             },
                         ],
                     },
@@ -105,10 +105,10 @@ async def test_n8n_enrichment_sequential_mock_online():
                 return Response(
                     status_code=200,
                     json={
-                        "adversarial_review": "Operación ordinaria con cotizaciones y entregas verificadas.",
-                        "judge_verdict": "VEREDICTO DEL JUEZ (LÍNEA 1): ABSUELTO / LÍNEA DESESTIMADA.",
-                        "reason": "Operación ordinaria de suministro con cotizaciones verificadas.",
-                        "closed_by": "Defensa Técnica / Juez Instructor",
+                        "adversarial_review": "Ordinary transaction with verified quotes and deliveries.",
+                        "judge_verdict": "JUDGE'S VERDICT (LEAD 1): ACQUITTED / LEAD DISMISSED.",
+                        "reason": "Ordinary supply transaction with verified quotes.",
+                        "closed_by": "Technical Defense / Examining Judge",
                     },
                     request=None,
                 )
@@ -116,8 +116,8 @@ async def test_n8n_enrichment_sequential_mock_online():
                 return Response(
                     status_code=200,
                     json={
-                        "judge_verdict": "DICTAMEN JUDICIAL PERICIAL GLOBAL: Responsabilidad corporativa confirmada.",
-                        "final_narrative": "Investigación pericial concluyente por $92,800.00 MXN.",
+                        "judge_verdict": "GLOBAL EXPERT JUDICIAL VERDICT: Corporate liability confirmed.",
+                        "final_narrative": "Conclusive expert investigation for $92,800.00 MXN.",
                     },
                     request=None,
                 )
@@ -143,12 +143,12 @@ async def test_n8n_enrichment_sequential_mock_online():
 
             # Verify finding received its individual judge verdict
             finding_step = next(s for s in steps_collected if s["type"] == "finding_reviewed")
-            assert "CULPABLE" in finding_step["judge_verdict"]
+            assert "GUILTY" in finding_step["judge_verdict"]
             assert len(finding_step["adversarial_evidences"]) == 1
 
             # Verify lead received its dismissal judge verdict
             lead_step = next(s for s in steps_collected if s["type"] == "lead_reviewed")
-            assert "ABSUELTO" in lead_step["judge_verdict"]
+            assert "ACQUITTED" in lead_step["judge_verdict"]
 
             # 1. Check exhibit records were inserted into the database exhibits table
             async with connector.session_scope(db_path) as session:
@@ -172,9 +172,9 @@ async def test_n8n_enrichment_sequential_mock_online():
                 "run_metadata": {"llm_calls": synthesis_step["llm_calls"], "wall_clock_seconds": 1.2, "mxn_cost": 0.0},
             }
             case_md = generator.generate_case_file_markdown(submission_payload)
-            assert "DICTAMEN JUDICIAL PERICIAL GLOBAL" in case_md
-            assert "Veredicto Judicial del Hallazgo" in case_md
-            assert "CULPABLE" in case_md
+            assert "GLOBAL EXPERT JUDICIAL VERDICT" in case_md
+            assert "Judicial Verdict on the Finding" in case_md
+            assert "GUILTY" in case_md
             assert "EX-ADV-0001" in case_md
 
         await connector.dispose_all()
@@ -191,12 +191,12 @@ async def test_n8n_enrichment_offline_fallback():
             {
                 "scheme_type": "phantom_vendor",
                 "entities": ["RFC:OFFLINE01"],
-                "narrative": "Hallazgo detectado en modo offline.",
-                "rule_broken": "SAT Articulo 69-B",
+                "narrative": "Finding detected in offline mode.",
+                "rule_broken": "SAT Article 69-B",
                 "peso_amount": 50000.00,
                 "confidence": "proven",
                 "exhibits": [
-                    {"exhibit_id": "EX-OFF-01", "source_table": "invoices", "record_id": "INV-001", "note": "Factura"},
+                    {"exhibit_id": "EX-OFF-01", "source_table": "invoices", "record_id": "INV-001", "note": "Invoice"},
                 ],
                 "money_trail": [],
             }
@@ -211,14 +211,14 @@ async def test_n8n_enrichment_offline_fallback():
             n8n_url=None,
         )
 
-        assert "Artículo 69-B" in result["adversarial_review"]
-        assert "DICTAMEN PERICIAL" in result["judge_verdict"]
-        assert "auditoría forense" in result["final_narrative"]
+        assert "Article 69-B" in result["adversarial_review"]
+        assert "EXPERT VERDICT ISSUED" in result["judge_verdict"]
+        assert "forensic audit" in result["final_narrative"]
         assert len(result["adversarial_evidences"]) >= 1
 
         # Check per-finding judge verdict was populated
         f0 = result["findings"][0]
-        assert "VEREDICTO DEL JUEZ (HALLAZGO 1/1)" in f0["judge_verdict"]
+        assert "JUDGE'S VERDICT (FINDING 1/1)" in f0["judge_verdict"]
 
         # Check exhibit inserted in exhibits table
         async with connector.session_scope(db_path) as session:

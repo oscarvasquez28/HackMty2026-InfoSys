@@ -30,10 +30,10 @@ interface EstateAuditStreamModalProps {
 }
 
 const AGENTS: Array<{ id: AgentId; label: string; role: string }> = [
-  { id: "DATA_VALIDATION", label: "Validación", role: "Ingesta & Conciliación 2%" },
-  { id: "CIRCULAR_FLOWS", label: "Topología", role: "Ciclos NetworkX & Mulas" },
+  { id: "DATA_VALIDATION", label: "Validation", role: "Ingestion & Reconciliation 2%" },
+  { id: "CIRCULAR_FLOWS", label: "Topology", role: "NetworkX Cycles & Mules" },
   { id: "RISK_REVIEW", label: "Adversarial", role: "Challenger vs Investigator" },
-  { id: "ORCHESTRATOR", label: "Dictamen", role: "Juez Pericial Oficial" },
+  { id: "ORCHESTRATOR", label: "Verdict", role: "Official Expert Judge" },
 ];
 
 export const EstateAuditStreamModal: React.FC<EstateAuditStreamModalProps> = ({
@@ -77,7 +77,7 @@ export const EstateAuditStreamModal: React.FC<EstateAuditStreamModalProps> = ({
             </div>
             <div>
               <h3 className="text-base font-semibold tracking-tight text-foreground">
-                Auditoría Forense en Tiempo Real
+                Real-Time Forensic Audit
               </h3>
               <p className="flex items-center gap-2 font-mono text-xs text-muted">
                 <span className="inline-block h-2 w-2 rounded-full bg-brand-400 animate-pulse" />
@@ -133,7 +133,7 @@ export const EstateAuditStreamModal: React.FC<EstateAuditStreamModalProps> = ({
           {thoughts.length === 0 && !error && (
             <div className="flex flex-col items-center justify-center py-12 text-center text-muted">
               <Loader2 className="h-8 w-8 animate-spin text-brand-400 mb-3" />
-              <p>Iniciando agentes y cargando topología de transacciones...</p>
+              <p>Starting agents and loading transaction topology...</p>
             </div>
           )}
 
@@ -145,7 +145,7 @@ export const EstateAuditStreamModal: React.FC<EstateAuditStreamModalProps> = ({
               <div className="flex items-center justify-between gap-2 mb-1.5 text-[11px]">
                 <div className="flex items-center gap-2">
                   <span className="rounded bg-brand-500/20 px-1.5 py-0.5 text-brand-300 font-semibold">
-                    Paso {t.step}
+                    Step {t.step}
                   </span>
                   <span className="text-foreground font-medium">{t.phase}</span>
                 </div>
@@ -167,7 +167,7 @@ export const EstateAuditStreamModal: React.FC<EstateAuditStreamModalProps> = ({
             >
               <div className="flex items-center gap-2 text-amber-300 font-semibold mb-1">
                 <ShieldAlert className="h-4 w-4" />
-                <span>Hallazgo Detectado & Validado</span>
+                <span>Finding Detected & Validated</span>
               </div>
               <p className="text-amber-100/90 font-sans">{f.message}</p>
             </div>
@@ -178,7 +178,7 @@ export const EstateAuditStreamModal: React.FC<EstateAuditStreamModalProps> = ({
             <div className="rounded-lg border border-rose-500/40 bg-rose-500/10 p-4 text-xs text-rose-300 flex items-start gap-3">
               <AlertTriangle className="h-5 w-5 shrink-0 text-rose-400" />
               <div>
-                <p className="font-semibold">Error en la auditoría</p>
+                <p className="font-semibold">Error during the audit</p>
                 <p className="mt-1 text-rose-200/80 font-sans">{error}</p>
               </div>
             </div>
@@ -191,31 +191,31 @@ export const EstateAuditStreamModal: React.FC<EstateAuditStreamModalProps> = ({
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-5 w-5 text-emerald-400" />
                   <span className="font-semibold text-foreground text-sm">
-                    Dictamen Pericial Concluido
+                    Expert Verdict Concluded
                   </span>
                 </div>
                 <span
                   className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                    verdict.risk_level === "CRÍTICO"
+                    verdict.risk_level === "CRITICAL"
                       ? "bg-rose-500/20 text-rose-300 border border-rose-500/30"
                       : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
                   }`}
                 >
-                  Nivel de Riesgo: {verdict.risk_level}
+                  Risk Level: {verdict.risk_level}
                 </span>
               </div>
 
               <div className="mt-3 grid grid-cols-2 gap-3 border-t border-surface-border/50 pt-3 text-xs">
                 <div>
-                  <span className="text-muted block">Volumen Flagelado:</span>
+                  <span className="text-muted block">Flagged Volume:</span>
                   <span className="text-foreground font-semibold text-sm">
                     {formatCurrencyMXN(verdict.total_amount_mxn)}
                   </span>
                 </div>
                 <div>
-                  <span className="text-muted block">Líneas Descartadas:</span>
+                  <span className="text-muted block">Discarded Leads:</span>
                   <span className="text-foreground font-semibold text-sm">
-                    {verdict.pruned_leads_count} líneas
+                    {verdict.pruned_leads_count} leads
                   </span>
                 </div>
               </div>
@@ -235,12 +235,12 @@ export const EstateAuditStreamModal: React.FC<EstateAuditStreamModalProps> = ({
             {isStreaming ? (
               <span className="flex items-center gap-2">
                 <Zap className="h-3.5 w-3.5 text-brand-400 animate-pulse" />
-                Ejecución determinista en curso...
+                Deterministic execution in progress...
               </span>
             ) : completedAudit ? (
               <span className="text-emerald-400 flex items-center gap-1.5">
                 <CheckCircle2 className="h-4 w-4" />
-                Expediente judicial listo para inspección
+                Judicial case file ready for inspection
               </span>
             ) : null}
           </div>
@@ -251,7 +251,7 @@ export const EstateAuditStreamModal: React.FC<EstateAuditStreamModalProps> = ({
               onClick={onClose}
               className="app-button text-xs"
             >
-              Cerrar
+              Close
             </button>
 
             {completedAudit && (
@@ -261,7 +261,7 @@ export const EstateAuditStreamModal: React.FC<EstateAuditStreamModalProps> = ({
                 className="app-primary flex items-center gap-2 text-xs font-semibold py-2 px-4 shadow-lg shadow-brand-500/20"
               >
                 <FileCheck className="h-4 w-4" />
-                Ver Expediente Completo
+                View Full Case File
               </button>
             )}
           </div>

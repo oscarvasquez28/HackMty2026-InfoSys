@@ -137,13 +137,13 @@ async def test_case_file_full_generation_and_export():
 
             # Assert 3. Finding section requirements
             assert "## 3. Findings" in md_content
-            assert "Qué Sucedió (Narrativa Pericial)" in md_content or "Narrative" in md_content or "Qué Sucedió" in md_content
+            assert "Narrative" in md_content
             assert "Money Trail" in md_content
             assert "```mermaid" in md_content
             assert "flowchart LR" in md_content
             assert "Exhibits Table" in md_content
-            assert "Conciliación Aritmética" in md_content or "Conciliación" in md_content
-            assert "Revisión Adversarial" in md_content or "Adversarial" in md_content
+            assert "Reconciliation" in md_content
+            assert "Adversarial" in md_content
 
             # Assert 4. Leads Not Pursued in the body
             assert "## 4. Leads not pursued" in md_content
