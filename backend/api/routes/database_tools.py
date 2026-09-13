@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 import uuid
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, Response, status
 from pydantic import BaseModel, Field
 from sqlalchemy import func, or_, select
 
@@ -139,6 +139,10 @@ class TablesCatalogResponse(BaseModel):
     tables: List[TableInfo]
 
 
+class TablesCatalogRequest(BaseModel):
+    estate_path: Optional[str] = Field(None, description="Path to SQLite data estate file")
+
+
 class TableQueryResponse(BaseModel):
     table: str
     total: int
@@ -157,12 +161,116 @@ class TableQueryRequest(BaseModel):
     max_amount: Optional[float] = None
 
 
+class VendorsQueryRequest(BaseModel):
+    estate_path: Optional[str] = None
+    limit: int = Field(50, ge=1, le=500)
+    offset: int = Field(0, ge=0)
+    rfc: Optional[str] = None
+    legal_name: Optional[str] = None
+    bank_clabe: Optional[str] = None
+    category: Optional[str] = None
+    q: Optional[str] = Field(None, description="Search across RFC, legal name, address")
+
+
+class InvoicesQueryRequest(BaseModel):
+    estate_path: Optional[str] = None
+    limit: int = Field(50, ge=1, le=500)
+    offset: int = Field(0, ge=0)
+    uuid: Optional[str] = None
+    issuer_rfc: Optional[str] = None
+    receiver_rfc: Optional[str] = None
+    status: Optional[str] = None
+    min_amount: Optional[float] = None
+    max_amount: Optional[float] = None
+    q: Optional[str] = Field(None, description="Search across UUID, RFCs, concepto_text")
+
+
+class LedgerQueryRequest(BaseModel):
+    estate_path: Optional[str] = None
+    limit: int = Field(50, ge=1, le=500)
+    offset: int = Field(0, ge=0)
+    entry_id: Optional[int] = None
+    account_code: Optional[str] = None
+    invoice_uuid: Optional[str] = None
+    approver: Optional[str] = None
+    q: Optional[str] = Field(None, description="Search across description, account_name, approver")
+
+
+class BankTxnsQueryRequest(BaseModel):
+    estate_path: Optional[str] = None
+    limit: int = Field(50, ge=1, le=500)
+    offset: int = Field(0, ge=0)
+    txn_id: Optional[str] = None
+    from_clabe: Optional[str] = None
+    to_clabe: Optional[str] = None
+    min_amount: Optional[float] = None
+    max_amount: Optional[float] = None
+    q: Optional[str] = Field(None, description="Search across reference, CLABEs, txn_id")
+
+
+class PurchaseOrdersQueryRequest(BaseModel):
+    estate_path: Optional[str] = None
+    limit: int = Field(50, ge=1, le=500)
+    offset: int = Field(0, ge=0)
+    po_id: Optional[str] = None
+    vendor_rfc: Optional[str] = None
+    approver: Optional[str] = None
+    requester: Optional[str] = None
+    min_amount: Optional[float] = None
+    max_amount: Optional[float] = None
+    q: Optional[str] = Field(None, description="Search description, approver, requester")
+
+
+class ContractsQueryRequest(BaseModel):
+    estate_path: Optional[str] = None
+    limit: int = Field(50, ge=1, le=500)
+    offset: int = Field(0, ge=0)
+    contract_id: Optional[str] = None
+    vendor_rfc: Optional[str] = None
+    min_value: Optional[float] = None
+    max_value: Optional[float] = None
+    q: Optional[str] = Field(None, description="Search scope_text, contract_id, vendor_rfc")
+
+
+class EmployeesQueryRequest(BaseModel):
+    estate_path: Optional[str] = None
+    limit: int = Field(50, ge=1, le=500)
+    offset: int = Field(0, ge=0)
+    emp_id: Optional[str] = None
+    name: Optional[str] = None
+    role: Optional[str] = None
+    bank_clabe: Optional[str] = None
+    q: Optional[str] = Field(None, description="Search employee name, role, CLABE")
+
+
+class EfosListQueryRequest(BaseModel):
+    estate_path: Optional[str] = None
+    limit: int = Field(50, ge=1, le=500)
+    offset: int = Field(0, ge=0)
+    rfc: Optional[str] = None
+    status: Optional[str] = None
+    q: Optional[str] = Field(None, description="Search RFC or legal_name")
+
+
+class ExhibitsQueryRequest(BaseModel):
+    estate_path: Optional[str] = None
+    limit: int = Field(50, ge=1, le=500)
+    offset: int = Field(0, ge=0)
+    exhibit_id: Optional[str] = None
+    source_table: Optional[str] = None
+    record_id: Optional[str] = None
+    q: Optional[str] = Field(None, description="Search exhibit_id, record_id, sentence")
+
+
 class ExhibitCreateRequest(BaseModel):
     estate_path: Optional[str] = None
     exhibit_id: Optional[str] = Field(None, description="Optional custom exhibit ID (e.g. EX-ADV-001)")
-    source_table: str = Field(..., description="Name of the source table cited (e.g. contracts, invoices)")
-    record_id: str = Field(..., description="Record primary key cited in the source table")
-    sentence: str = Field(..., description="Statement explaining what this evidence proves")
+    source_table: Optional[str] = Field(None, description="Name of the source table cited (e.g. contracts, invoices)")
+    record_id: Optional[str] = Field(None, description="Record primary key cited in the source table")
+    sentence: Optional[str] = Field(None, description="Statement explaining what this evidence proves")
+    limit: int = Field(50, ge=1, le=500)
+    offset: int = Field(0, ge=0)
+    q: Optional[str] = Field(None, description="Search exhibit_id, record_id, sentence")
 
 
 class ExhibitCreateResponse(BaseModel):
@@ -174,18 +282,24 @@ class ExhibitCreateResponse(BaseModel):
     verified: bool
 
 
+class RecordLookupRequest(BaseModel):
+    estate_path: Optional[str] = None
+
+
+class DirectRecordLookupRequest(BaseModel):
+    table_name: str = Field(..., description="Target database table name")
+    record_id: str = Field(..., description="Record primary key cited in the source table")
+    estate_path: Optional[str] = None
+
+
+class DatabaseDynamicQueryRequest(TableQueryRequest):
+    table_name: str = Field(..., description="Target database table name")
+
+
 # -----------------------------------------------------------------------------
 # Endpoints
 # -----------------------------------------------------------------------------
-@router.get(
-    "/tables",
-    response_model=TablesCatalogResponse,
-    summary="List all database tables and schema catalog",
-    description="Returns available database tables, column names, primary keys, and row counts.",
-)
-async def list_tables(
-    estate_path: Optional[str] = Query(None, description="Path to SQLite data estate file"),
-):
+async def _list_tables_internal(estate_path: Optional[str] = None) -> TablesCatalogResponse:
     target = resolve_estate_target(estate_path)
     result_tables: List[TableInfo] = []
 
@@ -215,10 +329,35 @@ async def list_tables(
     )
 
 
+@router.get(
+    "/tables",
+    response_model=TablesCatalogResponse,
+    summary="List all database tables and schema catalog (GET)",
+    description="Returns available database tables, column names, primary keys, and row counts.",
+)
+async def list_tables(
+    estate_path: Optional[str] = Query(None, description="Path to SQLite data estate file"),
+):
+    return await _list_tables_internal(estate_path)
+
+
+@router.post(
+    "/tables",
+    response_model=TablesCatalogResponse,
+    summary="List all database tables and schema catalog (POST)",
+    description="Returns available database tables, column names, primary keys, and row counts via POST body.",
+)
+async def list_tables_post(
+    body: Optional[TablesCatalogRequest] = None,
+):
+    estate_path = body.estate_path if body else None
+    return await _list_tables_internal(estate_path)
+
+
 # -----------------------------------------------------------------------------
 # Dedicated Table Endpoints for Adversarial Reviewer & AI Agent Tools
 # -----------------------------------------------------------------------------
-@router.get("/vendors", response_model=TableQueryResponse, summary="Query vendors table")
+@router.get("/vendors", response_model=TableQueryResponse, summary="Query vendors table (GET)")
 async def get_vendors(
     estate_path: Optional[str] = Query(None),
     limit: int = Query(50, ge=1, le=500),
@@ -241,7 +380,22 @@ async def get_vendors(
     return await _query_table_internal("vendors", estate_path, limit, offset, q, filters)
 
 
-@router.get("/invoices", response_model=TableQueryResponse, summary="Query invoices table")
+@router.post("/vendors", response_model=TableQueryResponse, summary="Query vendors table (POST)")
+async def post_vendors(body: Optional[VendorsQueryRequest] = None):
+    req = body or VendorsQueryRequest()
+    filters = {}
+    if req.rfc:
+        filters["rfc"] = req.rfc
+    if req.legal_name:
+        filters["legal_name"] = req.legal_name
+    if req.bank_clabe:
+        filters["bank_clabe"] = req.bank_clabe
+    if req.category:
+        filters["category"] = req.category
+    return await _query_table_internal("vendors", req.estate_path, req.limit, req.offset, req.q, filters)
+
+
+@router.get("/invoices", response_model=TableQueryResponse, summary="Query invoices table (GET)")
 async def get_invoices(
     estate_path: Optional[str] = Query(None),
     limit: int = Query(50, ge=1, le=500),
@@ -268,7 +422,24 @@ async def get_invoices(
     )
 
 
-@router.get("/ledger", response_model=TableQueryResponse, summary="Query ledger table")
+@router.post("/invoices", response_model=TableQueryResponse, summary="Query invoices table (POST)")
+async def post_invoices(body: Optional[InvoicesQueryRequest] = None):
+    req = body or InvoicesQueryRequest()
+    filters = {}
+    if req.uuid:
+        filters["uuid"] = req.uuid
+    if req.issuer_rfc:
+        filters["issuer_rfc"] = req.issuer_rfc
+    if req.receiver_rfc:
+        filters["receiver_rfc"] = req.receiver_rfc
+    if req.status:
+        filters["status"] = req.status
+    return await _query_table_internal(
+        "invoices", req.estate_path, req.limit, req.offset, req.q, filters, min_amount=req.min_amount, max_amount=req.max_amount
+    )
+
+
+@router.get("/ledger", response_model=TableQueryResponse, summary="Query ledger table (GET)")
 async def get_ledger(
     estate_path: Optional[str] = Query(None),
     limit: int = Query(50, ge=1, le=500),
@@ -291,7 +462,22 @@ async def get_ledger(
     return await _query_table_internal("ledger", estate_path, limit, offset, q, filters)
 
 
-@router.get("/bank_txns", response_model=TableQueryResponse, summary="Query bank transactions table")
+@router.post("/ledger", response_model=TableQueryResponse, summary="Query ledger table (POST)")
+async def post_ledger(body: Optional[LedgerQueryRequest] = None):
+    req = body or LedgerQueryRequest()
+    filters = {}
+    if req.entry_id is not None:
+        filters["entry_id"] = req.entry_id
+    if req.account_code:
+        filters["account_code"] = req.account_code
+    if req.invoice_uuid:
+        filters["invoice_uuid"] = req.invoice_uuid
+    if req.approver:
+        filters["approver"] = req.approver
+    return await _query_table_internal("ledger", req.estate_path, req.limit, req.offset, req.q, filters)
+
+
+@router.get("/bank_txns", response_model=TableQueryResponse, summary="Query bank transactions table (GET)")
 async def get_bank_txns(
     estate_path: Optional[str] = Query(None),
     limit: int = Query(50, ge=1, le=500),
@@ -315,7 +501,22 @@ async def get_bank_txns(
     )
 
 
-@router.get("/purchase_orders", response_model=TableQueryResponse, summary="Query purchase orders table")
+@router.post("/bank_txns", response_model=TableQueryResponse, summary="Query bank transactions table (POST)")
+async def post_bank_txns(body: Optional[BankTxnsQueryRequest] = None):
+    req = body or BankTxnsQueryRequest()
+    filters = {}
+    if req.txn_id:
+        filters["txn_id"] = req.txn_id
+    if req.from_clabe:
+        filters["from_clabe"] = req.from_clabe
+    if req.to_clabe:
+        filters["to_clabe"] = req.to_clabe
+    return await _query_table_internal(
+        "bank_txns", req.estate_path, req.limit, req.offset, req.q, filters, min_amount=req.min_amount, max_amount=req.max_amount
+    )
+
+
+@router.get("/purchase_orders", response_model=TableQueryResponse, summary="Query purchase orders table (GET)")
 async def get_purchase_orders(
     estate_path: Optional[str] = Query(None),
     limit: int = Query(50, ge=1, le=500),
@@ -342,7 +543,24 @@ async def get_purchase_orders(
     )
 
 
-@router.get("/contracts", response_model=TableQueryResponse, summary="Query contracts table")
+@router.post("/purchase_orders", response_model=TableQueryResponse, summary="Query purchase orders table (POST)")
+async def post_purchase_orders(body: Optional[PurchaseOrdersQueryRequest] = None):
+    req = body or PurchaseOrdersQueryRequest()
+    filters = {}
+    if req.po_id:
+        filters["po_id"] = req.po_id
+    if req.vendor_rfc:
+        filters["vendor_rfc"] = req.vendor_rfc
+    if req.approver:
+        filters["approver"] = req.approver
+    if req.requester:
+        filters["requester"] = req.requester
+    return await _query_table_internal(
+        "purchase_orders", req.estate_path, req.limit, req.offset, req.q, filters, min_amount=req.min_amount, max_amount=req.max_amount
+    )
+
+
+@router.get("/contracts", response_model=TableQueryResponse, summary="Query contracts table (GET)")
 async def get_contracts(
     estate_path: Optional[str] = Query(None),
     limit: int = Query(50, ge=1, le=500),
@@ -363,7 +581,20 @@ async def get_contracts(
     )
 
 
-@router.get("/employees", response_model=TableQueryResponse, summary="Query employees table")
+@router.post("/contracts", response_model=TableQueryResponse, summary="Query contracts table (POST)")
+async def post_contracts(body: Optional[ContractsQueryRequest] = None):
+    req = body or ContractsQueryRequest()
+    filters = {}
+    if req.contract_id:
+        filters["contract_id"] = req.contract_id
+    if req.vendor_rfc:
+        filters["vendor_rfc"] = req.vendor_rfc
+    return await _query_table_internal(
+        "contracts", req.estate_path, req.limit, req.offset, req.q, filters, min_amount=req.min_value, max_amount=req.max_value
+    )
+
+
+@router.get("/employees", response_model=TableQueryResponse, summary="Query employees table (GET)")
 async def get_employees(
     estate_path: Optional[str] = Query(None),
     limit: int = Query(50, ge=1, le=500),
@@ -386,7 +617,22 @@ async def get_employees(
     return await _query_table_internal("employees", estate_path, limit, offset, q, filters)
 
 
-@router.get("/efos_list", response_model=TableQueryResponse, summary="Query SAT EFOS blacklist")
+@router.post("/employees", response_model=TableQueryResponse, summary="Query employees table (POST)")
+async def post_employees(body: Optional[EmployeesQueryRequest] = None):
+    req = body or EmployeesQueryRequest()
+    filters = {}
+    if req.emp_id:
+        filters["emp_id"] = req.emp_id
+    if req.name:
+        filters["name"] = req.name
+    if req.role:
+        filters["role"] = req.role
+    if req.bank_clabe:
+        filters["bank_clabe"] = req.bank_clabe
+    return await _query_table_internal("employees", req.estate_path, req.limit, req.offset, req.q, filters)
+
+
+@router.get("/efos_list", response_model=TableQueryResponse, summary="Query SAT EFOS blacklist (GET)")
 async def get_efos_list(
     estate_path: Optional[str] = Query(None),
     limit: int = Query(50, ge=1, le=500),
@@ -403,7 +649,18 @@ async def get_efos_list(
     return await _query_table_internal("efos_list", estate_path, limit, offset, q, filters)
 
 
-@router.get("/exhibits", response_model=TableQueryResponse, summary="Query registered evidentiary exhibits")
+@router.post("/efos_list", response_model=TableQueryResponse, summary="Query SAT EFOS blacklist (POST)")
+async def post_efos_list(body: Optional[EfosListQueryRequest] = None):
+    req = body or EfosListQueryRequest()
+    filters = {}
+    if req.rfc:
+        filters["rfc"] = req.rfc
+    if req.status:
+        filters["status"] = req.status
+    return await _query_table_internal("efos_list", req.estate_path, req.limit, req.offset, req.q, filters)
+
+
+@router.get("/exhibits", response_model=TableQueryResponse, summary="Query registered evidentiary exhibits (GET)")
 async def get_exhibits(
     estate_path: Optional[str] = Query(None),
     limit: int = Query(50, ge=1, le=500),
@@ -423,15 +680,8 @@ async def get_exhibits(
     return await _query_table_internal("exhibits", estate_path, limit, offset, q, filters)
 
 
-@router.post(
-    "/exhibits",
-    response_model=ExhibitCreateResponse,
-    status_code=status.HTTP_201_CREATED,
-    summary="Insert new evidence into exhibits table",
-    description="Registers an evidentiary exhibit cited by the adversarial reviewer into the database exhibits table.",
-)
-async def create_exhibit(req: ExhibitCreateRequest):
-    """Inserts an evidence record into the exhibits table."""
+async def _create_exhibit_internal(req: ExhibitCreateRequest) -> ExhibitCreateResponse:
+    """Internal implementation for inserting an evidence record into the exhibits table."""
     target = resolve_estate_target(req.estate_path)
     ex_id = req.exhibit_id or f"EX-ADV-{uuid.uuid4().hex[:8].upper()}"
 
@@ -494,6 +744,7 @@ async def create_exhibit(req: ExhibitCreateRequest):
                 "source_table": req.source_table,
                 "record_id": str(req.record_id),
                 "sentence": req.sentence,
+                "note": req.sentence,
             }],
             estate_target=target if target != "default" else None,
         )
@@ -510,13 +761,96 @@ async def create_exhibit(req: ExhibitCreateRequest):
     )
 
 
+@router.post(
+    "/exhibits",
+    response_model=Union[ExhibitCreateResponse, TableQueryResponse],
+    summary="Insert new evidence or query exhibits table (POST)",
+    description="Registers an evidentiary exhibit if sentence is provided (HTTP 201), or queries exhibits if omitted (HTTP 200).",
+)
+async def create_exhibit(req: ExhibitCreateRequest, response: Response):
+    """Inserts evidence into exhibits table or queries exhibits if sentence is omitted."""
+    # If 'sentence' is provided, this is an exhibit creation/registration request
+    if req.sentence and req.sentence.strip():
+        if not req.source_table or not req.record_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="source_table and record_id are required when creating an exhibit.",
+            )
+        response.status_code = status.HTTP_201_CREATED
+        return await _create_exhibit_internal(req)
+
+    # Otherwise, this is a query request for exhibits
+    response.status_code = status.HTTP_200_OK
+    filters = {}
+    if req.exhibit_id:
+        filters["exhibit_id"] = req.exhibit_id
+    if req.source_table:
+        filters["source_table"] = req.source_table
+    if req.record_id:
+        filters["record_id"] = req.record_id
+    return await _query_table_internal("exhibits", req.estate_path, req.limit, req.offset, req.q, filters)
+
+
+@router.post(
+    "/exhibits/query",
+    response_model=TableQueryResponse,
+    summary="Query registered evidentiary exhibits via dedicated POST route",
+)
+async def query_exhibits_post(body: Optional[ExhibitsQueryRequest] = None):
+    req = body or ExhibitsQueryRequest()
+    filters = {}
+    if req.exhibit_id:
+        filters["exhibit_id"] = req.exhibit_id
+    if req.source_table:
+        filters["source_table"] = req.source_table
+    if req.record_id:
+        filters["record_id"] = req.record_id
+    return await _query_table_internal("exhibits", req.estate_path, req.limit, req.offset, req.q, filters)
+
+
+@router.post(
+    "/exhibits/search",
+    response_model=TableQueryResponse,
+    summary="Search registered evidentiary exhibits via dedicated POST route",
+)
+async def search_exhibits_post(body: Optional[ExhibitsQueryRequest] = None):
+    return await query_exhibits_post(body)
+
+
 # -----------------------------------------------------------------------------
 # Generic Dynamic Table Query & Record Lookup Endpoints
 # -----------------------------------------------------------------------------
+@router.post(
+    "/query",
+    response_model=TableQueryResponse,
+    summary="Dynamic table query via POST body",
+)
+async def query_table_dynamic(body: DatabaseDynamicQueryRequest):
+    return await _query_table_internal(
+        table_name=body.table_name,
+        estate_path=body.estate_path,
+        limit=body.limit,
+        offset=body.offset,
+        q=body.q,
+        filters=body.filters,
+        min_amount=body.min_amount,
+        max_amount=body.max_amount,
+    )
+
+
+@router.post(
+    "/record",
+    response_model=Dict[str, Any],
+    summary="Direct single record lookup via POST body",
+)
+async def post_record_lookup(body: DirectRecordLookupRequest):
+    return await _get_table_record_by_id_internal(body.table_name, body.record_id, body.estate_path)
+
+
 @router.get(
     "/{table_name}",
     response_model=TableQueryResponse,
-    summary="Generic table query with search & pagination",
+    summary="Generic table query with search & pagination (GET)",
 )
 async def query_any_table(
     table_name: str,
@@ -539,9 +873,31 @@ async def query_any_table(
 
 
 @router.post(
+    "/{table_name}",
+    response_model=TableQueryResponse,
+    summary="Generic table query with search & pagination (POST)",
+)
+async def query_any_table_post_direct(
+    table_name: str,
+    body: Optional[TableQueryRequest] = None,
+):
+    req = body or TableQueryRequest()
+    return await _query_table_internal(
+        table_name=table_name,
+        estate_path=req.estate_path,
+        limit=req.limit,
+        offset=req.offset,
+        q=req.q,
+        filters=req.filters,
+        min_amount=req.min_amount,
+        max_amount=req.max_amount,
+    )
+
+
+@router.post(
     "/{table_name}/query",
     response_model=TableQueryResponse,
-    summary="Structured JSON table query",
+    summary="Structured JSON table query (POST)",
 )
 async def query_any_table_post(table_name: str, body: TableQueryRequest):
     return await _query_table_internal(
@@ -556,16 +912,11 @@ async def query_any_table_post(table_name: str, body: TableQueryRequest):
     )
 
 
-@router.get(
-    "/{table_name}/{record_id}",
-    response_model=Dict[str, Any],
-    summary="Direct single record lookup by primary key ID",
-)
-async def get_table_record_by_id(
+async def _get_table_record_by_id_internal(
     table_name: str,
     record_id: str,
-    estate_path: Optional[str] = Query(None),
-):
+    estate_path: Optional[str] = None,
+) -> Dict[str, Any]:
     clean_table = table_name.strip().lower()
     if clean_table not in ALL_DATABASE_MODELS:
         raise HTTPException(
@@ -599,6 +950,33 @@ async def get_table_record_by_id(
                 detail=f"Record '{record_id}' not found in table '{clean_table}'.",
             )
         return serialize_model_instance(record, clean_table)
+
+
+@router.get(
+    "/{table_name}/{record_id}",
+    response_model=Dict[str, Any],
+    summary="Direct single record lookup by primary key ID (GET)",
+)
+async def get_table_record_by_id(
+    table_name: str,
+    record_id: str,
+    estate_path: Optional[str] = Query(None),
+):
+    return await _get_table_record_by_id_internal(table_name, record_id, estate_path)
+
+
+@router.post(
+    "/{table_name}/{record_id}",
+    response_model=Dict[str, Any],
+    summary="Direct single record lookup by primary key ID (POST)",
+)
+async def post_table_record_by_id(
+    table_name: str,
+    record_id: str,
+    body: Optional[RecordLookupRequest] = None,
+):
+    estate_path = body.estate_path if body else None
+    return await _get_table_record_by_id_internal(table_name, record_id, estate_path)
 
 
 # -----------------------------------------------------------------------------

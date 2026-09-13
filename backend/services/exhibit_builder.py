@@ -373,7 +373,7 @@ class ExhibitBuilder:
                 eid = str(ex.get("exhibit_id", "")).strip()
                 tbl = str(ex.get("source_table", "")).strip()
                 rid = str(ex.get("record_id", "")).strip()
-                note = str(ex.get("note", "")).strip()
+                note = str(ex.get("note") or ex.get("sentence", "")).strip()
 
                 if not eid or not tbl or not rid:
                     continue
